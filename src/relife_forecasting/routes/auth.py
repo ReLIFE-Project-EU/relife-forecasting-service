@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from relife_service_template.auth.dependencies import AuthenticatedUserWithRolesDep
-from relife_service_template.models.auth import AuthenticatedUser
+from relife_forecasting.auth.dependencies import AuthenticatedUserWithRolesDep
+from relife_forecasting.models.auth import AuthenticatedUser
 
 router = APIRouter(tags=["auth"])
 

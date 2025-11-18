@@ -2,8 +2,8 @@ from importlib.metadata import version
 
 from fastapi import FastAPI
 
-from relife_service_template.config.logging import configure_logging
-from relife_service_template.routes import auth, examples, health
+from relife_forecasting.config.logging import configure_logging
+from relife_forecasting.routes import auth, examples, health
 
 # Dynamically determine the package name
 package_name = __name__.split(".")[0]
@@ -19,8 +19,8 @@ except ImportError:
 configure_logging()
 
 app = FastAPI(
-    title="ReLIFE Service Template",
-    description="A project template for ReLIFE service HTTP APIs",
+    title="ReLIFE Forecasting Service",
+    description="ReLIFE service for building energy forecasting",
     version=__version__,
 )
 
