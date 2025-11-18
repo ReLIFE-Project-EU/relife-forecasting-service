@@ -1,45 +1,44 @@
 # ReLIFE Forecasting Service API
 
-
 API for a simplified building thermal simulation and EPC generation.
 
-Required functionality (in EN):
-1) Load a dictionary of geometric/thermal building data
-2) Get (and load) a dictionary for the associated plant
-3) Thermally simulate the building using weather data EPW
-4) Export the results in CSV
-5) Generate an EPC (energy class) with default input
+## Required Functionality
 
-NOTE IMPORTANT
-- This is an example of workflow all the content and API name will be different after the integration of teh pybuilding library.
+1. Load a dictionary of geometric/thermal building data
+2. Get (and load) a dictionary for the associated plant
+3. Thermally simulate the building using weather data EPW
+4. Export the results in CSV
+5. Generate an EPC (energy class) with default input
 
-Local run
-------------
-1) Create a virtualenv and install the packages:
+> [!NOTE]
+> This is an example workflow. All content and API names will be different after the integration of the pybuilding library.
+
+## Local Run
+
+1. Create a virtualenv and install the packages:
+
+   ```bash
    pip install fastapi uvicorn "pydantic>=2" pandas python-multipart
+   ```
 
-2) Run the server:
+2. Run the server:
+
+   ```bash
    uvicorn app:app --reload
+   ```
 
-3) Open the interactive OpenAPI documentation:
+3. Open the interactive OpenAPI documentation:
    http://127.0.0.1:8000/docs
 
-Typical Workflow 
----------------
-- POST /project -> create a project_id
-- PUT /project/{id}/building -> load the building dictionary
-- GET /plant/template -> get the plant template
-- PUT /project/{id}/plant -> load the plant dictionary
-- POST /project/{id}/simulate (multipart con file=EPW) -> run the simulation
-- GET /project/{id}/results.csv -> download the results CSV
-- GET /project/{id}/epc -> get the EPC based on default input
+## Typical Workflow
 
-"""
-
-
-## Introduction
-
-This is a Python template for a ReLIFE Service API that integrates with Supabase for database operations and storage, and with Keycloak for authentication and authorisation. It provides a foundation for building ReLIFE Services including Supabase user authentication, Keycloak role-based access control, and file storage capabilities.
+- `POST /project` → create a project_id
+- `PUT /project/{id}/building` → load the building dictionary
+- `GET /plant/template` → get the plant template
+- `PUT /project/{id}/plant` → load the plant dictionary
+- `POST /project/{id}/simulate` (multipart with file=EPW) → run the simulation
+- `GET /project/{id}/results.csv` → download the results CSV
+- `GET /project/{id}/epc` → get the EPC based on default input
 
 ## Technology Stack
 
@@ -70,8 +69,9 @@ All configuration is driven by environment variables:
 | **Storage**  | `BUCKET_NAME`            | Name of the default storage bucket in Supabase    | `default_relife_bucket`                              |
 
 > [!WARNING]
-> * The `SUPABASE_KEY` uses the service role key that bypasses Row Level Security (RLS) policies. This should **never** be exposed to clients.
-> * `KEYCLOAK_CLIENT_SECRET` is sensitive and should be properly secured in production environments.
+>
+> - The `SUPABASE_KEY` uses the service role key that bypasses Row Level Security (RLS) policies. This should **never** be exposed to clients.
+> - `KEYCLOAK_CLIENT_SECRET` is sensitive and should be properly secured in production environments.
 
 ## Authentication Integration Validation
 
@@ -100,6 +100,3 @@ The script performs an end-to-end authentication validation:
 3. **Endpoint Verification**: Tests the `/whoami` endpoint with the obtained token
 4. **User Information**: Displays authenticated user details and associated roles
 5. **Cleanup**: Automatically shuts down the temporary server
-
-
-
