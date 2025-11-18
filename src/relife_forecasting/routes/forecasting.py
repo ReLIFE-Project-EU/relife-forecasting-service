@@ -1,72 +1,26 @@
-from __future__ import annotations
-
 import io
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import pandas as pd
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import StreamingResponse, JSONResponse
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import JSONResponse, StreamingResponse
 
-app = FastAPI(title="Building Thermal Simulator & EPC API (demo)")
+from relife_forecasting.models.forecasting import BuildingPayload, PlantPayload, Project
+
+router = APIRouter(tags=["forecasting"])
 
 # -------------------------------
 # In-memory storage (demo only)
 # -------------------------------
-class Project:
-    def __init__(self):
-        self.building: Optional[Dict[str, Any]] = None
-        self.plant: Optional[Dict[str, Any]] = None
-        self.results: Optional[pd.DataFrame] = None
 
 PROJECTS: Dict[str, Project] = {}
 
-# -------------------------------
-# Pydantic models
-# -------------------------------
-class BuildingPayload(BaseModel):
-    data: Dict[str, Any] = Field(
-        ...,
-        description=(
-            "Dizionario con parametri geometrici/termici. Esempio chiavi: \n"
-            "- area_m2 (float)\n- volume_m3 (float)\n- U_envelope_W_m2K (float)\n"
-            "- infiltration_ach (float/h)\n- internal_gains_W (float)\n- thermal_capacity_kJ_K (float)\n"
-        ),
-        examples=[
-            {
-                "area_m2": 100.0,
-                "volume_m3": 250.0,
-                "U_envelope_W_m2K": 0.7,
-                "infiltration_ach": 0.5,
-                "internal_gains_W": 500.0,
-                "thermal_capacity_kJ_K": 80000.0,
-            }
-        ],
-    )
-
-class PlantPayload(BaseModel):
-    data: Dict[str, Any] = Field(
-        ...,
-        description=(
-            "Dizionario impianto. Esempio chiavi: \n"
-            "- heat_setpoint_C (float)\n- cool_setpoint_C (float)\n- heat_power_max_W (float)\n- cool_power_max_W (float)\n- heat_efficiency (float, 0-1 o COP)\n- cool_efficiency (float, 0-1 o EER)\n"
-        ),
-        examples=[
-            {
-                "heat_setpoint_C": 20.0,
-                "cool_setpoint_C": 26.0,
-                "heat_power_max_W": 6000.0,
-                "cool_power_max_W": 6000.0,
-                "heat_efficiency": 0.95,  # caldaia (rendimento)
-                "cool_efficiency": 3.0,   # EER/COP per raffrescamento
-            }
-        ],
-    )
 
 # -------------------------------
 # Helpers
 # -------------------------------
+
 
 def new_project_id() -> str:
     pid = str(uuid.uuid4())
@@ -84,6 +38,7 @@ def get_project(pid: str) -> Project:
 # EPW columns: we only use dry-bulb temperature (°C).
 # EPW has 8 header lines; data lines are CSV with many columns. Dry bulb is column index 6 (0-based) in EnergyPlus EPW.
 # We'll do a defensive parse and try common positions.
+
 
 def parse_epw_hours(epw_bytes: bytes) -> pd.Series:
     df = pd.read_csv(io.BytesIO(epw_bytes), header=None, skiprows=8)
@@ -104,7 +59,9 @@ def parse_epw_hours(epw_bytes: bytes) -> pd.Series:
     return t_out
 
 
-def run_rc_simulation(building: Dict[str, Any], plant: Dict[str, Any], t_outdoor: pd.Series) -> pd.DataFrame:
+def run_rc_simulation(
+    building: Dict[str, Any], plant: Dict[str, Any], t_outdoor: pd.Series
+) -> pd.DataFrame:
     """Semplice modello 1R1C con controllo on/off per mantenere i setpoint.
 
     Equazione discreta oraria:
@@ -144,7 +101,7 @@ def run_rc_simulation(building: Dict[str, Any], plant: Dict[str, Any], t_outdoor
     P_heat = float(plant.get("heat_power_max_W", 6000.0))
     P_cool = float(plant.get("cool_power_max_W", 6000.0))
     eff_h = float(plant.get("heat_efficiency", 0.95))  # rendimento o COP
-    eff_c = float(plant.get("cool_efficiency", 3.0))   # EER/COP
+    eff_c = float(plant.get("cool_efficiency", 3.0))  # EER/COP
 
     dt = 3600.0
     n = len(t_outdoor)
@@ -239,8 +196,16 @@ def compute_epc(building: Dict[str, Any], results: pd.DataFrame) -> Dict[str, An
 
     # Soglie fittizie per classi (esempio indicativo)
     thresholds = [
-        (20, "A4"), (30, "A3"), (40, "A2"), (50, "A1"), (60, "B"),
-        (80, "C"), (110, "D"), (140, "E"), (180, "F"), (10**9, "G"),
+        (20, "A4"),
+        (30, "A3"),
+        (40, "A2"),
+        (50, "A1"),
+        (60, "B"),
+        (80, "C"),
+        (110, "D"),
+        (140, "E"),
+        (180, "F"),
+        (10**9, "G"),
     ]
     for thr, label in thresholds:
         if EUI <= thr:
@@ -268,32 +233,41 @@ def compute_epc(building: Dict[str, Any], results: pd.DataFrame) -> Dict[str, An
 # API Endpoints
 # -------------------------------
 
-@app.post("/project")
+
+@router.post("/project")
 def create_project() -> Dict[str, str]:
     pid = new_project_id()
     return {"project_id": pid}
 
 
-@app.put("/project/{project_id}/building")
+@router.put("/project/{project_id}/building")
 def upload_building(project_id: str, payload: BuildingPayload):
     prj = get_project(project_id)
     prj.building = payload.data
-    return {"status": "ok", "project_id": project_id, "building_keys": list(payload.data.keys())}
+    return {
+        "status": "ok",
+        "project_id": project_id,
+        "building_keys": list(payload.data.keys()),
+    }
 
 
-@app.get("/plant/template")
+@router.get("/plant/template")
 def get_plant_template():
     return default_plant_template()
 
 
-@app.put("/project/{project_id}/plant")
+@router.put("/project/{project_id}/plant")
 def upload_plant(project_id: str, payload: PlantPayload):
     prj = get_project(project_id)
     prj.plant = payload.data
-    return {"status": "ok", "project_id": project_id, "plant_keys": list(payload.data.keys())}
+    return {
+        "status": "ok",
+        "project_id": project_id,
+        "plant_keys": list(payload.data.keys()),
+    }
 
 
-@app.post("/project/{project_id}/simulate")
+@router.post("/project/{project_id}/simulate")
 def simulate_project(project_id: str, epw: UploadFile = File(...)):
     prj = get_project(project_id)
     if prj.building is None:
@@ -323,11 +297,14 @@ def simulate_project(project_id: str, epw: UploadFile = File(...)):
     return {"status": "ok", "n_hours": int(results.shape[0])}
 
 
-@app.get("/project/{project_id}/results.csv")
+@router.get("/project/{project_id}/results.csv")
 def download_results_csv(project_id: str):
     prj = get_project(project_id)
     if prj.results is None:
-        raise HTTPException(status_code=404, detail="Nessun risultato disponibile. Eseguire la simulazione.")
+        raise HTTPException(
+            status_code=404,
+            detail="Nessun risultato disponibile. Eseguire la simulazione.",
+        )
 
     csv_buf = io.StringIO()
     prj.results.to_csv(csv_buf)
@@ -335,21 +312,19 @@ def download_results_csv(project_id: str):
     return StreamingResponse(
         io.BytesIO(csv_buf.getvalue().encode("utf-8")),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=results_{project_id}.csv"},
+        headers={
+            "Content-Disposition": f"attachment; filename=results_{project_id}.csv"
+        },
     )
 
 
-@app.get("/project/{project_id}/epc")
+@router.get("/project/{project_id}/epc")
 def get_epc(project_id: str):
     prj = get_project(project_id)
     if prj.results is None or prj.building is None:
-        raise HTTPException(status_code=400, detail="Richiede edificio e risultati di simulazione")
+        raise HTTPException(
+            status_code=400, detail="Richiede edificio e risultati di simulazione"
+        )
 
     epc = compute_epc(prj.building, prj.results)
     return JSONResponse(epc)
-
-
-# Healthcheck
-@app.get("/health")
-def health():
-    return {"status": "ok"}
