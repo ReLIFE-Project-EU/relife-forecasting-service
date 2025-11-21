@@ -1,7 +1,7 @@
 [project]
-name = "relife-service-template"
+name = "relife-forecasting"
 version = "0.1.0"
-description = "ReLIFE Service Template"
+description = "ReLIFE Forecasting Service"
 readme = "README.md"
 authors = [{ name = "ReLIFE Developer", email = "developers@re-life.eu" }]
 requires-python = ">=3.11"
@@ -19,8 +19,8 @@ dependencies = [
 ]
 
 [project.scripts]
-run-service = "relife_service_template:main"
-validate-supabase = "relife_service_template.scripts.validate_supabase:cli"
+run-service = "relife_forecasting:main"
+validate-supabase = "relife_forecasting.scripts.validate_supabase:cli"
 
 [build-system]
 requires = ["hatchling"]
