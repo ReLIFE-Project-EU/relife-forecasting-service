@@ -1,12 +1,25 @@
-import io
-import uuid
 from typing import Any, Dict
 
 import pandas as pd
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from fastapi.responses import JSONResponse, StreamingResponse
 
-from relife_forecasting.models.forecasting import BuildingPayload, PlantPayload, Project
+from relife_forecasting.models.forecasting import Project
+# main.py
+from typing import Any, Dict, List, Optional
+import numpy as np
+import pandas as pd
+from fastapi import HTTPException, UploadFile, File, Form, Query, Body
+from fastapi.responses import HTMLResponse
+import pybuildingenergy as pybui
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
+# ---------------------------------------
+# Import example building archetypes
+# ---------------------------------------
+from building_examples import BUILDING_ARCHETYPES
+from routes.EPC_Greece_converter import U_VALUES_BY_CLASS, _norm_surface_name
+
+
 
 router = APIRouter(tags=["forecasting"])
 
@@ -17,314 +30,990 @@ router = APIRouter(tags=["forecasting"])
 PROJECTS: Dict[str, Project] = {}
 
 
-# -------------------------------
-# Helpers
-# -------------------------------
 
+# ============================================================================
+# Utility functions
+# ============================================================================
 
-def new_project_id() -> str:
-    pid = str(uuid.uuid4())
-    PROJECTS[pid] = Project()
-    return pid
-
-
-def get_project(pid: str) -> Project:
-    prj = PROJECTS.get(pid)
-    if prj is None:
-        raise HTTPException(status_code=404, detail="project_id non trovato")
-    return prj
-
-
-# EPW columns: we only use dry-bulb temperature (°C).
-# EPW has 8 header lines; data lines are CSV with many columns. Dry bulb is column index 6 (0-based) in EnergyPlus EPW.
-# We'll do a defensive parse and try common positions.
-
-
-def parse_epw_hours(epw_bytes: bytes) -> pd.Series:
-    df = pd.read_csv(io.BytesIO(epw_bytes), header=None, skiprows=8)
-    # Try EnergyPlus standard index for dry bulb
-    for idx in (6, 7):  # 6 typical, 7 fallback if format shifted
-        if idx < df.shape[1]:
-            s = df.iloc[:, idx]
-            # Very rough sanity: temperatures in [-60, 60]
-            if s.dropna().between(-80, 80).mean() > 0.9:
-                t_out = s.astype(float).reset_index(drop=True)
-                t_out.index.name = "hour"
-                return t_out
-    # As last resort, take the column with most values in plausible range
-    plausible = df.apply(lambda c: c.dropna().between(-80, 80).mean())
-    best = plausible.idxmax()
-    t_out = df.iloc[:, best].astype(float).reset_index(drop=True)
-    t_out.index.name = "hour"
-    return t_out
-
-
-def run_rc_simulation(
-    building: Dict[str, Any], plant: Dict[str, Any], t_outdoor: pd.Series
-) -> pd.DataFrame:
-    """Semplice modello 1R1C con controllo on/off per mantenere i setpoint.
-
-    Equazione discreta oraria:
-        T_{k+1} = T_k + (dt/C) * [ UA*(T_out - T_k) + Q_int + Q_HVAC ]
-
-    dove:
-      - dt = 3600 s
-      - C = capacità termica [J/K]
-      - UA = U_envelope * area [W/K]
-      - Q_int = carichi interni [W]
-      - Q_HVAC è positivo in riscaldamento, negativo in raffrescamento (lim. di potenza)
-
-    Consumi:
-      - E_heat = max(Q_HVAC, 0) / heat_efficiency [Wh]
-      - E_cool = max(-Q_HVAC, 0) / cool_efficiency [Wh]
+def numpyfy(obj: Any) -> Any:
     """
-    area = float(building.get("area_m2", 100.0))
-    U = float(building.get("U_envelope_W_m2K", 0.9))
-    UA = U * area  # W/K
-    V = float(building.get("volume_m3", area * 2.5))
-    ach = float(building.get("infiltration_ach", 0.5))
-    rho_air = 1.2  # kg/m3
-    cp_air = 1005  # J/kg-K
-    # Infiltration conductance approx: m_dot * cp, with m_dot = rho * V * ach / 3600
-    G_inf = rho_air * V * ach / 3600.0 * cp_air  # W/K
+    Optional utility: if you ever need to convert some list fields
+    to np.array for specific keys, do it here.
 
-    UA_total = UA + G_inf
-
-    C_kJ = float(building.get("thermal_capacity_kJ_K", 80000.0))
-    C = C_kJ * 1000  # to J/K
-
-    Q_int = float(building.get("internal_gains_W", 500.0))
-
-    # Plant params
-    T_heat = float(plant.get("heat_setpoint_C", 20.0))
-    T_cool = float(plant.get("cool_setpoint_C", 26.0))
-    P_heat = float(plant.get("heat_power_max_W", 6000.0))
-    P_cool = float(plant.get("cool_power_max_W", 6000.0))
-    eff_h = float(plant.get("heat_efficiency", 0.95))  # rendimento o COP
-    eff_c = float(plant.get("cool_efficiency", 3.0))  # EER/COP
-
-    dt = 3600.0
-    n = len(t_outdoor)
-    T = pd.Series(index=range(n), dtype=float)
-    Qhvac = pd.Series(index=range(n), dtype=float)
-    E_heat_Wh = pd.Series(index=range(n), dtype=float)
-    E_cool_Wh = pd.Series(index=range(n), dtype=float)
-
-    # Stato iniziale: 0 -> adotta il primo setpoint o la T esterna
-    T0 = t_outdoor.iloc[0]
-    T[0] = min(max(T0, T_heat), T_cool)
-    Qhvac[0] = 0.0
-    E_heat_Wh[0] = 0.0
-    E_cool_Wh[0] = 0.0
-
-    for k in range(n - 1):
-        T_k = T[k]
-        T_out = float(t_outdoor.iloc[k])
-
-        # Controllo HVAC semplice
-        q_hvac = 0.0
-        if T_k < T_heat:  # riscaldamento
-            q_hvac = min(P_heat, (T_heat - T_k) * UA_total)  # limitazione semplificata
-        elif T_k > T_cool:  # raffrescamento
-            q_hvac = -min(P_cool, (T_k - T_cool) * UA_total)
-
-        # Aggiornamento stato
-        dT = (dt / C) * (UA_total * (T_out - T_k) + Q_int + q_hvac)
-        T[k + 1] = T_k + dT
-        Qhvac[k] = q_hvac
-
-        # Consumi
-        if q_hvac >= 0:
-            E_heat_Wh[k] = q_hvac / max(eff_h, 1e-6) * (dt / 3600.0)
-            E_cool_Wh[k] = 0.0
-        else:
-            E_cool_Wh[k] = (-q_hvac) / max(eff_c, 1e-6) * (dt / 3600.0)
-            E_heat_Wh[k] = 0.0
-
-    # Ultimo step consumi = 0 by definition for missing q_hvac computation
-    Qhvac.iloc[-1] = Qhvac.iloc[-2]
-    E_heat_Wh.iloc[-1] = 0.0
-    E_cool_Wh.iloc[-1] = 0.0
-
-    df = pd.DataFrame(
-        {
-            "T_out_C": t_outdoor.values,
-            "T_in_C": T.values,
-            "Q_HVAC_W": Qhvac.values,
-            "E_heat_Wh": E_heat_Wh.values,
-            "E_cool_Wh": E_cool_Wh.values,
-        }
-    )
-    df.index.name = "hour"
-    return df
-
-
-def default_plant_template() -> Dict[str, Any]:
-    return {
-        "heat_setpoint_C": 20.0,
-        "cool_setpoint_C": 26.0,
-        "heat_power_max_W": 6000.0,
-        "cool_power_max_W": 6000.0,
-        "heat_efficiency": 0.95,
-        "cool_efficiency": 3.0,
-    }
-
-
-def compute_epc(building: Dict[str, Any], results: pd.DataFrame) -> Dict[str, Any]:
-    """Trasforma il risultato in un EPC semplificato usando input di default.
-
-    Metodo:
-    - Calcolo energia utile (Wh) riscaldamento/raffrescamento -> energia primaria semplificata
-    - Normalizzazione per area (kWh/m2 anno)
-    - Mappatura a classi EPC fittizie (A4...G) su soglie predefinite.
+    For now this is just a pass-through.
     """
-    area = float(building.get("area_m2", 100.0))
-    # Conversione a kWh
-    E_heat_kWh = results["E_heat_Wh"].sum() / 1000.0
-    E_cool_kWh = results["E_cool_Wh"].sum() / 1000.0
-
-    # Fattori di conversione a energia primaria (semplificati)
-    fp_heat = 1.0  # es. gas naturale ~1.0-1.05 (sempl.)
-    fp_elec = 2.2  # elettrico semplificato
-
-    # Supponiamo: riscaldamento da caldaia (fp_heat), raffrescamento elettrico (fp_elec)
-    EP_heat = E_heat_kWh * fp_heat
-    EP_cool = E_cool_kWh * fp_elec
-    EP_tot_kWh = EP_heat + EP_cool
-
-    EUI = EP_tot_kWh / max(area, 1e-6)  # kWh/m2*y
-
-    # Soglie fittizie per classi (esempio indicativo)
-    thresholds = [
-        (20, "A4"),
-        (30, "A3"),
-        (40, "A2"),
-        (50, "A1"),
-        (60, "B"),
-        (80, "C"),
-        (110, "D"),
-        (140, "E"),
-        (180, "F"),
-        (10**9, "G"),
-    ]
-    for thr, label in thresholds:
-        if EUI <= thr:
-            epc_class = label
-            break
-
-    return {
-        "area_m2": area,
-        "E_heat_kWh": round(EP_heat, 2),
-        "E_cool_kWh": round(EP_cool, 2),
-        "EP_tot_kWh": round(EP_tot_kWh, 2),
-        "EUI_kWh_m2y": round(EUI, 2),
-        "class": epc_class,
-        "method": "Semplificato con fattori di conversione di default",
-    }
+    return obj
 
 
-# Placeholder for external simulator integration (e.g., pybuildingenergy)
-# def run_external_simulator(building: Dict[str, Any], plant: Dict[str, Any], epw_path: str) -> pd.DataFrame:
-#     """Integra qui la libreria esterna, restituendo un DataFrame orario."""
-#     raise NotImplementedError
+def dict_to_df_records(df: pd.DataFrame) -> List[Dict[str, Any]]:
+    """
+    Convert a pandas DataFrame into a list of dictionaries
+    (one dict per row), convenient for JSON responses.
+    """
+    return df.to_dict(orient="records")
 
 
-# -------------------------------
-# API Endpoints
-# -------------------------------
+def validate_bui_and_system(
+    bui: Dict[str, Any],
+    system: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Validate both the BUI (building input) and HVAC system configuration.
 
+    Steps:
+      1) If available, run pybui.check_heating_system_inputs(system)
+         to check and normalize the HVAC inputs.
+      2) Run sanitize_and_validate_BUI(bui, fix=True) to auto-fix
+         some issues and get a 'fixed' BUI.
+      3) Run sanitize_and_validate_BUI(bui_fixed, fix=False) to check
+         for remaining issues without applying fixes.
+      4) If any ERROR-level issues are found, raise HTTP 422.
 
-@router.post("/project")
-def create_project() -> Dict[str, str]:
-    pid = new_project_id()
-    return {"project_id": pid}
-
-
-@router.put("/project/{project_id}/building")
-def upload_building(project_id: str, payload: BuildingPayload):
-    prj = get_project(project_id)
-    prj.building = payload.data
-    return {
-        "status": "ok",
-        "project_id": project_id,
-        "building_keys": list(payload.data.keys()),
-    }
-
-
-@router.get("/plant/template")
-def get_plant_template():
-    return default_plant_template()
-
-
-@router.put("/project/{project_id}/plant")
-def upload_plant(project_id: str, payload: PlantPayload):
-    prj = get_project(project_id)
-    prj.plant = payload.data
-    return {
-        "status": "ok",
-        "project_id": project_id,
-        "plant_keys": list(payload.data.keys()),
-    }
-
-
-@router.post("/project/{project_id}/simulate")
-def simulate_project(project_id: str, epw: UploadFile = File(...)):
-    prj = get_project(project_id)
-    if prj.building is None:
-        raise HTTPException(status_code=400, detail="Caricare prima l'edificio")
-    if prj.plant is None:
-        # Se non caricato, usa template di default
-        prj.plant = default_plant_template()
-
-    if not epw.filename.lower().endswith(".epw"):
-        raise HTTPException(status_code=400, detail="Fornire un file EPW valido")
-
-    epw_bytes = epw.file.read()
+    Returns a dict containing:
+      - bui_fixed
+      - bui_checked
+      - system_checked
+      - bui_report_fixed
+      - bui_issues
+      - system_messages
+    """
+    # 1) HVAC system check (if function exists in this pybuildingenergy version)
+    system_messages: List[str] = []
+    system_checked = system
 
     try:
-        t_out = parse_epw_hours(epw_bytes)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Errore lettura EPW: {e}")
-
-    if len(t_out) == 0:
-        raise HTTPException(status_code=400, detail="EPW vuoto o non valido")
-
-    # Se si volesse usare un simulatore esterno, sostituire con:
-    # results = run_external_simulator(prj.building, prj.plant, epw_saved_path)
-    results = run_rc_simulation(prj.building, prj.plant, t_out)
-
-    prj.results = results
-    return {"status": "ok", "n_hours": int(results.shape[0])}
-
-
-@router.get("/project/{project_id}/results.csv")
-def download_results_csv(project_id: str):
-    prj = get_project(project_id)
-    if prj.results is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Nessun risultato disponibile. Eseguire la simulazione.",
+        res_sys = pybui.check_heating_system_inputs(system)
+        system_checked = res_sys["config"]
+        system_messages.extend(res_sys.get("messages", []))
+    except AttributeError:
+        # pybuildingenergy version without check_heating_system_inputs
+        system_messages.append(
+            "⚠️ Function 'check_heating_system_inputs' is not available in the "
+            "installed pybuildingenergy version: HVAC inputs are NOT validated automatically."
         )
 
-    csv_buf = io.StringIO()
-    prj.results.to_csv(csv_buf)
-    csv_buf.seek(0)
-    return StreamingResponse(
-        io.BytesIO(csv_buf.getvalue().encode("utf-8")),
-        media_type="text/csv",
-        headers={
-            "Content-Disposition": f"attachment; filename=results_{project_id}.csv"
-        },
+    # 2) BUI: fix=True (sanitize and auto-fix some inputs)
+    bui_fixed, report_fixed = pybui.sanitize_and_validate_BUI(bui, fix=True)
+
+    # 3) BUI: only validation (no fixes)
+    bui_checked, issues = pybui.sanitize_and_validate_BUI(bui_fixed, fix=False)
+    errors = [e for e in issues if e["level"] == "ERROR"]
+
+    if errors:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "msg": "Errors in BUI model.",
+                "errors": errors,
+                "system_messages": system_messages,
+            },
+        )
+
+    return {
+        "bui_fixed": bui_fixed,
+        "bui_checked": bui_checked,
+        "system_checked": system_checked,
+        "bui_report_fixed": report_fixed,
+        "bui_issues": issues,
+        "system_messages": system_messages,
+    }
+
+
+# ============================================================================
+# JSON -> internal structures
+# ============================================================================
+
+def json_to_internal_bui(bui_json: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Convert JSON BUI representation into the internal format expected
+    by pybuildingenergy.
+
+    In particular:
+      - For each 'adjacent_zones' entry, some fields are converted
+        from list to np.array (dtype=object), since the library
+        expects numpy arrays.
+    """
+    bui = copy.deepcopy(bui_json)
+
+    for zone in bui.get("adjacent_zones", []):
+        for key in [
+            "area_facade_elements",
+            "typology_elements",
+            "transmittance_U_elements",
+            "orientation_elements",
+        ]:
+            if key in zone and isinstance(zone[key], list):
+                zone[key] = np.array(zone[key], dtype=object)
+
+    return bui
+
+
+def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Convert JSON system representation into the internal format expected
+    by pybuildingenergy.
+
+    In particular:
+      - 'gen_outdoor_temp_data' is converted from list[dict] to
+        a pandas DataFrame, with a fixed index label.
+    """
+    system = copy.deepcopy(system_json)
+
+    # gen_outdoor_temp_data: from list[dict] -> pd.DataFrame
+    if "gen_outdoor_temp_data" in system and isinstance(system["gen_outdoor_temp_data"], list):
+        df = pd.DataFrame(system["gen_outdoor_temp_data"])
+        df.index = ["Generator curve"] * len(df)
+        system["gen_outdoor_temp_data"] = df
+
+    return system
+
+
+# ============================================================================
+# Worker for parallel simulation (single building)
+# ============================================================================
+
+def simulate_building_worker(building_name: str, bui: dict, system: dict) -> Dict[str, Any]:
+    """
+    Worker function for multiprocessing: simulate a single building.
+
+    It performs:
+      - ISO 52016 building needs calculation (hourly + annual)
+      - ISO 15316 heating system simulation
+      - basic energy KPIs (kWh, kWh/m²)
+
+    Returns:
+      A dict with:
+        - name
+        - status ("ok" or "error")
+        - summary: small dict with KPIs
+        - hourly: JSON-serializable time series for the building
+        - annual: JSON-serializable annual results
+        - system: JSON-serializable heating system time series
+    """
+    try:
+        # --- ISO 52016 (building) ---
+        hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+            bui,
+            weather_source="pvgis",
+        )
+
+        # --- ISO 15316 (heating system) ---
+        calc = pybui.HeatingSystemCalculator(system)
+        calc.load_csv_data(hourly_sim)
+        df_system = calc.run_timeseries()
+
+        # --- Basic KPIs ---
+        heating_kWh = hourly_sim.loc[hourly_sim["Q_HC"] > 0, "Q_HC"].sum() / 1000
+        cooling_kWh = -hourly_sim.loc[hourly_sim["Q_HC"] < 0, "Q_HC"].sum() / 1000
+        area = bui["building"].get("net_floor_area", None)
+
+        summary = {
+            "name": building_name,
+            "heating_kWh": heating_kWh,
+            "cooling_kWh": cooling_kWh,
+            "area": area,
+            "heating_kWh_m2": heating_kWh / area if area else None,
+            "cooling_kWh_m2": cooling_kWh / area if area else None,
+        }
+
+        return {
+            "name": building_name,
+            "status": "ok",
+            "summary": summary,
+            "hourly": to_jsonable(hourly_sim),
+            "annual": to_jsonable(annual_results_df),
+            "system": to_jsonable(df_system),
+        }
+
+    except Exception as e:
+        return {
+            "name": building_name,
+            "status": "error",
+            "error": str(e),
+        }
+
+
+# ============================================================================
+# Endpoints
+# ============================================================================
+
+@router.post("/templates", tags=["Templates"])
+def get_building_config(
+    archetype: bool = Query(
+        True,
+        description="If True, use BUI/HVAC from internal archetypes; if False, use custom values from the request body.",
+    ),
+    category: Optional[str] = Query(
+        None,
+        description="Building category (Single Family House, Multi family House, office). Required when archetype=True.",
+    ),
+    country: Optional[str] = Query(
+        None,
+        description="Country (Italy, Greece, etc.). Required when archetype=True.",
+    ),
+    name: Optional[str] = Query(
+        None,
+        description="Specific archetype name. Required when archetype=True.",
+    ),
+    payload: Optional[Dict[str, Any]] = Body(
+        None,
+        description="JSON body with 'bui' and 'system' when archetype=False.",
+    ),
+):
+    """
+    Return example BUI/System either from internal archetypes or from a custom payload.
+
+    - If archetype=True: fetch BUI/system from BUILDING_ARCHETYPES by category/country/name.
+    - If archetype=False: echo back the custom BUI/system passed in the request body.
+    """
+    # --- ARCHETYPE CASE ---
+    if archetype:
+        if not category or not country or not name:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "With archetype=true you must provide 'category', 'country' and 'name' "
+                    "as query parameters."
+                ),
+            )
+
+        match = next(
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b["category"] == category
+                and b["country"] == country
+                and b["name"] == name
+            ),
+            None,
+        )
+
+        if match is None:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"No archetype found for "
+                    f"category='{category}', country='{country}', name='{name}'."
+                ),
+            )
+
+        return {
+            "source": "archetype",
+            "name": match["name"],
+            "category": match["category"],
+            "country": match["country"],
+            "bui": to_jsonable(match["bui"]),
+            "system": to_jsonable(match["system"]),
+        }
+
+    # --- CUSTOM CASE ---
+    if payload is None:
+        raise HTTPException(
+            status_code=400,
+            detail="With archetype=false you must send a JSON body containing 'bui' and 'system'.",
+        )
+
+    bui_json = payload.get("bui")
+    system_json = payload.get("system")
+
+    if bui_json is None or system_json is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Incomplete JSON body: both 'bui' and 'system' are required.",
+        )
+
+    return {
+        "source": "custom",
+        "name": name,
+        "category": category,
+        "country": country,
+        "bui": bui_json,
+        "system": system_json,
+    }
+
+
+@router.get("/templates/available", tags=["Templates"])
+def list_available_archetypes():
+    """
+    List available archetypes (metadata only, without full BUI/HVAC content).
+    """
+    return [
+        {
+            "name": b["name"],
+            "category": b["category"],
+            "country": b["country"],
+        }
+        for b in BUILDING_ARCHETYPES
+    ]
+
+
+@router.post("/validate", tags=["Validation"])
+def validate_model(
+    archetype: bool = Query(
+        True,
+        description="If True, validate an archetype (category+country+name). If False, validate a custom model from the body.",
+    ),
+    category: Optional[str] = Query(
+        None,
+        description="Building category. Required when archetype=True.",
+    ),
+    country: Optional[str] = Query(
+        None,
+        description="Country. Required when archetype=True.",
+    ),
+    name: Optional[str] = Query(
+        None,
+        description="Archetype name. Required when archetype=True.",
+    ),
+    payload: Optional[Dict[str, Any]] = Body(
+        None,
+        description="JSON body with 'bui' and 'system' when archetype=False.",
+    ),
+):
+    """
+    Validate BUI and HVAC system for either:
+      - an archetype (when archetype=True), or
+      - a custom input model provided in the request body.
+    """
+    # -------- 1) Archetype --------
+    if archetype:
+        if not category or not country or not name:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "With archetype=true you must provide 'category', 'country' and 'name' "
+                    "as query parameters."
+                ),
+            )
+
+        match = next(
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b["category"] == category
+                and b["country"] == country
+                and b["name"] == name
+            ),
+            None,
+        )
+
+        if match is None:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"No archetype found for "
+                    f"category='{category}', country='{country}', name='{name}'."
+                ),
+            )
+
+        bui_internal = match["bui"]
+        system_internal = match["system"]
+
+    # -------- 2) Custom --------
+    else:
+        if payload is None:
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=false you must send a JSON body containing 'bui' and 'system'.",
+            )
+
+        bui_json = payload.get("bui")
+        system_json = payload.get("system")
+
+        if bui_json is None or system_json is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Incomplete JSON body: both 'bui' and 'system' are required.",
+            )
+
+        bui_internal = json_to_internal_bui(bui_json)
+        system_internal = json_to_internal_system(system_json)
+
+    # -------- 3) Common validation --------
+    result = validate_bui_and_system(bui_internal, system_internal)
+
+    return {
+        "source": "archetype" if archetype else "custom",
+        "name": name,
+        "category": category,
+        "country": country,
+        "bui_fixed": to_jsonable(result["bui_fixed"]),
+        "bui_checked": to_jsonable(result["bui_checked"]),
+        "system_checked": to_jsonable(result["system_checked"]),
+        "bui_report_fixed": to_jsonable(result["bui_report_fixed"]),
+        "bui_issues": result["bui_issues"],
+        "system_messages": result["system_messages"],
+    }
+
+
+@router.post("/simulate", tags=["Simulation"])
+def simulate_building(
+    archetype: bool = Query(
+        True,
+        description="If True, simulate an archetype (category+country+name). If False, use a custom model from the body.",
+    ),
+    category: Optional[str] = Query(
+        None,
+        description="Building category. Required when archetype=True.",
+    ),
+    country: Optional[str] = Query(
+        None,
+        description="Country. Required when archetype=True.",
+    ),
+    name: Optional[str] = Query(
+        None,
+        description="Archetype name. Required when archetype=True.",
+    ),
+    weather_source: str = Query(
+        "pvgis",
+        description="Weather data source: 'pvgis' or 'epw'.",
+    ),
+    path_weather_file: Optional[str] = Query(
+        None,
+        description="Path to the .epw file when weather_source='epw'.",
+    ),
+    payload: Optional[Dict[str, Any]] = Body(
+        None,
+        description="JSON body with 'bui' and 'system' when archetype=False.",
+    ),
+):
+    """
+    Simulate a single building (ISO 52016 + ISO 15316) using either:
+      - an archetype (archetype=True), or
+      - a custom BUI/system configuration (archetype=False).
+    """
+    # -------- 1) Select BUI/System --------
+    if archetype:
+        if not category or not country or not name:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "With archetype=true you must provide 'category', 'country' and 'name' "
+                    "as query parameters."
+                ),
+            )
+
+        match = next(
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b["category"] == category
+                and b["country"] == country
+                and b["name"] == name
+            ),
+            None,
+        )
+
+        if match is None:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"No archetype found for "
+                    f"category='{category}', country='{country}', name='{name}'."
+                ),
+            )
+
+        bui_internal = match["bui"]
+        system_internal = match["system"]
+
+    else:
+        if payload is None:
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=false you must send a JSON body containing 'bui' and 'system'.",
+            )
+
+        bui_json = payload.get("bui")
+        system_json = payload.get("system")
+
+        if bui_json is None or system_json is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Incomplete JSON body: both 'bui' and 'system' are required.",
+            )
+
+        bui_internal = json_to_internal_bui(bui_json)
+        system_internal = json_to_internal_system(system_json)
+
+    # -------- 2) Validate BUI/System --------
+    result = validate_bui_and_system(bui_internal, system_internal)
+    bui_checked = result["bui_checked"]
+    system_checked = result["system_checked"]
+
+    # -------- 3) Weather configuration --------
+    weather_kwargs: Dict[str, Any] = {}
+    if weather_source == "pvgis":
+        weather_kwargs = {"weather_source": "pvgis", "path_weather_file": None}
+    elif weather_source == "epw":
+        if not path_weather_file:
+            raise HTTPException(
+                status_code=400,
+                detail="With weather_source='epw' you must provide 'path_weather_file'.",
+            )
+        weather_kwargs = {"weather_source": "epw", "path_weather_file": path_weather_file}
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="weather_source must be either 'pvgis' or 'epw'.",
+        )
+
+    # -------- 4) ISO 52016 simulation --------
+    hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+        bui_checked,
+        **weather_kwargs,
     )
 
+    # -------- 5) ISO 15316 heating system simulation --------
+    calc = pybui.HeatingSystemCalculator(system_checked)
+    calc.load_csv_data(hourly_sim)  # expects columns like Q_HC / T_op / T_ext or aliases
+    df_system = calc.run_timeseries()
 
-@router.get("/project/{project_id}/epc")
-def get_epc(project_id: str):
-    prj = get_project(project_id)
-    if prj.results is None or prj.building is None:
+    # -------- 6) Response --------
+    return {
+        "source": "archetype" if archetype else "custom",
+        "name": name,
+        "category": category,
+        "country": country,
+        "weather_source": weather_source,
+        "path_weather_file": path_weather_file,
+        "validation": {
+            "bui_issues": result["bui_issues"],
+            "system_messages": result["system_messages"],
+        },
+        "results": {
+            "hourly_building": to_jsonable(hourly_sim),
+            "annual_building": to_jsonable(annual_results_df),
+            "hourly_system": to_jsonable(df_system),
+        },
+    }
+
+
+@router.post("/report", response_class=HTMLResponse, tags=["Reports"])
+def generate_report(payload: Dict[str, Any]):
+    """
+    Generate an HTML report with hourly/monthly/annual statistical analysis
+    of energy needs.
+
+    Input JSON must contain:
+      - hourly_sim: list of records (rows) representing the hourly DataFrame
+      - building_area: float (m²)
+    """
+    hourly_records = payload.get("hourly_sim")
+    building_area = payload.get("building_area")
+
+    if hourly_records is None or building_area is None:
         raise HTTPException(
-            status_code=400, detail="Richiede edificio e risultati di simulazione"
+            status_code=400,
+            detail="Request JSON must contain 'hourly_sim' and 'building_area'.",
         )
 
-    epc = compute_epc(prj.building, prj.results)
-    return JSONResponse(epc)
+    # Rebuild DataFrame from JSON records
+    hourly_sim = pd.DataFrame(hourly_records)
+
+    # Temporary directory to store the HTML report
+    with tempfile.TemporaryDirectory() as tmpdir:
+        name_report = "energy_report"
+
+        # Build graph/report object
+        report_obj = pybui.Graphs_and_report(
+            df=hourly_sim,
+            season="heating_cooling",
+            building_area=building_area,
+        )
+
+        # This writes the HTML file to disk
+        report_obj.bui_analysis_page(
+            folder_directory=tmpdir,
+            name_file=name_report,
+        )
+
+        html_path = os.path.join(tmpdir, f"{name_report}.html")
+        if not os.path.exists(html_path):
+            raise HTTPException(
+                status_code=500,
+                detail="HTML report not found. Check the 'bui_analysis_page' implementation.",
+            )
+
+        with open(html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+
+    # Return the HTML content directly in the response
+    return HTMLResponse(content=html_content)
+
+
+@router.post("/simulate_epw", tags=["Simulation"])
+async def simulate_with_epw(
+    epw_file: UploadFile = File(...),
+    bui_json: str = Form(...),
+    system_json: str = Form(...),
+):
+    """
+    Simulate a building using an EPW weather file.
+
+    Parameters (multipart/form-data):
+      - epw_file: uploaded EPW file
+      - bui_json: string containing BUI in JSON format
+      - system_json: string containing HVAC system in JSON format
+
+    Example (curl):
+
+      curl -X POST http://localhost:8000/simulate_epw \\
+           -F "epw_file=@weather.epw" \\
+           -F 'bui_json={...}' \\
+           -F 'system_json={...}'
+    """
+    try:
+        bui = json.loads(bui_json)
+        system = json.loads(system_json)
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=400,
+            detail="bui_json and system_json must be valid JSON strings.",
+        )
+
+    bui = numpyfy(bui)
+    system = numpyfy(system)
+
+    validated = validate_bui_and_system(bui, system)
+    bui_checked = validated["bui_checked"]
+    system_checked = validated["system_checked"]
+
+    # Save EPW in a temporary directory
+    with tempfile.TemporaryDirectory() as tmpdir:
+        epw_path = os.path.join(tmpdir, epw_file.filename)
+        with open(epw_path, "wb") as f:
+            f.write(await epw_file.read())
+
+        # Adapt these keyword arguments to match your pybuildingenergy API
+        hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+            bui_checked,
+            weather_source="epw",
+            weather_file=epw_path,   # Adapt if your function expects a different argument name
+        )
+
+        calc = pybui.HeatingSystemCalculator(system_checked)
+        calc.load_csv_data(hourly_sim)
+        df_heating_system = calc.run_timeseries()
+
+    return {
+        "status": "ok",
+        "weather_source": "epw",
+        "hourly_needs": dict_to_df_records(hourly_sim),
+        "annual_needs": dict_to_df_records(annual_results_df),
+        "heating_system": dict_to_df_records(df_heating_system),
+    }
+
+
+@router.post("/bui/update_u_values", tags=["BUI"])
+def update_u_values(
+    energy_class: str = Query(
+        ...,
+        description="Envelope performance class: A, B, C or D.",
+        regex="^[ABCD]$",
+    ),
+    archetype: bool = Query(
+        True,
+        description=(
+            "If True, load the BUI from an archetype (category+country+name) "
+            "and create a NEW modified archetype. "
+            "If False, use a custom BUI from the request body (not stored)."
+        ),
+    ),
+    category: Optional[str] = Query(
+        None,
+        description="Building category (Single Family House, Multi family House, office). Required when archetype=True.",
+    ),
+    country: Optional[str] = Query(
+        None,
+        description="Country (Italy, Greece, etc.). Required when archetype=True.",
+    ),
+    name: Optional[str] = Query(
+        None,
+        description="Name of the source archetype. Required when archetype=True.",
+    ),
+    new_name: Optional[str] = Query(
+        None,
+        description=(
+            "Name of the NEW archetype to be created. "
+            "If not provided, a default name will be generated."
+        ),
+    ),
+    payload: Optional[Dict[str, Any]] = Body(
+        None,
+        description="JSON body with 'bui' (and optionally 'system') when archetype=False.",
+    ),
+):
+    """
+    Update envelope U-values in the BUI according to an energy class (A/B/C/D).
+
+    Behavior:
+      - If archetype=True:
+          * Load BUI/system from BUILDING_ARCHETYPES (category+country+name).
+          * Apply new U-values based on 'energy_class'.
+          * Create a NEW archetype (with 'new_name' or auto-generated name)
+            and append it to BUILDING_ARCHETYPES.
+      - If archetype=False:
+          * Read a custom BUI from the request body and modify it in-place
+            (no archetype is created).
+    """
+    # --- 1) Load base BUI (and system) ---
+
+    base_category = category
+    base_country = country
+    base_name = name
+    base_system = None
+
+    if archetype:
+        if not category or not country or not name:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "With archetype=true you must provide 'category', 'country' and 'name' "
+                    "as query parameters."
+                ),
+            )
+
+        match = next(
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b["category"] == category
+                and b["country"] == country
+                and b["name"] == name
+            ),
+            None,
+        )
+
+        if match is None:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"No archetype found for "
+                    f"category='{category}', country='{country}', name='{name}'."
+                ),
+            )
+
+        # Copy BUI and system so we don't modify the original archetype
+        bui_internal = copy.deepcopy(match["bui"])
+        base_system = copy.deepcopy(match["system"])
+
+    else:
+        # Custom case: only BUI is modified, no archetype is created
+        if payload is None:
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=false you must send a JSON body with at least 'bui'.",
+            )
+
+        bui_json = payload.get("bui")
+        if bui_json is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Incomplete JSON body: missing 'bui' key.",
+            )
+
+        bui_internal = json_to_internal_bui(bui_json)
+
+    # --- 2) Update U-values according to the selected energy class ---
+
+    class_map = U_VALUES_BY_CLASS.get(energy_class)
+    if class_map is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid energy class '{energy_class}'. Use A, B, C or D.",
+        )
+
+    surfaces = bui_internal.get("building_surface", [])
+
+    for surf in surfaces:
+        name_surf = surf.get("name")
+        if not name_surf:
+            continue
+
+        key = _norm_surface_name(name_surf)
+        new_u = class_map.get(key)
+
+        if new_u is not None:
+            surf["u_value"] = float(new_u)
+
+    # --- 3) If working on an archetype, create and store a NEW archetype ---
+
+    created_archetype_name = None
+
+    if archetype:
+        # Use provided new_name or generate a default one
+        if new_name:
+            created_archetype_name = new_name
+        else:
+            created_archetype_name = f"{base_name}_class_{energy_class}"
+
+        new_archetype = {
+            "name": created_archetype_name,
+            "category": base_category,
+            "country": base_country,
+            "bui": bui_internal,
+            "system": base_system,
+        }
+
+        # Append the new archetype to the global list
+        BUILDING_ARCHETYPES.append(new_archetype)
+
+    # --- 4) Response ---
+
+    return {
+        "source": "archetype" if archetype else "custom",
+        "base_name": base_name,
+        "base_category": base_category,
+        "base_country": base_country,
+        "energy_class": energy_class,
+        "new_archetype_name": created_archetype_name,
+        "bui": to_jsonable(bui_internal),
+    }
+
+
+@router.post("/simulate/batch", tags=["Batch Simulation"])
+def simulate_batch(payload: Dict[str, Any]):
+    """
+    Batch-simulate multiple buildings in parallel (multiprocessing).
+
+    Two modes are supported:
+
+      mode = "archetype":
+        {
+          "mode": "archetype",
+          "category": "Single Family House",
+          "countries": ["Italy", "Greece"],
+          "names": ["SFH_Italy_default", "SFH_Greece_default"]
+        }
+
+        - category: required
+        - countries: list of countries to include (required)
+        - names: list of archetype names to include (required)
+
+      mode = "custom":
+        {
+          "mode": "custom",
+          "buildings": [
+            { "name": "B1", "bui": {...}, "system": {...} },
+            { "name": "B2", "bui": {...}, "system": {...} }
+          ]
+        }
+
+        Each building must have:
+          - name
+          - bui: JSON BUI
+          - system: JSON system
+    """
+    mode = payload.get("mode")
+    buildings_to_simulate: List[Dict[str, Any]] = []  # list of dicts: {"name", "bui", "system"}
+
+    # =================== ARCHETYPE MODE ===================
+    if mode == "archetype":
+        category = payload.get("category")
+        countries = payload.get("countries") or []
+        names = payload.get("names") or []
+
+        if not category or not countries or not names:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "For mode='archetype' you must provide 'category', "
+                    "'countries' (list) and 'names' (list)."
+                ),
+            )
+
+        # Filter BUILDING_ARCHETYPES by category, country in countries, name in names
+        for arch in BUILDING_ARCHETYPES:
+            if (
+                arch.get("category") == category
+                and arch.get("country") in countries
+                and arch.get("name") in names
+            ):
+                buildings_to_simulate.append(
+                    {
+                        "name": arch["name"],
+                        "bui": arch["bui"],
+                        "system": arch["system"],
+                        "category": arch.get("category"),
+                        "country": arch.get("country"),
+                    }
+                )
+
+        if not buildings_to_simulate:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    "No archetypes found for the given parameters: "
+                    f"category='{category}', countries={countries}, names={names}."
+                ),
+            )
+
+    # =================== CUSTOM MODE ======================
+    elif mode == "custom":
+        buildings = payload.get("buildings")
+        if not buildings:
+            raise HTTPException(
+                status_code=400,
+                detail="For mode='custom' you must provide 'buildings': [ {name,bui,system} ].",
+            )
+
+        for b in buildings:
+            name = b.get("name")
+            bui_json = b.get("bui")
+            system_json = b.get("system")
+
+            if not name or bui_json is None or system_json is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Each custom building must have 'name', 'bui' and 'system'.",
+                )
+
+            buildings_to_simulate.append(
+                {
+                    "name": name,
+                    "bui": json_to_internal_bui(bui_json),
+                    "system": json_to_internal_system(system_json),
+                    "category": b.get("category"),
+                    "country": b.get("country"),
+                }
+            )
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Field 'mode' must be either 'archetype' or 'custom'.",
+        )
+
+    # =================== PARALLEL SIMULATION ======================
+
+    results: List[Dict[str, Any]] = []
+    summaries: List[Dict[str, Any]] = []
+
+    with ProcessPoolExecutor() as executor:
+        futures = []
+        for b in buildings_to_simulate:
+            futures.append(
+                executor.submit(
+                    simulate_building_worker,
+                    b["name"],
+                    b["bui"],
+                    b["system"],
+                )
+            )
+
+        for f in as_completed(futures):
+            res = f.result()
+            results.append(res)
+            if res.get("status") == "ok":
+                summaries.append(res["summary"])
+
+    # Summary DataFrame -> JSON
+    summary_df = pd.DataFrame(summaries) if summaries else pd.DataFrame()
+
+    return {
+        "status": "completed",
+        "mode": mode,
+        "n_buildings": len(results),
+        "results": results,  # detailed results per building
+        "summary": summary_df.to_dict(orient="records"),  # compact summary table
+    }

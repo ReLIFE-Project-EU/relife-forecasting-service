@@ -1,15 +1,23 @@
-# main.py
-import os
-import json
-import tempfile
-import copy
-from typing import Any, Dict, List, Optional
+from importlib.metadata import version
 
+from fastapi import FastAPI
+
+from relife_forecasting.config.logging import configure_logging
+# from relife_forecasting.routes import auth, examples, forecasting, health
+# from relife_forecasting.routes import forecasting
+
+from typing import Any, Dict
+
+import pandas as pd
+from fastapi import APIRouter, File, HTTPException, UploadFile
+
+from relife_forecasting.models.forecasting import Project
+# main.py
+from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Body
+from fastapi import HTTPException, UploadFile, File, Form, Query, Body
 from fastapi.responses import HTMLResponse
-from fastapi.encoders import jsonable_encoder
 import pybuildingenergy as pybui
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -17,10 +25,40 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # Import example building archetypes
 # ---------------------------------------
 from building_examples import BUILDING_ARCHETYPES
-from scripts.serializer import to_jsonable
 from routes.EPC_Greece_converter import U_VALUES_BY_CLASS, _norm_surface_name
 
-app = FastAPI(title="Building Energy API", version="0.1.0")
+# Dynamically determine the package name
+package_name = __name__.split(".")[0]
+
+# Get version dynamically
+package_dist_name = package_name.replace("_", "-")
+
+try:
+    __version__ = version(package_dist_name)
+except ImportError:
+    __version__ = "development"
+
+configure_logging()
+
+app = FastAPI(
+    title="ReLIFE Forecasting Service",
+    description="ReLIFE service for building energy forecasting",
+    version=__version__,
+)
+
+# app.include_router(health.router)
+# app.include_router(auth.router)
+# app.include_router(examples.router)
+# app.include_router(forecasting.router)
+
+router = APIRouter(tags=["forecasting"])
+
+# -------------------------------
+# In-memory storage (demo only)
+# -------------------------------
+
+PROJECTS: Dict[str, Project] = {}
+
 
 
 # ============================================================================
@@ -696,11 +734,11 @@ async def simulate_with_epw(
     }
 
 
-@app.post("/bui/update_u_values", tags=["BUI"])
+@app.post("/bui/update_u_values", tags=["Greek EPC"])
 def update_u_values(
     energy_class: str = Query(
         ...,
-        description="Envelope performance class: A, B, C or D.",
+        description="Change U-value according to the selected energy class (A, B, C or D) for greek buildings",
         regex="^[ABCD]$",
     ),
     archetype: bool = Query(

@@ -21,7 +21,6 @@ dependencies = [
 [project.scripts]
 run-service = "relife_forecasting:main"
 validate-supabase = "relife_forecasting.scripts.validate_supabase:cli"
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

@@ -600,7 +600,6 @@ INPUT_SYSTEM_HVAC = {
 '''
 
 
-
 # Lista di edifici di esempio (archetipi)
 # Puoi duplicare e cambiare category/country/name per coprire altri casi
 BUILDING_ARCHETYPES: List[Dict[str, Any]] = [
@@ -617,20 +616,5 @@ BUILDING_ARCHETYPES: List[Dict[str, Any]] = [
         "country": "Greece",
         "bui": BUI,
         "system": INPUT_SYSTEM_HVAC,
-    },
-    # Esempi aggiuntivi (da compilare):
-    # {
-    #     "name": "MFH_Italy_default",
-    #     "category": "Multi family House",
-    #     "country": "Italy",
-    #     "bui": BUI_MFH_IT,
-    #     "system": HVAC_MFH_IT,
-    # },
-    # {
-    #     "name": "Office_Greece_default",
-    #     "category": "office",
-    #     "country": "Greece",
-    #     "bui": BUI_OFF_GR,
-    #     "system": HVAC_OFF_GR,
-    # },
+    }
 ]
