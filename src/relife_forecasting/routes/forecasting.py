@@ -447,145 +447,132 @@ def validate_model(
 
 
 @router.post("/simulate", tags=["Simulation"])
-def simulate_building(
+async def simulate_building(
     archetype: bool = Query(
         True,
-        description="If True, simulate an archetype (category+country+name). If False, use a custom model from the body.",
+        description="If True, simulate an archetype. If False, use custom BUI+system.",
     ),
-    category: Optional[str] = Query(
-        None,
-        description="Building category. Required when archetype=True.",
-    ),
-    country: Optional[str] = Query(
-        None,
-        description="Country. Required when archetype=True.",
-    ),
-    name: Optional[str] = Query(
-        None,
-        description="Archetype name. Required when archetype=True.",
-    ),
+    category: Optional[str] = Query(None),
+    country: Optional[str] = Query(None),
+    name: Optional[str] = Query(None),
     weather_source: str = Query(
-        "pvgis",
-        description="Weather data source: 'pvgis' or 'epw'.",
+        "pvgis", description="Weather source: pvgis or epw"
     ),
-    path_weather_file: Optional[str] = Query(
+    epw_file: Optional[UploadFile] = File(
         None,
-        description="Path to the .epw file when weather_source='epw'.",
+        description="EPW weather file (required if weather_source='epw')"
     ),
     payload: Optional[Dict[str, Any]] = Body(
         None,
-        description="JSON body with 'bui' and 'system' when archetype=False.",
+        description="Required when archetype=False: JSON with 'bui' and 'system'",
     ),
 ):
     """
-    Simulate a single building (ISO 52016 + ISO 15316) using either:
-      - an archetype (archetype=True), or
-      - a custom BUI/system configuration (archetype=False).
+    Simulate a building (ISO 52016 + ISO 15316).
+
+    - Uses PVGIS or EPW weather file.
+    - EPW file must be uploaded via multipart/form-data when weather_source='epw'.
     """
-    # -------- 1) Select BUI/System --------
+    # ---------------- 1) Select BUI/SYSTEM ----------------
     if archetype:
         if not category or not country or not name:
             raise HTTPException(
-                status_code=400,
-                detail=(
-                    "With archetype=true you must provide 'category', 'country' and 'name' "
-                    "as query parameters."
-                ),
+                400,
+                "For archetype=True you must specify category, country and name.",
             )
 
         match = next(
-            (
-                b
-                for b in BUILDING_ARCHETYPES
-                if b["category"] == category
-                and b["country"] == country
-                and b["name"] == name
-            ),
+            (b for b in BUILDING_ARCHETYPES
+             if b["category"] == category
+             and b["country"] == country
+             and b["name"] == name),
             None,
         )
 
         if match is None:
             raise HTTPException(
-                status_code=404,
-                detail=(
-                    f"No archetype found for "
-                    f"category='{category}', country='{country}', name='{name}'."
-                ),
+                404,
+                f"No archetype found for {category}/{country}/{name}",
             )
 
         bui_internal = match["bui"]
         system_internal = match["system"]
 
     else:
-        if payload is None:
+        if payload is None or "bui" not in payload or "system" not in payload:
             raise HTTPException(
-                status_code=400,
-                detail="With archetype=false you must send a JSON body containing 'bui' and 'system'.",
+                400,
+                "With archetype=False you must send a JSON body with 'bui' and 'system'."
             )
 
-        bui_json = payload.get("bui")
-        system_json = payload.get("system")
+        bui_internal = json_to_internal_bui(payload["bui"])
+        system_internal = json_to_internal_system(payload["system"])
 
-        if bui_json is None or system_json is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Incomplete JSON body: both 'bui' and 'system' are required.",
-            )
+    # ---------------- 2) Validate ----------------
+    validated = validate_bui_and_system(bui_internal, system_internal)
+    bui_checked = validated["bui_checked"]
+    system_checked = validated["system_checked"]
 
-        bui_internal = json_to_internal_bui(bui_json)
-        system_internal = json_to_internal_system(system_json)
-
-    # -------- 2) Validate BUI/System --------
-    result = validate_bui_and_system(bui_internal, system_internal)
-    bui_checked = result["bui_checked"]
-    system_checked = result["system_checked"]
-
-    # -------- 3) Weather configuration --------
-    weather_kwargs: Dict[str, Any] = {}
+    # ---------------- 3) Weather ----------------
     if weather_source == "pvgis":
-        weather_kwargs = {"weather_source": "pvgis", "path_weather_file": None}
-    elif weather_source == "epw":
-        if not path_weather_file:
-            raise HTTPException(
-                status_code=400,
-                detail="With weather_source='epw' you must provide 'path_weather_file'.",
+        hourly_sim, annual_results_df = (
+            pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                bui_checked,
+                weather_source="pvgis",
             )
-        weather_kwargs = {"weather_source": "epw", "path_weather_file": path_weather_file}
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail="weather_source must be either 'pvgis' or 'epw'.",
         )
 
-    # -------- 4) ISO 52016 simulation --------
-    hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
-        bui_checked,
-        **weather_kwargs,
-    )
+    elif weather_source == "epw":
+        if epw_file is None:
+            raise HTTPException(
+                400,
+                "When weather_source='epw', you must upload an EPW file using epw_file."
+            )
 
-    # -------- 5) ISO 15316 heating system simulation --------
+        # Save uploaded EPW to a temporary folder
+        import tempfile, os
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            epw_path = os.path.join(tmpdir, epw_file.filename)
+            with open(epw_path, "wb") as f:
+                f.write(await epw_file.read())
+
+            # Run simulation
+            hourly_sim, annual_results_df = (
+                pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                    bui_checked,
+                    weather_source="epw",
+                    weather_file=epw_path,   # same key used by simulate_epw
+                )
+            )
+
+    else:
+        raise HTTPException(400, "weather_source must be 'pvgis' or 'epw'.")
+
+    # ---------------- 4) Heating System ----------------
     calc = pybui.HeatingSystemCalculator(system_checked)
-    calc.load_csv_data(hourly_sim)  # expects columns like Q_HC / T_op / T_ext or aliases
-    df_system = calc.run_timeseries()
+    calc.load_csv_data(hourly_sim)
+    df_heating_system = calc.run_timeseries()
 
-    # -------- 6) Response --------
+    # ---------------- 5) Return ----------------
     return {
-        "source": "archetype" if archetype else "custom",
-        "name": name,
+        "weather_source": weather_source,
+        "archetype": archetype,
         "category": category,
         "country": country,
-        "weather_source": weather_source,
-        "path_weather_file": path_weather_file,
+        "name": name,
         "validation": {
-            "bui_issues": result["bui_issues"],
-            "system_messages": result["system_messages"],
+            "bui_issues": validated["bui_issues"],
+            "system_messages": validated["system_messages"],
         },
         "results": {
             "hourly_building": to_jsonable(hourly_sim),
             "annual_building": to_jsonable(annual_results_df),
-            "hourly_system": to_jsonable(df_system),
+            "hourly_system": to_jsonable(df_heating_system),
         },
     }
+
+
 
 
 @router.post("/report", response_class=HTMLResponse, tags=["Reports"])

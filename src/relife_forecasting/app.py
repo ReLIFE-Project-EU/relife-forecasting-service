@@ -1,30 +1,31 @@
 from importlib.metadata import version
 
-from fastapi import FastAPI
+import os
+import math
+import copy
+import tempfile
+import pybuildingenergy as pybui
+import numpy as np
+import pandas as pd
+
+from fastapi import FastAPI, APIRouter, File, HTTPException, UploadFile, Form, Query, Body
+from fastapi.responses import HTMLResponse
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
+from typing import Any, Dict, List, Optional
 
 from relife_forecasting.config.logging import configure_logging
+from relife_forecasting.models.forecasting import Project
 # from relife_forecasting.routes import auth, examples, forecasting, health
 # from relife_forecasting.routes import forecasting
 
-from typing import Any, Dict
-
-import pandas as pd
-from fastapi import APIRouter, File, HTTPException, UploadFile
-
-from relife_forecasting.models.forecasting import Project
-# main.py
-from typing import Any, Dict, List, Optional
-import numpy as np
-import pandas as pd
-from fastapi import HTTPException, UploadFile, File, Form, Query, Body
-from fastapi.responses import HTMLResponse
-import pybuildingenergy as pybui
-from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # ---------------------------------------
 # Import example building archetypes
 # ---------------------------------------
 from building_examples import BUILDING_ARCHETYPES
+# from relife_forecasting.building_examples import BUILDING_ARCHETYPES
+# from relife_forecasting.routes.EPC_Greece_converter import U_VALUES_BY_CLASS, _norm_surface_name
 from routes.EPC_Greece_converter import U_VALUES_BY_CLASS, _norm_surface_name
 
 # Dynamically determine the package name
@@ -42,9 +43,25 @@ configure_logging()
 
 app = FastAPI(
     title="ReLIFE Forecasting Service",
-    description="ReLIFE service for building energy forecasting",
+    description="""
+This service evaluates the energy and thermal comfort performance of individual buildings and entire building stocks, 
+providing detailed projections for the years **2030** and **2050**.
+
+**Main objectives:**
+- Identify cost-effective renovation and retrofit strategies
+- Improve overall building performance and increase economic value
+- Significantly reduce energy demand and CO₂ emissions
+- Maximize the integration and use of renewable energy sources (RES)
+- Deliver environmental and health co-benefits, including:
+  - Reduction of greenhouse gas (GHG) emissions
+  - Decrease in heat- and cold-related illnesses and discomfort
+
+The analysis is performed using advanced **dynamic energy simulation tools** (EnergyPlus-based) 
+enhanced and calibrated within the ReLIFE project framework.
+""",
     version=__version__,
 )
+
 
 # app.include_router(health.router)
 # app.include_router(auth.router)
@@ -64,6 +81,177 @@ PROJECTS: Dict[str, Project] = {}
 # ============================================================================
 # Utility functions
 # ============================================================================
+import pandas as pd
+import numpy as np
+
+from typing import Any
+
+import numpy as np
+import pandas as pd
+
+
+def to_jsonable(obj: Any):
+    # tipi primitivi: già JSON-serializzabili
+    if isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+
+    # dizionari
+    if isinstance(obj, dict):
+        return {k: to_jsonable(v) for k, v in obj.items()}
+
+    # liste / tuple / set → lista JSON-safe
+    if isinstance(obj, (list, tuple, set)):
+        return [to_jsonable(v) for v in obj]
+
+    # numpy array
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+
+    # scalari numpy (np.float64, np.int64, ecc.)
+    if isinstance(obj, np.generic):
+        return obj.item()
+
+    # pandas Series / Index
+    if isinstance(obj, (pd.Series, pd.Index)):
+        return obj.tolist()
+
+    # pandas DataFrame (se mai ti capita nel BUI/system)
+    if isinstance(obj, pd.DataFrame):
+        # ad es. colonne → liste
+        return {col: to_jsonable(obj[col].values) for col in obj.columns}
+
+    # fallback: ultimo tentativo con .tolist(), poi stringa
+    try:
+        return obj.tolist()
+    except AttributeError:
+        return str(obj)
+
+def clean_and_jsonable(obj: Any):
+    """
+    Converte oggetti complessi (numpy, pandas, ecc.) in strutture JSON-safe.
+    - Mantiene stringhe e tipi primitivi così come sono
+    - Converte array/Series/DataFrame in liste/dict
+    - Gestisce correttamente array numerici e non numerici
+    """
+    # ---- tipi primitivi: già JSON-safe ----
+    if isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+
+    # ---- dict: ricorsione su valori ----
+    if isinstance(obj, dict):
+        return {k: clean_and_jsonable(v) for k, v in obj.items()}
+
+    # ---- liste / tuple / set ----
+    if isinstance(obj, (list, tuple, set)):
+        return [clean_and_jsonable(x) for x in obj]
+
+    # ---- numpy array ----
+    if isinstance(obj, np.ndarray):
+        # Se è chiaramente numerico, converto a float
+        if np.issubdtype(obj.dtype, np.number):
+            return obj.astype(float).tolist()
+        else:
+            # es. ['OP', 'GR', ...] oppure dtype=object misto
+            return [clean_and_jsonable(x) for x in obj.tolist()]
+
+    # ---- scalari numpy (np.float64, np.int64, ecc.) ----
+    if isinstance(obj, np.generic):
+        # se numerico → float, altrimenti valore "puro"
+        if np.issubdtype(type(obj), np.number):
+            return float(obj)
+        return obj.item()
+
+    # ---- pandas Series / Index ----
+    if isinstance(obj, (pd.Series, pd.Index)):
+        return [clean_and_jsonable(x) for x in obj.tolist()]
+
+    # ---- pandas DataFrame ----
+    if isinstance(obj, pd.DataFrame):
+        # esempio: {col: [valori ...]} – JSON-friendly
+        return {
+            col: clean_and_jsonable(obj[col].values)
+            for col in obj.columns
+        }
+
+    # ---- fallback: ultimo tentativo con .tolist(), poi stringa ----
+    try:
+        return obj.tolist()
+    except AttributeError:
+        return str(obj)
+
+
+# def to_jsonable(obj):
+#     """Converte DataFrame, Series, numpy array e tipi non JSON-safe 
+#     in strutture JSON-serializzabili."""
+    
+#     if isinstance(obj, pd.DataFrame):
+#         return obj.to_dict(orient="records")
+    
+#     if isinstance(obj, pd.Series):
+#         return obj.to_dict()
+
+#     if isinstance(obj, (np.ndarray, list, tuple)):
+#         return obj.tolist()
+
+#     if isinstance(obj, (np.integer, np.floating)):
+#         return obj.item()
+
+#     if isinstance(obj, dict):
+#         return {k: to_jsonable(v) for k, v in obj.items()}
+
+#     # fallback: lasciamo che FastAPI gestisca i tipi base
+#     return obj
+
+
+# def clean_and_jsonable(obj):
+#     """Converte DataFrame/Series/array e sostituisce NaN/inf con None per JSON."""
+    
+#     # Pandas DataFrame
+#     if isinstance(obj, pd.DataFrame):
+#         df = obj.replace([np.inf, -np.inf], np.nan)
+#         # sostituisce NaN con None
+#         return df.where(pd.notnull(df), None).to_dict(orient="records")
+    
+#     # Pandas Series
+#     if isinstance(obj, pd.Series):
+#         s = obj.replace([np.inf, -np.inf], np.nan)
+#         return s.where(pd.notnull(s), None).to_dict()
+
+#     # numpy array
+#     if isinstance(obj, np.ndarray):
+#         arr = obj.astype(float)
+#         arr[~np.isfinite(arr)] = np.nan
+#         # convertiamo a lista, e sostituiamo NaN con None
+#         return [
+#             (None if (isinstance(x, float) and math.isnan(x)) else x)
+#             for x in arr.tolist()
+#         ]
+
+#     # liste / tuple
+#     if isinstance(obj, (list, tuple)):
+#         return [clean_and_jsonable(x) for x in obj]
+
+#     # dict
+#     if isinstance(obj, dict):
+#         return {k: clean_and_jsonable(v) for k, v in obj.items()}
+
+#     # numpy scalari
+#     if isinstance(obj, (np.floating, np.integer)):
+#         v = obj.item()
+#         if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+#             return None
+#         return v
+
+#     # float normali
+#     if isinstance(obj, float):
+#         if math.isnan(obj) or math.isinf(obj):
+#             return None
+#         return obj
+
+#     # tutto il resto lo lasciamo così
+#     return obj
+
+
 
 def numpyfy(obj: Any) -> Any:
     """
@@ -250,9 +438,9 @@ def simulate_building_worker(building_name: str, bui: dict, system: dict) -> Dic
             "name": building_name,
             "status": "ok",
             "summary": summary,
-            "hourly": to_jsonable(hourly_sim),
-            "annual": to_jsonable(annual_results_df),
-            "system": to_jsonable(df_system),
+            "hourly": clean_and_jsonable(hourly_sim),
+            "annual": clean_and_jsonable(annual_results_df),
+            "system": clean_and_jsonable(df_system),
         }
 
     except Exception as e:
@@ -267,7 +455,7 @@ def simulate_building_worker(building_name: str, bui: dict, system: dict) -> Dic
 # Endpoints
 # ============================================================================
 
-@app.post("/templates", tags=["Templates"])
+@app.post("/building", tags=["Building and systems"])
 def get_building_config(
     archetype: bool = Query(
         True,
@@ -362,7 +550,7 @@ def get_building_config(
     }
 
 
-@app.get("/templates/available", tags=["Templates"])
+@app.get("/building/available", tags=["Building and systems"])
 def list_available_archetypes():
     """
     List available archetypes (metadata only, without full BUI/HVAC content).
@@ -467,20 +655,21 @@ def validate_model(
         "name": name,
         "category": category,
         "country": country,
-        "bui_fixed": to_jsonable(result["bui_fixed"]),
-        "bui_checked": to_jsonable(result["bui_checked"]),
-        "system_checked": to_jsonable(result["system_checked"]),
-        "bui_report_fixed": to_jsonable(result["bui_report_fixed"]),
+        "bui_fixed": clean_and_jsonable(result["bui_fixed"]),
+        "bui_checked": clean_and_jsonable(result["bui_checked"]),
+        "system_checked": clean_and_jsonable(result["system_checked"]),
+        "bui_report_fixed": clean_and_jsonable(result["bui_report_fixed"]),
         "bui_issues": result["bui_issues"],
         "system_messages": result["system_messages"],
     }
 
 
+
 @app.post("/simulate", tags=["Simulation"])
-def simulate_building(
+async def simulate_building(
     archetype: bool = Query(
         True,
-        description="If True, simulate an archetype (category+country+name). If False, use a custom model from the body.",
+        description="If True, simulate an archetype (category+country+name). If False, use custom BUI/SYSTEM.",
     ),
     category: Optional[str] = Query(
         None,
@@ -496,126 +685,180 @@ def simulate_building(
     ),
     weather_source: str = Query(
         "pvgis",
-        description="Weather data source: 'pvgis' or 'epw'.",
+        description="Weather source: 'pvgis' or 'epw'.",
     ),
-    path_weather_file: Optional[str] = Query(
+    # 👇 EPW file upload (solo se weather_source='epw')
+    epw_file: Optional[UploadFile] = File(
         None,
-        description="Path to the .epw file when weather_source='epw'.",
+        description="EPW weather file (required when weather_source='epw').",
     ),
-    payload: Optional[Dict[str, Any]] = Body(
+    # 👇 usate solo se archetype=False
+    bui_json: Optional[str] = Form(
         None,
-        description="JSON body with 'bui' and 'system' when archetype=False.",
+        description="JSON string with the BUI data (required when archetype=False).",
+    ),
+    system_json: Optional[str] = Form(
+        None,
+        description="JSON string with the SYSTEM data (required when archetype=False).",
     ),
 ):
     """
     Simulate a single building (ISO 52016 + ISO 15316) using either:
       - an archetype (archetype=True), or
       - a custom BUI/system configuration (archetype=False).
+
+    Weather:
+      - weather_source='pvgis' → dati da PVGIS
+      - weather_source='epw'   → si carica l'EPW via epw_file (UploadFile)
     """
+
     # -------- 1) Select BUI/System --------
     if archetype:
-        if not category or not country or not name:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "With archetype=true you must provide 'category', 'country' and 'name' "
-                    "as query parameters."
-                ),
-            )
+      # usa gli archetipi predefiniti
+      if not category or not country or not name:
+          raise HTTPException(
+              status_code=400,
+              detail="With archetype=true you must provide 'category', 'country' and 'name'.",
+          )
 
-        match = next(
-            (
-                b
-                for b in BUILDING_ARCHETYPES
-                if b["category"] == category
-                and b["country"] == country
-                and b["name"] == name
-            ),
-            None,
-        )
+      match = next(
+          (
+              b
+              for b in BUILDING_ARCHETYPES
+              if b["category"] == category
+              and b["country"] == country
+              and b["name"] == name
+          ),
+          None,
+      )
 
-        if match is None:
-            raise HTTPException(
-                status_code=404,
-                detail=(
-                    f"No archetype found for "
-                    f"category='{category}', country='{country}', name='{name}'."
-                ),
-            )
+      if match is None:
+          raise HTTPException(
+              status_code=404,
+              detail=(
+                  f"No archetype found for "
+                  f"category='{category}', country='{country}', name='{name}'."
+              ),
+          )
 
-        bui_internal = match["bui"]
-        system_internal = match["system"]
+      bui_internal = match["bui"]
+      system_internal = match["system"]
 
     else:
-        if payload is None:
-            raise HTTPException(
-                status_code=400,
-                detail="With archetype=false you must send a JSON body containing 'bui' and 'system'.",
-            )
+      # custom BUI/SYSTEM via JSON in form-data
+      if bui_json is None or system_json is None:
+          raise HTTPException(
+              status_code=400,
+              detail="With archetype=false you must send 'bui_json' and 'system_json' as form fields.",
+          )
 
-        bui_json = payload.get("bui")
-        system_json = payload.get("system")
+      try:
+          bui_raw = json.loads(bui_json)
+          system_raw = json.loads(system_json)
+      except json.JSONDecodeError:
+          raise HTTPException(
+              status_code=400,
+              detail="bui_json and system_json must be valid JSON strings.",
+          )
 
-        if bui_json is None or system_json is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Incomplete JSON body: both 'bui' and 'system' are required.",
-            )
-
-        bui_internal = json_to_internal_bui(bui_json)
-        system_internal = json_to_internal_system(system_json)
+      bui_internal = json_to_internal_bui(bui_raw)
+      system_internal = json_to_internal_system(system_raw)
 
     # -------- 2) Validate BUI/System --------
     result = validate_bui_and_system(bui_internal, system_internal)
     bui_checked = result["bui_checked"]
     system_checked = result["system_checked"]
 
-    # -------- 3) Weather configuration --------
-    weather_kwargs: Dict[str, Any] = {}
+    # -------- 3) Weather configuration + ISO 52016 --------
     if weather_source == "pvgis":
-        weather_kwargs = {"weather_source": "pvgis", "path_weather_file": None}
+        # nessun file, uso PVGIS
+        hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+            bui_checked,
+            weather_source="pvgis",
+        )
+
     elif weather_source == "epw":
-        if not path_weather_file:
+        if epw_file is None:
             raise HTTPException(
                 status_code=400,
-                detail="With weather_source='epw' you must provide 'path_weather_file'.",
+                detail="With weather_source='epw' you must upload 'epw_file'.",
             )
-        weather_kwargs = {"weather_source": "epw", "path_weather_file": path_weather_file}
+
+        # Salviamo il file caricato in una cartella temporanea
+        with tempfile.TemporaryDirectory() as tmpdir:
+            epw_path = os.path.join(tmpdir, epw_file.filename)
+
+            # scriviamo il contenuto dell’UploadFile su disco
+            contents = await epw_file.read()
+            with open(epw_path, "wb") as f:
+                f.write(contents)
+
+            # 👈 QUI: usiamo il nome del parametro corretto
+            hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                bui_checked,
+                weather_source="epw",
+                path_weather_file=epw_path,  # ✅ parametro giusto
+        )
     else:
         raise HTTPException(
             status_code=400,
             detail="weather_source must be either 'pvgis' or 'epw'.",
         )
 
-    # -------- 4) ISO 52016 simulation --------
-    hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
-        bui_checked,
-        **weather_kwargs,
-    )
-
-    # -------- 5) ISO 15316 heating system simulation --------
+    # -------- 4) ISO 15316 heating system simulation --------
     calc = pybui.HeatingSystemCalculator(system_checked)
     calc.load_csv_data(hourly_sim)  # expects columns like Q_HC / T_op / T_ext or aliases
     df_system = calc.run_timeseries()
 
-    # -------- 6) Response --------
-    return {
+    # -------- 5) Response --------
+    def df_to_json_safe(df: pd.DataFrame):
+        # 1. Se l'indice è Datetime, lo converte in colonna 'timestamp'
+        if isinstance(df.index, pd.DatetimeIndex):
+            df = df.reset_index().rename(columns={'index': 'timestamp'})
+        else:
+            # Altrimenti resetta l'indice e aggiunge un numero di riga
+            df = df.reset_index(drop=True)
+        
+        # 2. Pulisce i valori problematici
+        df = df.replace([np.inf, -np.inf], np.nan)
+        
+        # 3. Converte NaN in None (JSON null)
+        df = df.where(pd.notnull(df), None)
+        
+        # 4. Converte datetime in stringhe ISO
+        for col in df.columns:
+            if df[col].dtype == 'datetime64[ns]':
+                df[col] = df[col].astype(str)
+        
+        # 5. Converte tutto in dict records
+        return df.to_dict(orient="records")
+
+
+    # Applica a tutti i tuoi DataFrame
+    hourly_sim_clean        = df_to_json_safe(hourly_sim)
+    annual_results_df_clean = df_to_json_safe(annual_results_df)
+    df_system_clean         = df_to_json_safe(df_system)
+
+    raw_response = {
         "source": "archetype" if archetype else "custom",
         "name": name,
         "category": category,
         "country": country,
         "weather_source": weather_source,
-        "path_weather_file": path_weather_file,
         "validation": {
             "bui_issues": result["bui_issues"],
             "system_messages": result["system_messages"],
         },
         "results": {
-            "hourly_building": to_jsonable(hourly_sim),
-            "annual_building": to_jsonable(annual_results_df),
-            "hourly_system": to_jsonable(df_system),
+            "hourly_building": hourly_sim_clean,
+            "annual_building": annual_results_df_clean,
+            "hourly_system": df_system_clean,
         },
     }
+
+    return raw_response
+
+
 
 
 @app.post("/report", response_class=HTMLResponse, tags=["Reports"])
@@ -671,70 +914,70 @@ def generate_report(payload: Dict[str, Any]):
     return HTMLResponse(content=html_content)
 
 
-@app.post("/simulate_epw", tags=["Simulation"])
-async def simulate_with_epw(
-    epw_file: UploadFile = File(...),
-    bui_json: str = Form(...),
-    system_json: str = Form(...),
-):
-    """
-    Simulate a building using an EPW weather file.
+# @app.post("/simulate_epw", tags=["Simulation"])
+# async def simulate_with_epw(
+#     epw_file: UploadFile = File(...),
+#     bui_json: str = Form(...),
+#     system_json: str = Form(...),
+# ):
+#     """
+#     Simulate a building using an EPW weather file.
 
-    Parameters (multipart/form-data):
-      - epw_file: uploaded EPW file
-      - bui_json: string containing BUI in JSON format
-      - system_json: string containing HVAC system in JSON format
+#     Parameters (multipart/form-data):
+#       - epw_file: uploaded EPW file
+#       - bui_json: string containing BUI in JSON format
+#       - system_json: string containing HVAC system in JSON format
 
-    Example (curl):
+#     Example (curl):
 
-      curl -X POST http://localhost:8000/simulate_epw \\
-           -F "epw_file=@weather.epw" \\
-           -F 'bui_json={...}' \\
-           -F 'system_json={...}'
-    """
-    try:
-        bui = json.loads(bui_json)
-        system = json.loads(system_json)
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=400,
-            detail="bui_json and system_json must be valid JSON strings.",
-        )
+#       curl -X POST http://localhost:8000/simulate_epw \\
+#            -F "epw_file=@weather.epw" \\
+#            -F 'bui_json={...}' \\
+#            -F 'system_json={...}'
+#     """
+#     try:
+#         bui = json.loads(bui_json)
+#         system = json.loads(system_json)
+#     except json.JSONDecodeError:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="bui_json and system_json must be valid JSON strings.",
+#         )
 
-    bui = numpyfy(bui)
-    system = numpyfy(system)
+#     bui = numpyfy(bui)
+#     system = numpyfy(system)
 
-    validated = validate_bui_and_system(bui, system)
-    bui_checked = validated["bui_checked"]
-    system_checked = validated["system_checked"]
+#     validated = validate_bui_and_system(bui, system)
+#     bui_checked = validated["bui_checked"]
+#     system_checked = validated["system_checked"]
 
-    # Save EPW in a temporary directory
-    with tempfile.TemporaryDirectory() as tmpdir:
-        epw_path = os.path.join(tmpdir, epw_file.filename)
-        with open(epw_path, "wb") as f:
-            f.write(await epw_file.read())
+#     # Save EPW in a temporary directory
+#     with tempfile.TemporaryDirectory() as tmpdir:
+#         epw_path = os.path.join(tmpdir, epw_file.filename)
+#         with open(epw_path, "wb") as f:
+#             f.write(await epw_file.read())
 
-        # Adapt these keyword arguments to match your pybuildingenergy API
-        hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
-            bui_checked,
-            weather_source="epw",
-            weather_file=epw_path,   # Adapt if your function expects a different argument name
-        )
+#         # Adapt these keyword arguments to match your pybuildingenergy API
+#         hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+#             bui_checked,
+#             weather_source="epw",
+#             weather_file=epw_path,   # Adapt if your function expects a different argument name
+#         )
 
-        calc = pybui.HeatingSystemCalculator(system_checked)
-        calc.load_csv_data(hourly_sim)
-        df_heating_system = calc.run_timeseries()
+#         calc = pybui.HeatingSystemCalculator(system_checked)
+#         calc.load_csv_data(hourly_sim)
+#         df_heating_system = calc.run_timeseries()
 
-    return {
-        "status": "ok",
-        "weather_source": "epw",
-        "hourly_needs": dict_to_df_records(hourly_sim),
-        "annual_needs": dict_to_df_records(annual_results_df),
-        "heating_system": dict_to_df_records(df_heating_system),
-    }
+#     return {
+#         "status": "ok",
+#         "weather_source": "epw",
+#         "hourly_needs": dict_to_df_records(hourly_sim),
+#         "annual_needs": dict_to_df_records(annual_results_df),
+#         "heating_system": dict_to_df_records(df_heating_system),
+#     }
 
 
-@app.post("/bui/update_u_values", tags=["Greek EPC"])
+@app.post("/bui/epc_update_u_values", tags=["Greek EPC"])
 def update_u_values(
     energy_class: str = Query(
         ...,
@@ -901,7 +1144,7 @@ def update_u_values(
     }
 
 
-@app.post("/simulate/batch", tags=["Batch Simulation"])
+@app.post("/simulate/batch", tags=["Simulation"])
 def simulate_batch(payload: Dict[str, Any]):
     """
     Batch-simulate multiple buildings in parallel (multiprocessing).
@@ -1047,3 +1290,726 @@ def simulate_batch(payload: Dict[str, Any]):
         "results": results,  # detailed results per building
         "summary": summary_df.to_dict(orient="records"),  # compact summary table
     }
+
+# ================================================================
+#                       ECM
+# ================================================================
+
+def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
+    """
+    Ritorna:
+      - "roof"     per tetto (opaque, tilt=0, azimuth=0)
+      - "wall"     per muri (opaque, tilt=90)
+      - "window"   per finestre (transparent, tilt=90)
+      - None       altrimenti
+    """
+    s_type = surface.get("type")
+    orientation = surface.get("orientation", {}) or {}
+    tilt = orientation.get("tilt")
+    azimuth = orientation.get("azimuth")
+
+    # Tetto: opaco, orizzontale (tilt=0) e azimuth=0 (come da tua regola)
+    if s_type == "opaque" and tilt == 0 and azimuth == 0:
+        return "roof"
+
+    # Muri: opaco, verticale (tilt=90)
+    if s_type == "opaque" and tilt == 90:
+        return "wall"
+
+    # Finestre: trasparenti, verticali (tilt=90)
+    if s_type == "transparent" and tilt == 90:
+        return "window"
+
+    return None
+
+def apply_u_values_to_bui(
+    bui: Dict[str, Any],
+    use_roof: bool,
+    use_wall: bool,
+    use_window: bool,
+    u_roof: Optional[float],
+    u_wall: Optional[float],
+    u_window: Optional[float],
+) -> Dict[str, Any]:
+    """
+    Ritorna una COPIA del BUI con gli U-value modificati dove richiesto.
+    """
+    bui_copy = copy.deepcopy(bui)
+    for surface in bui_copy.get("building_surface", []):
+        kind = classify_surface(surface)
+        if kind == "roof" and use_roof and u_roof is not None:
+            surface["u_value"] = u_roof
+        elif kind == "wall" and use_wall and u_wall is not None:
+            surface["u_value"] = u_wall
+        elif kind == "window" and use_window and u_window is not None:
+            surface["u_value"] = u_window
+    return bui_copy
+
+@app.post("/ecm_application", tags=["Simulation"])
+async def simulate_uvalues(
+    archetype: bool = Query(
+        True,
+        description="Se True, usa un archetipo (category+country+name). Se False, usa un BUI custom da JSON.",
+    ),
+    category: Optional[str] = Query(
+        None,
+        description="Building category. Richiesto quando archetype=True.",
+    ),
+    country: Optional[str] = Query(
+        None,
+        description="Country. Richiesto quando archetype=True.",
+    ),
+    name: Optional[str] = Query(
+        None,
+        description="Archetype name. Richiesto quando archetype=True.",
+    ),
+    weather_source: str = Query(
+        "pvgis",
+        description="Weather source: 'pvgis' o 'epw'.",
+    ),
+    epw_file: Optional[UploadFile] = File(
+        None,
+        description="EPW weather file (richiesto quando weather_source='epw').",
+    ),
+    # BUI custom (quando archetype=False)
+    bui_json: Optional[str] = Form(
+        None,
+        description="JSON string con il BUI (richiesto quando archetype=False).",
+    ),
+    # Nuovi U-value richiesti
+    u_wall: Optional[float] = Query(
+        None,
+        description="Nuova trasmittanza dei muri (U-value delle superfici opache verticali).",
+    ),
+    u_roof: Optional[float] = Query(
+        None,
+        description="Nuova trasmittanza del tetto (U-value della superficie opaca orizzontale).",
+    ),
+    u_window: Optional[float] = Query(
+        None,
+        description="Nuova trasmittanza delle finestre (U-value delle superfici trasparenti verticali).",
+    ),
+):
+    """
+    Seleziona un BUI da archetipo o da JSON,
+    crea copie con U-value modificati per tetto / muri / finestre
+    e simula tutte le combinazioni delle migliorie richieste.
+    """
+
+    # ---- 1) Selezione BUI base ----
+    if archetype:
+        if not category or not country or not name:
+            raise HTTPException(
+                status_code=400,
+                detail="Con archetype=true devi fornire 'category', 'country' e 'name'.",
+            )
+
+        match = next(
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b["category"] == category
+                and b["country"] == country
+                and b["name"] == name
+            ),
+            None,
+        )
+
+        if match is None:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"Nessun archetipo trovato per "
+                    f"category='{category}', country='{country}', name='{name}'."
+                ),
+            )
+
+        base_bui = match["bui"]  # BUI di partenza
+
+    else:
+        if bui_json is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Con archetype=false devi mandare 'bui_json' come campo form.",
+            )
+        try:
+            bui_raw = json.loads(bui_json)
+        except json.JSONDecodeError:
+            raise HTTPException(
+                status_code=400,
+                detail="'bui_json' deve essere una stringa JSON valida.",
+            )
+
+        # Se hai un converter tipo json_to_internal_bui, usalo:
+        # base_bui = json_to_internal_bui(bui_raw)
+        # Se invece il BUI che arriva è già nel formato interno, puoi fare:
+        base_bui = bui_raw
+
+    # ---- 2) Controllo che almeno un U-value sia stato richiesto ----
+    u_map = {
+        "roof": u_roof,
+        "wall": u_wall,
+        "window": u_window,
+    }
+    active_types = [k for k, v in u_map.items() if v is not None]
+
+    if not active_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Devi specificare almeno uno tra u_wall, u_roof, u_window.",
+        )
+
+    # ---- 3) Preparazione meteo (EPW) se serve ----
+    epw_path: Optional[str] = None
+    if weather_source == "epw":
+        if epw_file is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Con weather_source='epw' devi caricare 'epw_file'.",
+            )
+        # salvo il file solo una volta e riuso il path in tutte le simulazioni
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".epw") as tmp:
+            tmp.write(await epw_file.read())
+            epw_path = tmp.name
+
+    elif weather_source != "pvgis":
+        raise HTTPException(
+            status_code=400,
+            detail="weather_source deve essere 'pvgis' oppure 'epw'.",
+        )
+
+    # ---- 4) Generazione delle combinazioni di scenari ----
+    # tutte le combinazioni non vuote dei tipi attivi
+    scenarios_spec = []
+    for r in range(1, len(active_types) + 1):
+        for subset in itertools.combinations(active_types, r):
+            subset = set(subset)
+            use_roof = "roof" in subset
+            use_wall = "wall" in subset
+            use_window = "window" in subset
+
+            label_parts = []
+            if use_roof:
+                label_parts.append(f"tetto U={u_roof}")
+            if use_wall:
+                label_parts.append(f"muri U={u_wall}")
+            if use_window:
+                label_parts.append(f"finestre U={u_window}")
+            label = ", ".join(label_parts)
+
+            scenarios_spec.append(
+                {
+                    "id": "+".join(sorted(subset)),
+                    "use_roof": use_roof,
+                    "use_wall": use_wall,
+                    "use_window": use_window,
+                    "label": label,
+                }
+            )
+
+    # ---- 5) Eseguo le simulazioni per ogni scenario ----
+    scenario_results: List[Dict[str, Any]] = []
+
+    try:
+        for spec in scenarios_spec:
+            bui_variant = apply_u_values_to_bui(
+                base_bui,
+                use_roof=spec["use_roof"],
+                use_wall=spec["use_wall"],
+                use_window=spec["use_window"],
+                u_roof=u_roof,
+                u_wall=u_wall,
+                u_window=u_window,
+            )
+
+            # Lancia ISO 52016
+            if weather_source == "pvgis":
+                hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                    bui_variant,
+                    weather_source="pvgis",
+                )
+            else:  # EPW
+                hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                    bui_variant,
+                    weather_source="epw",
+                    path_weather_file=epw_path,
+                )
+
+            scenario_results.append(
+                {
+                    "scenario_id": spec["id"],
+                    "description": spec["label"],
+                    "u_values": {
+                        "roof": u_roof,
+                        "wall": u_wall,
+                        "window": u_window,
+                    },
+                    "results": {
+                        "hourly_building": clean_and_jsonable(hourly_sim),
+                        "annual_building": clean_and_jsonable(annual_results_df),
+                    },
+                }
+            )
+    finally:
+        # pulizia del file temporaneo EPW se usato
+        if epw_path and os.path.exists(epw_path):
+            try:
+                os.remove(epw_path)
+            except OSError:
+                pass
+
+    # ---- 6) Risposta ----
+    return {
+        "source": "archetype" if archetype else "custom",
+        "name": name,
+        "category": category,
+        "country": country,
+        "weather_source": weather_source,
+        "u_values_requested": {
+            "roof": u_roof,
+            "wall": u_wall,
+            "window": u_window,
+        },
+        "n_scenarios": len(scenarios_spec),
+        "scenarios": scenario_results,
+    }
+
+
+# ==============================================================================
+#                      CO2 EQUIVALENT – MODELS, LOGIC & ROUTES
+# ==============================================================================
+
+from enum import Enum
+from typing import Dict, List, Optional
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
+
+# # Router dedicato alla CO2, allineato con il resto del servizio
+# co2_router = APIRouter(
+#     prefix="/api",
+#     tags=["CO2 emissions"],
+# )
+
+
+# ==============================================================================
+#                      FATTORI DI EMISSIONE DATABASE
+# ==============================================================================
+
+class EnergySource(str, Enum):
+    """Fonti energetiche disponibili"""
+    GRID_ELECTRICITY = "grid_electricity"
+    NATURAL_GAS = "natural_gas"
+    LPG = "lpg"
+    DIESEL = "diesel"
+    BIOMASS = "biomass"
+    DISTRICT_HEATING = "district_heating"
+    SOLAR_PV = "solar_pv"
+    WIND = "wind"
+    HEAT_PUMP_ELECTRIC = "heat_pump_electric"
+
+
+# Fattori di emissione in kgCO2eq/kWh
+EMISSION_FACTORS: Dict[str, Dict[str, float]] = {
+    "IT": {  # Italia
+        "grid_electricity": 0.280,      # Mix elettrico nazionale
+        "natural_gas": 0.202,           # Gas naturale (uso termico)
+        "lpg": 0.234,                   # GPL
+        "diesel": 0.267,                # Gasolio da riscaldamento
+        "biomass": 0.030,               # Pellet/legna (quasi neutrale)
+        "district_heating": 0.180,      # Teleriscaldamento (media)
+        "solar_pv": 0.040,              # Fotovoltaico (LCA)
+        "wind": 0.012,                  # Eolico (LCA)
+        "heat_pump_electric": 0.070,    # PdC con mix elettrico (COP≈4)
+    },
+    "EU": {  # Media europea
+        "grid_electricity": 0.255,
+        "natural_gas": 0.202,
+        "lpg": 0.234,
+        "diesel": 0.267,
+        "biomass": 0.030,
+        "district_heating": 0.150,
+        "solar_pv": 0.040,
+        "wind": 0.012,
+        "heat_pump_electric": 0.064,
+    },
+    "DE": {  # Germania
+        "grid_electricity": 0.420,      # Mix più carbonico
+        "natural_gas": 0.202,
+        "lpg": 0.234,
+        "diesel": 0.267,
+        "biomass": 0.030,
+        "district_heating": 0.200,
+        "solar_pv": 0.040,
+        "wind": 0.012,
+        "heat_pump_electric": 0.105,
+    },
+}
+
+
+# ==============================================================================
+#                      PYDANTIC MODELS
+# ==============================================================================
+
+class ScenarioInput(BaseModel):
+    """Input per calcolo singolo scenario"""
+    name: str = Field(..., description="Nome dello scenario")
+    energy_source: EnergySource = Field(..., description="Fonte energetica")
+    annual_consumption_kwh: float = Field(..., gt=0, description="Consumo annuale [kWh]")
+    country: str = Field("IT", description="Codice paese (IT, EU, DE)")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Caldaia Gas Esistente",
+                "energy_source": "natural_gas",
+                "annual_consumption_kwh": 20000,
+                "country": "IT",
+            }
+        }
+
+
+class MultiScenarioInput(BaseModel):
+    """Input per confronto multiplo"""
+    scenarios: List[ScenarioInput] = Field(..., min_length=1, max_length=10)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "scenarios": [
+                    {
+                        "name": "Scenario Attuale - Caldaia Gas",
+                        "energy_source": "natural_gas",
+                        "annual_consumption_kwh": 20000,
+                        "country": "IT",
+                    },
+                    {
+                        "name": "Scenario 1 - Pompa di Calore",
+                        "energy_source": "heat_pump_electric",
+                        "annual_consumption_kwh": 5000,
+                        "country": "IT",
+                    },
+                    {
+                        "name": "Scenario 2 - PdC + Fotovoltaico",
+                        "energy_source": "solar_pv",
+                        "annual_consumption_kwh": 5000,
+                        "country": "IT",
+                    },
+                ]
+            }
+        }
+
+
+class EmissionResult(BaseModel):
+    """Risultato calcolo emissioni"""
+    name: str
+    energy_source: str
+    annual_consumption_kwh: float
+    emission_factor_kg_per_kwh: float
+    annual_emissions_kg_co2eq: float
+    annual_emissions_ton_co2eq: float
+    equivalent_trees: int          # Alberi necessari per assorbire la CO2
+    equivalent_km_car: int         # Km in auto equivalenti
+
+class SavingResult(BaseModel):
+    """Risultato di risparmio rispetto al baseline per uno scenario"""
+    scenario_name: str
+    absolute_kg_co2eq: float
+    absolute_ton_co2eq: float
+    percentage: float
+
+
+class ComparisonResult(BaseModel):
+    """Risultato confronto scenari"""
+    baseline: EmissionResult
+    scenarios: List[EmissionResult]
+    best_scenario: str
+    savings: List[SavingResult]
+
+
+
+class InterventionInput(BaseModel):
+    """Input per valutare un intervento di riqualificazione"""
+
+    current_consumption_kwh: float = Field(
+        ...,
+        gt=0,
+        description="Consumo attuale [kWh/anno]",
+    )
+    current_source: EnergySource = Field(
+        ...,
+        description="Fonte energetica attuale",
+    )
+    energy_reduction_percentage: float = Field(
+        0,
+        ge=0,
+        le=100,
+        description="Riduzione percentuale dei consumi (es. 30 = -30%)",
+    )
+    new_source: Optional[EnergySource] = Field(
+        None,
+        description="Nuova fonte energetica (se None, resta quella attuale)",
+    )
+    new_consumption_kwh: Optional[float] = Field(
+        None,
+        description="Nuovo consumo annuo. Se None, calcolato dalla riduzione percentuale.",
+    )
+    country: str = Field(
+        "IT",
+        description="Codice paese per i fattori di emissione (IT, EU, DE)",
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "current_consumption_kwh": 20000,
+                "current_source": "natural_gas",
+                "energy_reduction_percentage": 30,
+                "new_source": "heat_pump_electric",
+                "new_consumption_kwh": 5000,
+                "country": "IT",
+            }
+        }
+
+
+# ==============================================================================
+#                      BUSINESS LOGIC
+# ==============================================================================
+
+def calculate_emissions(
+    energy_source: EnergySource | str,
+    annual_consumption_kwh: float,
+    country: str = "IT",
+) -> Dict[str, float]:
+    """
+    Calcola emissioni CO2eq e parametri equivalenti.
+    """
+    # Normalizza codice paese
+    if country not in EMISSION_FACTORS:
+        country = "IT"
+
+    # Normalizza sorgente (Enum -> stringa)
+    if isinstance(energy_source, EnergySource):
+        source_key = energy_source.value
+    else:
+        source_key = str(energy_source)
+
+    emission_factor = EMISSION_FACTORS[country].get(
+        source_key,
+        EMISSION_FACTORS[country]["grid_electricity"],  # fallback ragionevole
+    )
+
+    # Calcolo emissioni
+    annual_emissions_kg = annual_consumption_kwh * emission_factor
+    annual_emissions_ton = annual_emissions_kg / 1000.0
+
+    # EQUIVALENZE PRATICHE
+    # 1 albero ≈ 21 kg CO2/anno
+    equivalent_trees = int(annual_emissions_kg / 21.0)
+
+    # 1 km in auto ≈ 120 g CO2
+    equivalent_km_car = int(annual_emissions_kg / 0.120)
+
+    return {
+        "emission_factor": emission_factor,
+        "annual_emissions_kg": annual_emissions_kg,
+        "annual_emissions_ton": annual_emissions_ton,
+        "equivalent_trees": equivalent_trees,
+        "equivalent_km_car": equivalent_km_car,
+    }
+
+
+def calculate_savings(
+    baseline_emissions: float,
+    scenario_emissions: float,
+) -> Dict[str, float]:
+    """Calcola risparmio tra baseline e scenario."""
+    absolute_saving = baseline_emissions - scenario_emissions
+    percentage_saving = (
+        absolute_saving / baseline_emissions * 100.0
+        if baseline_emissions > 0
+        else 0.0
+    )
+
+    return {
+        "absolute_kg_co2eq": round(absolute_saving, 2),
+        "absolute_ton_co2eq": round(absolute_saving / 1000.0, 3),
+        "percentage": round(percentage_saving, 1),
+    }
+
+
+# ==============================================================================
+#                      ROUTES (montate su co2_router)
+# ==============================================================================
+@app.get("/emission-factors", tags=['Co2 Emissions'])
+def get_emission_factors(country: str = "IT"):
+    """
+    Ottieni fattori di emissione per un paese.
+
+    Args:
+        country: Codice paese (IT, EU, DE)
+    """
+    if country not in EMISSION_FACTORS:
+        raise HTTPException(status_code=404, detail=f"Paese {country} non trovato")
+
+    return {
+        "country": country,
+        "emission_factors_kg_co2eq_per_kwh": EMISSION_FACTORS[country],
+        "sources": list(EMISSION_FACTORS[country].keys()),
+    }
+
+
+@app.post("/calculate", response_model=EmissionResult, tags=['Co2 Emissions'])
+def calculate_single_scenario(scenario: ScenarioInput):
+    """
+    Calcola emissioni CO2eq per un singolo scenario.
+    """
+    result = calculate_emissions(
+        energy_source=scenario.energy_source,
+        annual_consumption_kwh=scenario.annual_consumption_kwh,
+        country=scenario.country,
+    )
+
+    return EmissionResult(
+        name=scenario.name,
+        energy_source=scenario.energy_source,
+        annual_consumption_kwh=scenario.annual_consumption_kwh,
+        emission_factor_kg_per_kwh=result["emission_factor"],
+        annual_emissions_kg_co2eq=result["annual_emissions_kg"],
+        annual_emissions_ton_co2eq=result["annual_emissions_ton"],
+        equivalent_trees=result["equivalent_trees"],
+        equivalent_km_car=result["equivalent_km_car"],
+    )
+
+
+@app.post("/compare", response_model=ComparisonResult, tags=['Co2 Emissions'])
+def compare_scenarios(input_data: MultiScenarioInput):
+    if len(input_data.scenarios) < 2:
+        raise HTTPException(
+            status_code=400, 
+            detail="Servono almeno 2 scenari per il confronto"
+        )
+    
+    # Calcola emissioni per tutti gli scenari
+    results: List[EmissionResult] = []
+    for scenario in input_data.scenarios:
+        result = calculate_emissions(
+            energy_source=scenario.energy_source,
+            annual_consumption_kwh=scenario.annual_consumption_kwh,
+            country=scenario.country
+        )
+        
+        results.append(EmissionResult(
+            name=scenario.name,
+            energy_source=scenario.energy_source,
+            annual_consumption_kwh=scenario.annual_consumption_kwh,
+            emission_factor_kg_per_kwh=result["emission_factor"],
+            annual_emissions_kg_co2eq=result["annual_emissions_kg"],
+            annual_emissions_ton_co2eq=result["annual_emissions_ton"],
+            equivalent_trees=result["equivalent_trees"],
+            equivalent_km_car=result["equivalent_km_car"],
+        ))
+    
+    # Baseline = primo scenario
+    baseline = results[0]
+    baseline_emissions = baseline.annual_emissions_kg_co2eq
+    
+    # Calcola risparmi
+    savings: List[SavingResult] = []
+    for result in results[1:]:
+        saving_dict = calculate_savings(
+            baseline_emissions,
+            result.annual_emissions_kg_co2eq
+        )
+        savings.append(
+            SavingResult(
+                scenario_name=result.name,
+                absolute_kg_co2eq=saving_dict["absolute_kg_co2eq"],
+                absolute_ton_co2eq=saving_dict["absolute_ton_co2eq"],
+                percentage=saving_dict["percentage"],
+            )
+        )
+    
+    # Trova scenario migliore
+    best_scenario = min(
+        results[1:], 
+        key=lambda x: x.annual_emissions_kg_co2eq
+    ).name
+    
+    return ComparisonResult(
+        baseline=baseline,
+        scenarios=results[1:],   # solo gli alternativi
+        best_scenario=best_scenario,
+        savings=savings,
+    )
+
+
+@app.post("/calculate-intervention", tags=['Co2 Emissions'])
+def calculate_intervention_impact(payload: InterventionInput):
+    """
+    Calcola impatto di un intervento di riqualificazione energetica
+    in termini di CO2 equivalente.
+    """
+    current_consumption_kwh = payload.current_consumption_kwh
+    current_source = payload.current_source
+    energy_reduction_percentage = payload.energy_reduction_percentage
+    new_source = payload.new_source
+    new_consumption_kwh = payload.new_consumption_kwh
+    country = payload.country
+
+    # Scenario attuale
+    current = calculate_emissions(
+        energy_source=current_source,
+        annual_consumption_kwh=current_consumption_kwh,
+        country=country,
+    )
+
+    # Nuovo consumo
+    if new_consumption_kwh is None:
+        final_consumption = current_consumption_kwh * (
+            1.0 - energy_reduction_percentage / 100.0
+        )
+    else:
+        final_consumption = new_consumption_kwh
+
+    # Scenario futuro
+    final_source = new_source if new_source is not None else current_source
+    future = calculate_emissions(
+        energy_source=final_source,
+        annual_consumption_kwh=final_consumption,
+        country=country,
+    )
+
+    # Risparmio
+    saving = calculate_savings(
+        baseline_emissions=current["annual_emissions_kg"],
+        scenario_emissions=future["annual_emissions_kg"],
+    )
+
+    return {
+        "intervention_summary": {
+            "energy_reduction": f"{energy_reduction_percentage}%",
+            "source_change": f"{current_source} → {final_source}",
+            "consumption_change": (
+                f"{current_consumption_kwh:.0f} → {final_consumption:.0f} kWh/anno"
+            ),
+        },
+        "current_scenario": {
+            "emissions_kg_co2eq": round(current["annual_emissions_kg"], 2),
+            "emissions_ton_co2eq": round(current["annual_emissions_ton"], 3),
+        },
+        "future_scenario": {
+            "emissions_kg_co2eq": round(future["annual_emissions_kg"], 2),
+            "emissions_ton_co2eq": round(future["annual_emissions_ton"], 3),
+        },
+        "savings": saving,
+        "environmental_impact": {
+            "trees_saved": (
+                current["equivalent_trees"] - future["equivalent_trees"]
+            ),
+            "km_car_avoided": (
+                current["equivalent_km_car"] - future["equivalent_km_car"]
+            ),
+        },
+    }
+

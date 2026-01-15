@@ -1,0 +1,23 @@
+{
+  "building": {
+    "name": "test-cy",
+    "azimuth_relative_to_true_north": 41.8,
+    "latitude": 37.98880066730187,
+    "longitude": 23.733531819066098,
+    "exposed_perimeter": 40,
+    "height": 3,
+    "wall_thickness": 0.3,
+    "n_floors": 1,
+    "building_type_class": "Residential_apartment",
+    "adj_zones_present": false,
+    "number_adj_zone": 2,
+    "net_floor_area": 100,
+    "construction_class": "class_i"
+  },
+  "adjacent_zones": [
+    {
+      "name": "adj_1",
+      "orientation_zone": {
+        "azimuth": 0
+      },
+      "area_facade_elements": 
