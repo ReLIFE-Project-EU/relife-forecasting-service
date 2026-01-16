@@ -1,8 +1,10 @@
 from importlib.metadata import version
 
-import os
-import math
 import copy
+import itertools
+import json
+import math
+import os
 import tempfile
 import pybuildingenergy as pybui
 import numpy as np
@@ -23,10 +25,8 @@ from relife_forecasting.models.forecasting import Project
 # ---------------------------------------
 # Import example building archetypes
 # ---------------------------------------
-from building_examples import BUILDING_ARCHETYPES
-# from relife_forecasting.building_examples import BUILDING_ARCHETYPES
-# from relife_forecasting.routes.EPC_Greece_converter import U_VALUES_BY_CLASS, _norm_surface_name
-from routes.EPC_Greece_converter import U_VALUES_BY_CLASS, _norm_surface_name
+from relife_forecasting.building_examples import BUILDING_ARCHETYPES
+from relife_forecasting.routes.EPC_Greece_converter import U_VALUES_BY_CLASS, _norm_surface_name
 
 # Dynamically determine the package name
 package_name = __name__.split(".")[0]
