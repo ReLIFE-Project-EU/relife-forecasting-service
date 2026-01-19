@@ -2,57 +2,32 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict, Any
 
-BUI = {
+# DATABSE OF ARCHETPYE
+
+# Greece
+BUI_SINGLE_FAMILY_1946_1969 = {
     "building": {
         "name": "test-cy",
         "azimuth_relative_to_true_north": 41.8,
         "latitude": 37.98880066730187,
         "longitude": 23.733531819066098,
-        "exposed_perimeter": 40,
-        "height": 3,
+        "exposed_perimeter": 46,
+        "height": 2.7,
         "wall_thickness": 0.3,
-        "n_floors": 1,
+        "n_floors": 2,
         "building_type_class": "Residential_apartment",
         "adj_zones_present": False,
-        "number_adj_zone":2,
-        "net_floor_area": 100,
+        "number_adj_zone":0,
+        "net_floor_area": 125,
         "construction_class": "class_i",
     },
-    "adjacent_zones": [
-        {
-            "name":"adj_1",
-            "orientation_zone": {
-                "azimuth": 0,
-            },
-            "area_facade_elements": np.array([20,60,30,30,50,50], dtype=object),
-            "typology_elements": np.array(['OP', 'OP', 'OP', 'OP', 'GR', 'OP'], dtype=object),
-            "transmittance_U_elements": np.array([0.8196721311475411, 0.8196721311475411, 0.8196721311475411, 0.8196721311475411, 0.5156683855612851, 1.162633192818565], dtype=object),
-            "orientation_elements": np.array(['NV', 'SV', 'EV', 'WV', 'HOR', 'HOR'], dtype=object),
-            'volume': 300, 
-            'building_type_class':'Residential_apartment',
-            'a_use':50 
-        },
-        {
-            "name":"adj_2",
-            "orientation_zone": {
-                "azimuth": 180,
-            },
-            "area_facade_elements": np.array([20,60,30,30,50,50], dtype=object),
-            "typology_elements": np.array(['OP', 'OP', 'OP', 'OP', 'GR', 'OP'], dtype=object),
-            "transmittance_U_elements": np.array([0.8196721311475411, 0.8196721311475411, 0.8196721311475411, 0.8196721311475411, 0.5156683855612851, 1.162633192818565], dtype=object),
-            "orientation_elements": np.array(['NV', 'SV', 'EV', 'WV', 'HOR', 'HOR'], dtype=object),
-            'volume': 300, 
-            'building_type_class':'Residential_apartment',
-            'a_use':50 
-        }
-    ],
     "building_surface": [
         {
             "name": "Roof surface",
             "type": "opaque",
-            "area": 130,
+            "area": 120,
             "sky_view_factor": 1.0,
-            "u_value": 2.2,
+            "u_value": 3.05,
             "solar_absorptance": 0.4,
             "thermal_capacity": 741500.0,
             "orientation": {
@@ -66,14 +41,14 @@ BUI = {
             "type": "opaque",
             "area": 30,
             "sky_view_factor": 0.5,
-            "u_value": 1.4,
+            "u_value": 0.95,
             "solar_absorptance": 0.4,
             "thermal_capacity": 1416240.0,
             "orientation": {
                 "azimuth": 0,
                 "tilt": 90
             },
-            "name_adj_zone": "adj_1"
+            "name_adj_zone": None
         },
         {
             "name": "Opaque south surface",
@@ -81,21 +56,21 @@ BUI = {
             "type": "opaque",
             "area": 30,
             "sky_view_factor": 0.5,
-            "u_value": 1.4,
+            "u_value": 0.95,
             "solar_absorptance": 0.4,
             "thermal_capacity": 1416240.0,
             "orientation": {
                 "azimuth": 180,
                 "tilt": 90
             },
-            "name_adj_zone": "adj_2"
+            "name_adj_zone": None
         },
         {
             "name": "Opaque east surface",
             "type": "opaque",
             "area": 30,
             "sky_view_factor": 0.5,
-            "u_value": 1.2,
+            "u_value": 0.95,
             "solar_absorptance": 0.6,
             "thermal_capacity": 1416240.0,
             "orientation": {
@@ -109,7 +84,7 @@ BUI = {
             "type": "opaque",
             "area": 30,
             "sky_view_factor": 0.5,
-            "u_value": 1.2,
+            "u_value": 0.95,
             "solar_absorptance": 0.7,
             "thermal_capacity": 1416240.0,
             "orientation": {
@@ -121,9 +96,9 @@ BUI = {
         {
             "name": "Slab to ground",
             "type": "opaque",
-            "area": 100,
+            "area": 120,
             "sky_view_factor": 0.0,
-            "u_value": 1.6,
+            "u_value": 1.2,
             "solar_absorptance": 0.6,
             "thermal_capacity": 405801,
             "orientation": {
@@ -137,8 +112,8 @@ BUI = {
             "type": "transparent",
             "area": 4,
             "sky_view_factor": 0.5,
-            "u_value": 5,
-            "g_value": 0.726,
+            "u_value": 3.1,
+            "g_value": 0.76,
             "height": 2,
             "width": 1,
             "parapet": 1.1,
@@ -227,7 +202,7 @@ BUI = {
         ],
         "construction": {
             "wall_thickness": 0.3,
-            "thermal_bridges": 2,
+            "thermal_bridges": 0.8,
             "units": "m (for thickness), W/mK (for thermal bridges)"
         },
         "climate_parameters": {
@@ -248,6 +223,114 @@ BUI = {
         }
     }
 }
+
+
+
+'''
+CONDENSING BOILER + RADIATORS
+'''
+INPUT_SYSTEM_HVAC_CONDENSING_BOILER_AND_RADIATOR = {
+    # ======================
+    # ---- EMISSION (secondary side) ----
+    # ======================
+    'emitter_type': 'Radiator',          # Must match a TB14 index (e.g., 'Radiator' / 'Floor heating' / 'Fan coil')
+    'nominal_power': 10,                 # kW: nominal emitter/zone power at design conditions
+    'emission_efficiency': 95,           # %: emission-side efficiency (accounts for emission-side losses)
+    'selected_emm_cont_circuit': 1,      # 0=C.2, 1=C.3, 2=C.4, 3=C.5; radiators are typically modeled as C.3 (variable flow)
+    'flow_temp_control_type': 'Type 2 - Based on outdoor temperature',  # Secondary control law (if used): weather-compensated curve
+    'mixing_valve': False,               # Radiator circuits often do not have a dedicated mixing valve on the secondary side
+    'mixing_valve_delta': 0,             # °C: mixing valve offset; keep 0 if mixing_valve=False for consistency
+
+    # Secondary-side emission limits/setpoints for radiators
+    # Typical medium/low-temperature values to encourage condensing operation (e.g., around 55/45), with an upper cap (e.g., 70°C)
+    'heat_emission_data': pd.DataFrame({
+        "θH_em_flw_max_sahz_i": [70],     # °C: maximum allowed radiator supply temperature
+        "ΔθH_em_w_max_sahz_i":  [20],     # K : maximum allowed supply/return temperature difference
+        "θH_em_ret_req_sahz_i": [45],     # °C: desired return temperature (lower return improves condensing)
+        "βH_em_req_sahz_i":     [80],     # %: required duty-cycle/load factor (mainly relevant for C.4/C.5 ON-OFF behavior)
+        "θH_em_flw_min_tz_i":   [30],     # °C: minimum allowed radiator supply temperature
+    }, index=[
+        "Max flow temperature HZ1",
+        "Max Δθ flow / return HZ1",
+        "Desired return temperature HZ1",
+        "Desired load factor with ON-OFF for HZ1",
+        "Minimum flow temperature for HZ1"
+    ]),
+
+    # Secondary weather-compensation curve (used if flow_temp_control_type = Type 2)
+    'outdoor_temp_data': pd.DataFrame({
+        "θext_min_sahz_i":     [-10],     # °C: minimum outdoor temperature for the curve
+        "θext_max_sahz_i":     [16],      # °C: maximum outdoor temperature for the curve
+        "θem_flw_max_sahz_i":  [70],      # °C: secondary supply at minimum outdoor temperature
+        "θem_flw_min_sahz_i":  [30],      # °C: secondary supply at maximum outdoor temperature
+    }, index=[
+        "Minimum outdoor temperature",
+        "Maximum outdoor temperature",
+        "Maximum flow temperature",
+        "Minimum flow temperature"
+    ]),
+
+    # Emission-side auxiliaries (only if you want to account for them)
+    'auxiliars_power': 0,                # W : e.g., zone actuators/valves/secondary-side pumps (if any)
+    'auxiliary_recovery_factor': 100,    # %: recoverable share of auxiliary energy (if modeled as recoverable heat)
+    'emission_operation_time': 1,        # h : timestep duration (typically 1 hour for hourly inputs)
+
+    # ======================
+    # ---- DISTRIBUTION ----
+    # ======================
+    'heat_losses_recovered': True,       # If True, part of distribution losses can be treated as recoverable heat
+    'distribution_loss_recovery': 90,    # %: recoverable fraction of distribution heat losses (towards conditioned zones)
+    'simplified_approach': 80,           # %: simplified/holistic approach factor used by your implementation
+    'distribution_aux_recovery': 80,     # %: recoverable fraction of distribution auxiliaries (pump heat gains)
+    'distribution_aux_power': 60,        # W : distribution pump electric power (typical order: 40–100 W)
+    'distribution_loss_coeff': 60,       # W/K: distribution heat loss coefficient (depends on pipe length/insulation)
+    'distribution_operation_time': 1,    # h : timestep duration for distribution calculations
+    'recoverable_losses': 0.0,           # kWh: additional system-level recoverable losses upstream (if any)
+
+    # ======================
+    # ---- GENERATION (primary side): condensing boiler ----
+    # ======================
+    'full_load_power': 24,               # kW: boiler nominal useful power
+    'max_monthly_load_factor': 100,      # % : cap on delivered energy/power (per your implementation)
+    'tH_gen_i_ON': 1,                    # h : timestep duration for generator calculations
+
+    # Generator auxiliaries (if you model auxiliary electric use as a % of EHW_gen_in)
+    'auxiliary_power_generator': 0,      # % of EHW_gen_in (set 0 if you do not want this auxiliary model)
+    'fraction_of_auxiliary_power_generator': 40,  # %: recoverable share (if interpreted as recoverable thermal losses)
+
+    # Hydraulic layout on the generator side
+    'generator_circuit': 'direct',       # 'direct' means primary flow equals secondary flow (no hydraulic separation)
+
+    # PRIMARY supply temperature control
+    'gen_flow_temp_control_type': 'Type A - Based on outdoor temperature',  # Primary weather-compensated curve
+    'gen_outdoor_temp_data': pd.DataFrame({
+        "θext_min_gen": [-7],            # °C: minimum outdoor temperature for the primary curve
+        "θext_max_gen": [15],            # °C: maximum outdoor temperature for the primary curve
+        "θflw_gen_max": [70],            # °C: maximum primary supply temperature
+        "θflw_gen_min": [35],            # °C: minimum primary supply temperature
+    }, index=["Generator curve"]),
+    'θHW_gen_flw_const': 50.0,           # °C: used only if gen_flow_temp_control_type is Type C (constant)
+
+    # Generator pump control
+    'speed_control_generator_pump': 'variable',  # 'deltaT_constant' | 'variable'
+    'generator_nominal_deltaT': 20,              # K : typical radiator ΔT (e.g., 70/50 or 55/35)
+
+    # Generator efficiency model (condensing behavior proxy)
+    'efficiency_model': 'simple',        # Starting point; you may switch to 'parametric' for more explicit control
+    # Optional parameters if you switch to 'parametric'
+    # 'eta_max': 108.0,                  # %: max efficiency in strong condensing conditions
+    # 'eta_no_cond': 94.0,               # %: efficiency without condensing
+    # 'T_ret_min': 25.0,                 # °C: reference minimum return temperature for max efficiency
+    # 'T_ret_thr': 55.0,                 # °C: threshold return temperature above which condensing benefit vanishes
+
+    # ======================
+    # ---- CALCULATION POLICY ----
+    # ======================
+    'calc_when_QH_positive_only': False,  # If False: always compute (including zero/negative load timesteps)
+    'off_compute_mode': 'full',           # If calc_when_QH_positive_only=True: 'idle' | 'temps' | 'full'
+}
+
+# ====================================================================================================================
 
 
 INPUT_SYSTEM_HVAC = {
@@ -603,17 +686,10 @@ INPUT_SYSTEM_HVAC = {
 # Puoi duplicare e cambiare category/country/name per coprire altri casi
 BUILDING_ARCHETYPES: List[Dict[str, Any]] = [
     {
-        "name": "SFH_Italy_default",
-        "category": "Single Family House",
-        "country": "Italy",
-        "bui": BUI,
-        "system": INPUT_SYSTEM_HVAC,
-    },
-    {
-        "name": "SFH_Greece_default",
+        "name": "SFH_Greece_1946_1969",
         "category": "Single Family House",
         "country": "Greece",
-        "bui": BUI,
-        "system": INPUT_SYSTEM_HVAC,
-    }
+        "bui": BUI_SINGLE_FAMILY_1946_1969,
+        "system": INPUT_SYSTEM_HVAC_CONDENSING_BOILER_AND_RADIATOR,
+    },
 ]
