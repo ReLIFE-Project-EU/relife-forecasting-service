@@ -15,7 +15,7 @@ headers = {
     "accept": "application/json",
 }
 
-epw_path = Path("/Users/dantonucci/Downloads/2020_Athens.epw")
+epw_path = Path("epw_weather/2020_Athens.epw")
 
 files = {
     "epw_file": (epw_path.name, epw_path.open("rb"), "application/octet-stream"),
