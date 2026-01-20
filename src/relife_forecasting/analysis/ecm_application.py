@@ -1,11 +1,11 @@
 """
-ECM Multiprocessing con Debug e Gestione Errori
-Versione che:
-1. Importa correttamente la funzione di simulazione
-2. Aggiunge logging dettagliato
-3. Gestisce errori e timeout
-4. Mostra progress bar
-5. Salva ogni BUI modificato nella cartella building_examples
+ECM multiprocessing with debug and error handling.
+Version that:
+1. Imports the simulation function correctly
+2. Adds detailed logging
+3. Handles errors and timeouts
+4. Shows a progress bar
+5. Saves each modified BUI into the building_examples folder
 """
 
 import copy
@@ -14,38 +14,49 @@ import os
 import time
 import traceback
 from multiprocessing import Pool, cpu_count
-from typing import Dict, Any, List, Optional,Tuple
+from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 import json
 import numpy as np
 import pybuildingenergy as pybui
-from building_examples import BUI, INPUT_SYSTEM_HVAC
 import pandas as pd
+from typing import Union
 
-RESULTS_DIR = "results/ecm/"               
-SYSTEM_RESULTS_DIR = "results/ecm/heating" 
+# Import BUI and INPUT_SYSTEM_HVAC
+try:
+    from building_examples import (
+        BUI_SINGLE_FAMILY_1946_1969,
+        INPUT_SYSTEM_HVAC_CONDENSING_BOILER_AND_RADIATOR,
+    )
+except ImportError:
+    print("[WARN] building_examples not found, using default data")
+    BUI = {"building": {"name": "test_building"}}
+    INPUT_SYSTEM_HVAC = {}
+
+BUI = BUI_SINGLE_FAMILY_1946_1969
+RESULTS_DIR = "results/ecm/"
+SYSTEM_RESULTS_DIR = "results/ecm/heating"
 BUILDING_EXAMPLES_DIR = "building_examples_ecm"
 
 # ============================================================================
-# IMPORTA LA TUA FUNZIONE DI SIMULAZIONE
+# IMPORT YOUR SIMULATION FUNCTION
 # ============================================================================
 # def simulate_hourly(BUI, INPUT_SYSTEM_HVAC, epw_name=None, name_file=None):
-#     """Wrapper per pybuildingenergy"""
+#     """Wrapper for pybuildingenergy"""
 #     hourly_sim, annual_results = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
 #         BUI,
 #         weather_source="pvgis",
 #         path_weather_file=epw_name,
 #     )
-
-#     # Salva risultati
+#
+#     # Save results
 #     hourly_sim.to_csv(name_file, index=True)
-
-#     # Se vuoi anche i risultati annuali:
+#
+#     # If you also want annual results:
 #     # annual_file = name_file.replace(".csv", "_annual.csv")
 #     # annual_results.to_csv(annual_file, index=True)
-
+#
 #     return hourly_sim
-
 
 
 def simulate_hourly(
@@ -55,24 +66,24 @@ def simulate_hourly(
     name_file: Optional[str] = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Wrapper per pybuildingenergy:
-      - Calcola i fabbisogni edificio (ISO 52016)
-      - Calcola il funzionamento del sistema di riscaldamento (ISO 15316)
-      - Opzionalmente salva i risultati su file CSV.
+    Wrapper for pybuildingenergy:
+      - Computes building needs (ISO 52016)
+      - Computes heating system operation (ISO 15316)
+      - Optionally saves results to CSV.
 
     Args:
-        BUI: Dizionario BUI in formato interno pybuildingenergy
-        INPUT_SYSTEM_HVAC: Configurazione sistema di riscaldamento
-        epw_name: path del file EPW (se fornito → usa weather_source='epw')
-        name_file: path del CSV per i risultati edificio
+        BUI: BUI dictionary in pybuildingenergy internal format
+        INPUT_SYSTEM_HVAC: Heating system configuration
+        epw_name: EPW file path (if provided -> use weather_source='epw')
+        name_file: CSV path for building results
 
     Returns:
-        hourly_sim:     DataFrame orario edificio (ISO 52016)
-        df_system:      DataFrame orario sistema (ISO 15316)
-        annual_results: DataFrame risultati annuali edificio
+        hourly_sim:     Hourly building DataFrame (ISO 52016)
+        df_system:      Hourly system DataFrame (ISO 15316)
+        annual_results: Annual building results DataFrame
     """
 
-    # ===================== ISO 52016 – EDIFICIO =====================
+    # ===================== ISO 52016 - BUILDING =====================
     if epw_name:
         hourly_sim, annual_results = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
             BUI,
@@ -85,43 +96,30 @@ def simulate_hourly(
             weather_source="pvgis",
         )
 
-    # ===================== ISO 15316 – SISTEMA =====================
+    # ===================== ISO 15316 - SYSTEM =====================
     calc = pybui.HeatingSystemCalculator(INPUT_SYSTEM_HVAC)
     calc.load_csv_data(hourly_sim)
     df_system = calc.run_timeseries()
 
-    # ===================== SALVATAGGIO CSV (OPZIONALE) =====================
+    # ===================== CSV SAVE (OPTIONAL) =====================
     if name_file is not None:
-        # 1) CSV edificio (nella cartella risultati "normale")
+        # 1) Building CSV (in the main results folder)
         hourly_sim.to_csv(name_file, index=True)
 
-        # 2) CSV sistema in cartella dedicata (es. results/ecm/heating)
+        # 2) System CSV in a dedicated folder (e.g., results/ecm/heating)
         system_dir = Path(SYSTEM_RESULTS_DIR)
         system_dir.mkdir(parents=True, exist_ok=True)
 
-        base_name = Path(name_file).name                # es: test-cy__baseline__... .csv
+        base_name = Path(name_file).name  # e.g., test-cy__baseline__... .csv
         system_file = system_dir / base_name.replace(".csv", "_system.csv")
 
         df_system.to_csv(system_file, index=True)
 
-        # opzionale: annuale
+        # Optional: annual results
         # annual_file = Path(name_file).with_name(Path(name_file).stem + "_annual.csv")
         # annual_results.to_csv(annual_file, index=True)
 
     return hourly_sim, df_system, annual_results
-
-
-
-# Importa BUI e INPUT_SYSTEM_HVAC
-try:
-    from building_examples import BUI, INPUT_SYSTEM_HVAC
-except ImportError:
-    print("⚠️  building_examples non trovato, usa dati di default")
-    BUI = {"building": {"name": "test_building"}}
-    INPUT_SYSTEM_HVAC = {}
-
-
-
 
 
 # ============================================================================
@@ -129,7 +127,7 @@ except ImportError:
 # ============================================================================
 
 def slugify(text: str) -> str:
-    """Nome file safe per l'OS."""
+    """OS-safe filename."""
     return (
         text.lower()
         .replace(" ", "_")
@@ -143,16 +141,18 @@ def slugify(text: str) -> str:
 def build_name_file(
     building_name: str,
     ecm_combo: List[str],
-    epw_name: str,
+    epw_name: Union[str, Path],
     base_dir: Optional[str] = None,
 ) -> str:
-    """Costruisce nome file univoco per i risultati CSV."""
+    """Build a unique filename for CSV results."""
     dir_path = Path(base_dir or RESULTS_DIR)
     dir_path.mkdir(parents=True, exist_ok=True)
 
     bld = slugify(building_name)
     ecm_tag = "_".join(sorted(ecm_combo)) if ecm_combo else "baseline"
-    epw_tag = slugify(epw_name.split(".")[0])
+
+    epw_path = Path(epw_name)  # works for str or Path
+    epw_tag = slugify(epw_path.stem)  # filename without extension
 
     filename = f"{bld}__{ecm_tag}__{epw_tag}.csv"
     return str(dir_path / filename)
@@ -164,9 +164,9 @@ def save_bui_to_folder(
     folder: str = BUILDING_EXAMPLES_DIR,
 ) -> str:
     """
-    Salva il BUI modificato nella cartella `building_examples` come JSON.
-    Il nome del file include il nome dell'edificio e la combinazione ECM.
-    Esempio: BUI_test_building__wall_window.json
+    Save the modified BUI into the `building_examples` folder as JSON.
+    The filename includes the building name and the ECM combination.
+    Example: BUI_test_building__wall_window.json
     """
     Path(folder).mkdir(parents=True, exist_ok=True)
 
@@ -177,7 +177,7 @@ def save_bui_to_folder(
     full_path = Path(folder) / filename
 
     def _json_safe(obj: Any):
-        """Converte numpy/array in tipi serializzabili JSON."""
+        """Convert numpy/arrays into JSON-serializable types."""
         if isinstance(obj, dict):
             return {k: _json_safe(v) for k, v in obj.items()}
         if isinstance(obj, (list, tuple)):
@@ -193,16 +193,16 @@ def save_bui_to_folder(
     with open(full_path, "w", encoding="utf-8") as f:
         json.dump(_json_safe(BUI_obj), f, ensure_ascii=False, indent=2)
 
-    print(f"  💾 BUI modificato salvato in: {full_path}")
+    print(f"  [SAVE] Modified BUI saved to: {full_path}")
     return str(full_path)
 
 
 # ============================================================================
-# CLASSIFICAZIONE SUPERFICI
+# SURFACE CLASSIFICATION
 # ============================================================================
 
 def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
-    """Classifica superficie come 'roof', 'wall' o 'window'."""
+    """Classify surface as 'roof', 'wall', or 'window'."""
     s_type = str(surface.get("type", "")).lower()
     ori = surface.get("orientation", {})
     tilt = float(ori.get("tilt", 0))
@@ -210,7 +210,7 @@ def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
     name = str(surface.get("name", "")).lower()
     svf = float(surface.get("sky_view_factor", 0.0))
 
-    # Tetto: opaque, orizzontale, verso cielo, non slab
+    # Roof: opaque, horizontal, facing sky, not a slab
     if (
         s_type == "opaque"
         and abs(tilt - 0) < 1e-3
@@ -220,11 +220,11 @@ def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
     ):
         return "roof"
 
-    # Muri: opachi verticali
+    # Walls: opaque vertical
     if s_type == "opaque" and abs(tilt - 90) < 1e-3:
         return "wall"
 
-    # Finestre: trasparenti verticali
+    # Windows: transparent vertical
     if s_type == "transparent" and abs(tilt - 90) < 1e-3:
         return "window"
 
@@ -239,8 +239,8 @@ def apply_u_values_to_BUI(
     active_elements: List[str],
 ) -> Dict[str, Any]:
     """
-    Applica U-values agli elementi specificati e
-    SALVA il BUI modificato in building_examples.
+    Apply U-values to the specified elements and
+    SAVE the modified BUI in building_examples.
     """
     u_map: Dict[str, float] = {}
 
@@ -260,22 +260,25 @@ def apply_u_values_to_BUI(
             old_u = surface.get("u_value", "N/A")
             surface["u_value"] = u_map[s_class]
             modified_count += 1
-            print(f"  ✓ {surface.get('name', 'Unknown')}: {s_class} U={old_u} → {u_map[s_class]}")
+            print(
+                f"  [OK] {surface.get('name', 'Unknown')}: "
+                f"{s_class} U={old_u} -> {u_map[s_class]}"
+            )
 
-    print(f"  📝 Modificate {modified_count} superfici")
+    print(f"  [INFO] Modified surfaces: {modified_count}")
 
-    # 🔴 QUI salviamo il BUI modificato nella cartella building_examples
+    # Save the modified BUI into building_examples
     save_bui_to_folder(BUI_new, active_elements=active_elements)
 
     return BUI_new
 
 
 # ============================================================================
-# GENERAZIONE COMBINAZIONI ECM
+# ECM COMBINATION GENERATION
 # ============================================================================
 
 def generate_ecm_combinations(ecm_options: List[str]) -> List[List[str]]:
-    """Genera tutte le combinazioni NON VUOTE delle ECM."""
+    """Generate all NON-EMPTY ECM combinations."""
     combos: List[List[str]] = []
     for r in range(1, len(ecm_options) + 1):
         for subset in itertools.combinations(ecm_options, r):
@@ -284,7 +287,7 @@ def generate_ecm_combinations(ecm_options: List[str]) -> List[List[str]]:
 
 
 # ============================================================================
-# SIMULAZIONE SINGOLA
+# SINGLE SIMULATION
 # ============================================================================
 
 def run_single_simulation(
@@ -294,19 +297,19 @@ def run_single_simulation(
     epw_name: str,
 ) -> Dict[str, Any]:
     """
-    Esegue una singola simulazione con gestione errori.
-    Ritorna dict con status e info.
+    Run a single simulation with error handling.
+    Returns a dict with status and info.
     """
     start_time = time.time()
 
     try:
         print(f"\n{'='*80}")
-        print(f"   SIMULAZIONE: {Path(name_file).name}")
+        print(f"   SIMULATION: {Path(name_file).name}")
         print(f"   Building: {BUI['building']['name']}")
         print(f"   EPW: {epw_name}")
         print(f"{'='*80}")
 
-        # Esegui simulazione
+        # Run simulation
         result = simulate_hourly(
             BUI=BUI,
             INPUT_SYSTEM_HVAC=INPUT_SYSTEM_HVAC,
@@ -316,13 +319,13 @@ def run_single_simulation(
 
         elapsed = time.time() - start_time
 
-        # Verifica file creato
+        # Check file creation
         if not os.path.exists(name_file):
-            raise FileNotFoundError(f"File non creato: {name_file}")
+            raise FileNotFoundError(f"File not created: {name_file}")
 
         file_size = os.path.getsize(name_file) / 1024  # KB
 
-        print(f"\n✅ SUCCESSO in {elapsed:.1f}s")
+        print(f"\n[OK] SUCCESS in {elapsed:.1f}s")
         print(f"   File: {name_file}")
         print(f"   Size: {file_size:.1f} KB")
 
@@ -337,7 +340,7 @@ def run_single_simulation(
         elapsed = time.time() - start_time
         error_msg = f"{type(e).__name__}: {str(e)}"
 
-        print(f"\n❌ ERRORE in {elapsed:.1f}s")
+        print(f"\n[ERROR] FAILED in {elapsed:.1f}s")
         print(f"   {error_msg}")
         print(f"   File: {name_file}")
         print(f"\n{traceback.format_exc()}")
@@ -350,9 +353,9 @@ def run_single_simulation(
         }
 
 
-# Wrapper per multiprocessing
+# Multiprocessing worker
 def _mp_worker(task: Dict[str, Any]) -> Dict[str, Any]:
-    """Worker per multiprocessing."""
+    """Worker for multiprocessing."""
     return run_single_simulation(
         BUI=task["BUI"],
         INPUT_SYSTEM_HVAC=task["INPUT_SYSTEM_HVAC"],
@@ -362,7 +365,7 @@ def _mp_worker(task: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # ============================================================================
-# FUNZIONE PRINCIPALE
+# MAIN FUNCTION
 # ============================================================================
 
 def run_ecm_multiprocessing(
@@ -378,48 +381,48 @@ def run_ecm_multiprocessing(
     include_baseline: bool = True,
 ) -> Dict[str, Any]:
     """
-    Esegue simulazioni ECM in multiprocessing.
-    
+    Run ECM simulations with multiprocessing.
+
     Returns:
-        Dict con statistiche delle simulazioni
+        Dict with simulation statistics
     """
 
-    print("\n" + "="*80)
-    print("AVVIO ECM MULTIPROCESSING")
-    print("="*80)
+    print("\n" + "=" * 80)
+    print("START ECM MULTIPROCESSING")
+    print("=" * 80)
 
-    # Validazioni
+    # Validations
     if "wall" in ecm_options and u_wall is None:
-        raise ValueError("Per ECM 'wall' è necessario fornire u_wall.")
+        raise ValueError("For ECM 'wall' you must provide u_wall.")
     if "roof" in ecm_options and u_roof is None:
-        raise ValueError("Per ECM 'roof' è necessario fornire u_roof.")
+        raise ValueError("For ECM 'roof' you must provide u_roof.")
     if "window" in ecm_options and u_window is None:
-        raise ValueError("Per ECM 'window' è necessario fornire u_window.")
+        raise ValueError("For ECM 'window' you must provide u_window.")
 
-    # Genera combinazioni
+    # Generate combinations
     ecm_combos = generate_ecm_combinations(ecm_options)
 
-    # Aggiungi baseline se richiesto
+    # Add baseline if requested
     if include_baseline:
-        ecm_combos.insert(0, [])  # Lista vuota = baseline
+        ecm_combos.insert(0, [])  # Empty list = baseline
 
-    print(f"\n === CONFIGURAZIONE: ===")
+    print("\n === CONFIGURATION: ===")
     print(f"   ECM options: {ecm_options}")
     print(f"   U-values: wall={u_wall}, roof={u_roof}, window={u_window}")
-    print(f"   Combinazioni da simulare: {len(ecm_combos)}")
-    print(f"   Processi paralleli: {n_processes or cpu_count()}")
+    print(f"   Combinations to simulate: {len(ecm_combos)}")
+    print(f"   Parallel processes: {n_processes or cpu_count()}")
     print(f"   Output dir: {output_dir or RESULTS_DIR}")
 
     base_dir = output_dir or RESULTS_DIR
     Path(base_dir).mkdir(parents=True, exist_ok=True)
 
-    # Prepara tasks
+    # Prepare tasks
     tasks: List[Dict[str, Any]] = []
 
-    print(f"\n📋 PREPARAZIONE TASKS:")
+    print("\n[INFO] PREPARING TASKS:")
     for i, combo in enumerate(ecm_combos, 1):
         combo_name = ", ".join(combo) if combo else "BASELINE"
-        print(f"\n[{i}/{len(ecm_combos)}] Combinazione: {combo_name}")
+        print(f"\n[{i}/{len(ecm_combos)}] Combination: {combo_name}")
 
         name_file = build_name_file(
             building_name=BUI_base["building"]["name"],
@@ -430,8 +433,8 @@ def run_ecm_multiprocessing(
 
         print(f"   Output: {Path(name_file).name}")
 
-        # Applica modifiche BUI
-        if combo:  # Non modificare baseline
+        # Apply BUI changes
+        if combo:  # Do not modify baseline
             BUI_mod = apply_u_values_to_BUI(
                 BUI_base=BUI_base,
                 u_wall=u_wall,
@@ -441,7 +444,7 @@ def run_ecm_multiprocessing(
             )
         else:
             BUI_mod = copy.deepcopy(BUI_base)
-            print("   (Baseline - nessuna modifica)")
+            print("   (Baseline - no changes)")
 
         task = {
             "BUI": BUI_mod,
@@ -451,48 +454,48 @@ def run_ecm_multiprocessing(
         }
         tasks.append(task)
 
-    # Esegui simulazioni
+    # Run simulations
     print(f"\n{'='*80}")
-    print(f"🔄 ESECUZIONE SIMULAZIONI ({len(tasks)} tasks)")
+    print(f"[RUN] EXECUTING SIMULATIONS ({len(tasks)} tasks)")
     print(f"{'='*80}")
 
     start_time = time.time()
 
     if n_processes is None or n_processes == 1:
-        # Sequenziale (per debug)
-        print("⚠️  Modalità SEQUENZIALE (n_processes=1)")
+        # Sequential (for debug)
+        print("[WARN] SEQUENTIAL MODE (n_processes=1)")
         results = [_mp_worker(task) for task in tasks]
     else:
-        # Parallelo
-        print(f"⚡ Modalità PARALLELA ({n_processes} processi)")
+        # Parallel
+        print(f"[INFO] PARALLEL MODE ({n_processes} processes)")
         with Pool(processes=n_processes) as pool:
             results = pool.map(_mp_worker, tasks)
 
     total_time = time.time() - start_time
 
-    # Statistiche
+    # Stats
     successful = [r for r in results if r["status"] == "success"]
     failed = [r for r in results if r["status"] == "error"]
 
     print(f"\n{'='*80}")
-    print(f"RISULTATI FINALI")
+    print("FINAL RESULTS")
     print(f"{'='*80}")
-    print(f"Successi: {len(successful)}/{len(results)}")
-    print(f"Errori: {len(failed)}/{len(results)}")
-    print(f"Tempo totale: {total_time:.1f}s")
-    print(f"⚡ Tempo medio: {total_time/len(results):.1f}s per simulazione")
+    print(f"Successes: {len(successful)}/{len(results)}")
+    print(f"Errors: {len(failed)}/{len(results)}")
+    print(f"Total time: {total_time:.1f}s")
+    print(f"[INFO] Avg time: {total_time/len(results):.1f}s per simulation")
 
     if successful:
         total_size = sum(r["size_kb"] for r in successful)
-        print(f"💾 Spazio disco: {total_size:.1f} KB totali")
-        print(f"\n📁 File creati in: {base_dir}/")
+        print(f"[INFO] Disk usage: {total_size:.1f} KB total")
+        print(f"\n[INFO] Files created in: {base_dir}/")
         for r in successful:
-            print(f"   ✓ {Path(r['file']).name}")
+            print(f"   OK {Path(r['file']).name}")
 
     if failed:
-        print(f"\n⚠️  ERRORI:")
+        print("\n[WARN] ERRORS:")
         for r in failed:
-            print(f"   ✗ {Path(r['file']).name}: {r['error']}")
+            print(f"   FAIL {Path(r['file']).name}: {r['error']}")
 
     return {
         "total": len(results),
@@ -504,25 +507,25 @@ def run_ecm_multiprocessing(
 
 
 # ============================================================================
-# ESEMPIO D'USO
+# EXAMPLE USAGE
 # ============================================================================
 
 # if __name__ == "__main__":
-    # Test con 1 solo processo per debug
+# Test with a single process for debug
 stats = run_ecm_multiprocessing(
     BUI_base=BUI,
-    INPUT_SYSTEM_HVAC=INPUT_SYSTEM_HVAC,
+    INPUT_SYSTEM_HVAC=INPUT_SYSTEM_HVAC_CONDENSING_BOILER_AND_RADIATOR,
     ecm_options=["wall", "window"],
     u_wall=0.5,
     u_window=1.0,
-    epw_name="/Users/dantonucci/Documents/GitHub/relife-forecasting-service/src/relife_forecasting/utils/GRC_Athens.167160_IWEC.epw",
+    epw_name=Path("epw_weather/GRC_Athens.167160_IWEC.epw"),
     output_dir="results",
-    n_processes=1,  # ← IMPORTANTE: usa 1 per debug!
+    n_processes=1,  # IMPORTANT: use 1 for debug
     include_baseline=True,
 )
 
-print("\n" + "="*80)
-print("COMPLETATO")
-print("="*80)
-print(f"Successi: {stats['successful']}/{stats['total']}")
-print(f"Tempo: {stats['total_time']:.1f}s")
+print("\n" + "=" * 80)
+print("COMPLETED")
+print("=" * 80)
+print(f"Successes: {stats['successful']}/{stats['total']}")
+print(f"Time: {stats['total_time']:.1f}s")

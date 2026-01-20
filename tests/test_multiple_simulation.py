@@ -1,6 +1,9 @@
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 import pybuildingenergy as pybui
+import pytest
 
 BUI = {
     "building": {
@@ -317,54 +320,79 @@ INPUT_SYSTEM_HVAC = {
 
 }
 
-calc = pybui.HeatingSystemCalculator(INPUT_SYSTEM_HVAC)
 
+def test_multiple_simulation():
+    """Test ISO52016 simulation and heating system calculation."""
 
+    calc = pybui.HeatingSystemCalculator(INPUT_SYSTEM_HVAC)
 
-bui_fixed, report = pybui.sanitize_and_validate_BUI(BUI, fix=True)
+    bui_fixed, report = pybui.sanitize_and_validate_BUI(BUI, fix=True)
 
+    # print issues
+    for r in report:
+        lvl = r["level"]
+        print(
+            f"[{lvl}] {r['path']}: {r['msg']}"
+            + (" (fix applied)" if r["fix_applied"] else "")
+        )
 
-# print issues
-for r in report:
-    lvl = r["level"]
-    print(f"[{lvl}] {r['path']}: {r['msg']}" + (" (fix applied)" if r["fix_applied"] else ""))
+    # validate BUI
+    bui_checked, issues = pybui.sanitize_and_validate_BUI(BUI, fix=False)
+    bui_checked["building_surface"]
+    # extract only errors (level "ERROR")
+    errors = [e for e in issues if e["level"] == "ERROR"]
 
-# validate BUI
-bui_checked, issues = pybui.sanitize_and_validate_BUI(BUI, fix=False)
-bui_checked['building_surface']
-# extract only errors (level "ERROR")
-errors = [e for e in issues if e["level"] == "ERROR"]
+    name_file = "hourly_sim_arch_now"
+    epw_name = "GRC_Athens.167160_IWEC"
+    # epw_name = "2050_Athens"
 
+    base_dir = Path(__file__).resolve().parent
+    file_dir = base_dir / "results"
+    weather_file = base_dir / "utils" / f"{epw_name}.epw"
 
+    if not weather_file.exists():
+        pytest.skip(f"EPW file not found: {weather_file}")
 
-name_file = "hourly_sim_arch_now"
-epw_name = "GRC_Athens.167160_IWEC"
-# epw_name = "2050_Athens"
-if errors:
-    print("❌ Errors in BUI input data — simulation interrupted:\n")
-    for e in errors:
-        print(f" - {e['path']}: {e['msg']}")
-    raise ValueError("Invalid BUI input: correct the data and retry.")
-else:
+    if errors:
+        print("❌ Errors in BUI input data — simulation interrupted:\n")
+        for e in errors:
+            print(f" - {e['path']}: {e['msg']}")
+        raise ValueError("Invalid BUI input: correct the data and retry.")
+
     print("✅ BUI valid — starting ISO52016 simulation...\n")
-    file_dir = "/Users/dantonucci/Documents/GitHub/relife-forecasting-service/src/relife_forecasting/results"
-    hourly_sim,annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(bui_checked,weather_source="epw", path_weather_file= f'/Users/dantonucci/Documents/GitHub/relife-forecasting-service/src/relife_forecasting/utils/{epw_name}.epw' )
-    path_hourly_sim_result = file_dir + f"/{name_file}.csv"
-    path_annual_sim_result = file_dir + f"/{name_file}_annual.csv"
+    file_dir.mkdir(parents=True, exist_ok=True)
+    hourly_sim, annual_results_df = (
+        pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+            bui_checked,
+            weather_source="epw",
+            path_weather_file=str(weather_file),
+        )
+    )
+
+    path_hourly_sim_result = file_dir / f"{name_file}.csv"
+    path_annual_sim_result = file_dir / f"{name_file}_annual.csv"
     hourly_sim.to_csv(path_hourly_sim_result)
     annual_results_df.to_csv(path_annual_sim_result)
-        
+
     # ISO 15316-1 calculation
     df_in = calc.load_csv_data(hourly_sim)  # colonne: Q_H, T_op, T_ext (o alias)
     df_out = calc.run_timeseries()
-    df_out.to_csv(file_dir + f"/{name_file}_heating_system.csv")
+    df_out.to_csv(file_dir / f"{name_file}_heating_system.csv")
 
     # Generate Graphs
     dir_chart_folder = file_dir
     name_report = f"main_report_{name_file}"
-    pybui.Graphs_and_report(df = hourly_sim,season ='heating_cooling',building_area=BUI['building']['net_floor_area'] ).bui_analysis_page(
-    folder_directory=dir_chart_folder,
-    name_file=name_report)
+    pybui.Graphs_and_report(
+        df=hourly_sim,
+        season="heating_cooling",
+        building_area=BUI["building"]["net_floor_area"],
+    ).bui_analysis_page(
+        folder_directory=str(dir_chart_folder),
+        name_file=name_report,
+    )
 
+    assert not hourly_sim.empty
+    assert not annual_results_df.empty
+    assert not df_out.empty
 
 

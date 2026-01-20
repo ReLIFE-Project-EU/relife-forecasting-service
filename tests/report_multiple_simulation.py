@@ -1,15 +1,17 @@
 from pyecharts.globals import ThemeType
 from pyecharts.charts import Page, Bar, Line
 from pyecharts import options as opts
-from utils.graphs import *
+from relife_forecasting.utils.graphs import *
 import pandas as pd
 import json
 from pathlib import Path
 import os
-from building_examples import BUI
+import pytest
+
+from relife_forecasting.building_examples import BUI
 
 # -------------------------------------------------------------------------------------------------
-#   GRAFICO ANNUALE PER N SIMULAZIONI (BUILDING)
+#   ANNUAL CHART FOR N SIMULATIONS (BUILDING)
 # -------------------------------------------------------------------------------------------------
 
 def annual_total_HC_sum_chart(
@@ -19,18 +21,18 @@ def annual_total_HC_sum_chart(
     theme_type: str = ThemeType.ROMA,
 ):
     """
-    Bar chart con consumi annuali per Q_H e Q_C per N simulazioni.
+    Bar chart with annual Q_H and Q_C for N simulations.
 
-    :param labels: etichette sull'asse x (es. ["Q_H", "Q_C"])
-    :param values_all_sims: lista di liste con i valori delle simulazioni:
+    :param labels: x-axis labels (e.g., ["Q_H", "Q_C"])
+    :param values_all_sims: list of simulation values:
                             [
                                 [qh1, qc1],   # sim 1
                                 [qh2, qc2],   # sim 2
                                 [qh3, qc3],   # sim 3
                                 ...
                             ]
-    :param sim_labels: lista di etichette per ogni simulazione (stessa lunghezza di values_all_sims)
-    :param theme_type: tema pyecharts
+    :param sim_labels: labels for each simulation (same length as values_all_sims)
+    :param theme_type: pyecharts theme
     """
     c = (
         Bar(init_opts=opts.InitOpts(theme=theme_type))
@@ -77,7 +79,7 @@ def annual_total_HC_sum_chart(
 
 
 # -------------------------------------------------------------------------------------------------
-#   GRAFICO MENSILE TIME SERIES DELLA GENERAZIONE (SYSTEM)
+#   MONTHLY TIME SERIES GENERATION CHART (SYSTEM)
 # -------------------------------------------------------------------------------------------------
 
 def monthly_generation_time_series_chart(
@@ -89,30 +91,30 @@ def monthly_generation_time_series_chart(
     theme_type: str = ThemeType.ROMA,
 ):
     """
-    Line chart mensile dei valori di:
+    Monthly line chart for:
       - QH_gen_out(kWh)
       - QHW_gen_out(kWh)
-    per tutte le simulazioni.
+    across all simulations.
 
-    :param x_labels: etichette asse X (es. ["2009-01", "2009-02", ...])
-    :param series_qh: lista di liste, una per simulazione, con valori mensili QH_gen_out(kWh)
-    :param series_qhw: lista di liste, una per simulazione, con valori mensili QHW_gen_out(kWh)
-    :param sim_labels: etichette delle simulazioni
-    :param title: titolo del grafico
-    :param theme_type: tema pyecharts
+    :param x_labels: x-axis labels (e.g., ["2009-01", "2009-02", ...])
+    :param series_qh: list of monthly QH_gen_out(kWh) series
+    :param series_qhw: list of monthly QHW_gen_out(kWh) series
+    :param sim_labels: simulation labels
+    :param title: chart title
+    :param theme_type: pyecharts theme
     """
     c = Line(init_opts=opts.InitOpts(theme=theme_type))
     c.add_xaxis(x_labels)
 
     for qh_vals, qhw_vals, lab in zip(series_qh, series_qhw, sim_labels):
-        # Una linea per il riscaldamento
+        # One line per heating
         # c.add_yaxis(
         #     f"{lab} - QH_gen_out",
         #     qh_vals,
         #     is_smooth=True,
         #     linestyle_opts=opts.LineStyleOpts(width=2),
         # )
-        # Una linea per ACS (QHW)
+        # One line per DHW (QHW)
         c.add_yaxis(
             f"{lab} - QHW_gen_out",
             qhw_vals,
@@ -162,22 +164,22 @@ def monthly_generation_time_series_chart(
 
 
 # -------------------------------------------------------------------------------------------------
-#   REPORT PER N SIMULAZIONI
+#   REPORT FOR N SIMULATIONS
 # -------------------------------------------------------------------------------------------------
 
 class MultiSimulationsReport:
     """
-    Class per creare un report di confronto tra N simulazioni
-    a partire da N DataFrame (es. letti da CSV).
+    Class to build a comparison report across N simulations
+    from N DataFrames (e.g., read from CSV).
 
-    Si assume che ogni DataFrame "building" abbia:
-        - indice datetime
-        - colonne: 'Q_H' (heating), 'Q_C' (cooling),
-          opzionalmente 'Q_HC', 'T_op', 'T_ext'
+    Each "building" DataFrame is expected to have:
+        - datetime index
+        - columns: 'Q_H' (heating), 'Q_C' (cooling),
+          optionally 'Q_HC', 'T_op', 'T_ext'
 
-    E ogni DataFrame "system" (se fornito) abbia:
-        - indice datetime
-        - colonne: 'QH_gen_out(kWh)', 'QHW_gen_out(kWh)' (se disponibili)
+    Each "system" DataFrame (if provided) is expected to have:
+        - datetime index
+        - columns: 'QH_gen_out(kWh)', 'QHW_gen_out(kWh)' (if available)
     """
 
     def __init__(
@@ -187,17 +189,19 @@ class MultiSimulationsReport:
         building_areas: list[float],
         system_dfs: list[pd.DataFrame] | None = None,
     ):
-        assert len(building_dfs) == len(labels) == len(building_areas), \
-            "building_dfs, labels e building_areas devono avere la stessa lunghezza"
+        assert len(building_dfs) == len(labels) == len(building_areas), (
+            "building_dfs, labels, and building_areas must have the same length"
+        )
 
         self.dfs = [df.sort_index(axis=0) for df in building_dfs]
         self.labels = labels
         self.areas = building_areas
 
-        # System (opzionale)
+        # System (optional)
         if system_dfs is not None:
-            assert len(system_dfs) == len(building_dfs), \
-                "system_dfs deve avere la stessa lunghezza di building_dfs"
+            assert len(system_dfs) == len(building_dfs), (
+                "system_dfs must have the same length as building_dfs"
+            )
             self.system_dfs = [df.sort_index(axis=0) for df in system_dfs]
         else:
             self.system_dfs = []
@@ -235,12 +239,12 @@ class MultiSimulationsReport:
     @staticmethod
     def _monthly_gen_energy(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Ritorna un DataFrame con la somma mensile di:
+        Return a DataFrame with monthly sums of:
           - QH_gen_out(kWh)
           - QHW_gen_out(kWh)
-        se presenti nel DataFrame.
+        if present in the DataFrame.
 
-        L'indice deve essere datetime.
+        The index must be datetime.
         """
         cols = []
         if "QH_gen_out(kWh)" in df.columns:
@@ -250,7 +254,7 @@ class MultiSimulationsReport:
 
         if not cols:
             raise ValueError(
-                "Il DataFrame non contiene le colonne 'QH_gen_out(kWh)' o 'QHW_gen_out(kWh)'."
+                "The DataFrame does not contain 'QH_gen_out(kWh)' or 'QHW_gen_out(kWh)'."
             )
 
         df_gen = df.loc[:, cols]
@@ -262,7 +266,7 @@ class MultiSimulationsReport:
 
         return df_monthly
 
-    # ------------------------ GRAFICI DI CONFRONTO (BUILDING) ------------------------
+    # ------------------------ COMPARISON CHARTS (BUILDING) ------------------------
 
     def monthly_heating_comparison(
         self,
@@ -270,8 +274,8 @@ class MultiSimulationsReport:
         name_file: str = "monthly_heating_comparison",
     ):
         """
-        Confronto mensile dei consumi di heating tra N simulazioni.
-        I valori sono espressi in kWh.
+        Monthly heating consumption comparison across N simulations.
+        Values are in kWh.
         """
 
         df_monthly_list = [self._monthly_HC(df, unit='W') for df in self.dfs]
@@ -295,8 +299,8 @@ class MultiSimulationsReport:
         name_file: str = "monthly_cooling_comparison",
     ):
         """
-        Confronto mensile dei consumi di cooling tra N simulazioni.
-        I valori sono espressi in kWh.
+        Monthly cooling consumption comparison across N simulations.
+        Values are in kWh.
         """
 
         df_monthly_list = [self._monthly_HC(df, unit='W') for df in self.dfs]
@@ -314,7 +318,7 @@ class MultiSimulationsReport:
         Chart.render(file_path)
         return Chart
 
-    # ------------------------ GRAFICO DI CONFRONTO (SYSTEM) ------------------------
+    # ------------------------ COMPARISON CHART (SYSTEM) ------------------------
 
     def monthly_generation_comparison(
         self,
@@ -322,18 +326,18 @@ class MultiSimulationsReport:
         name_file: str = "monthly_generation_comparison",
     ):
         """
-        Grafico mensile (line chart) di QH_gen_out(kWh) e QHW_gen_out(kWh)
-        per tutte le simulazioni di sistema (tutti i CSV in results/ecm/heating).
+        Monthly line chart for QH_gen_out(kWh) and QHW_gen_out(kWh)
+        across all system simulations (all CSVs in results/ecm/heating).
         """
         if not self.system_dfs:
-            # Nessun dato di system fornito → niente grafico
+            # No system data provided -> no chart
             raise RuntimeError(
-                "Nessun DataFrame di sistema fornito a MultiSimulationsReport (system_dfs è vuoto)."
+                "No system DataFrame provided to MultiSimulationsReport (system_dfs is empty)."
             )
 
         monthly_list = [self._monthly_gen_energy(df) for df in self.system_dfs]
 
-        # Etichette asse X come "YYYY-MM" (prendiamo l'indice della prima sim)
+        # X-axis labels as "YYYY-MM" (use the first simulation index)
         first_monthly = monthly_list[0]
         x_labels = [idx.strftime("%Y-%m") for idx in first_monthly.index]
 
@@ -379,17 +383,17 @@ class MultiSimulationsReport:
         normalized per surface [kWh/m²], for all simulations.
         """
 
-        # Uso unit=None per evitare la divisione /1000 dentro _yearly_HC
+        # Use unit=None to avoid division by 1000 inside _yearly_HC
         df_yearly_list = [self._yearly_HC(df, unit=None) for df in self.dfs]
 
         values_all_sims = []
         for df_y, area in zip(df_yearly_list, self.areas):
-            # Q_* in Wh -> /1000 per kWh, poi /area [m²]
+            # Q_* in Wh -> /1000 for kWh, then /area [m²]
             qh_kwh_m2 = df_y["Q_H"].values[0] / (1000 * area)
             qc_kwh_m2 = df_y["Q_C"].values[0] / (1000 * area)
             values_all_sims.append([round(qh_kwh_m2, 2), round(qc_kwh_m2, 2)])
 
-        labels = ["Q_H", "Q_C"]  # heating e cooling
+        labels = ["Q_H", "Q_C"]  # heating and cooling
 
         Chart = annual_total_HC_sum_chart(
             labels=labels,
@@ -402,7 +406,7 @@ class MultiSimulationsReport:
         Chart.render(file_path)
         return Chart
 
-    # ------------------------ REPORT COMPLETO ------------------------
+    # ------------------------ FULL REPORT ------------------------
 
     def comparison_page(
         self,
@@ -412,7 +416,7 @@ class MultiSimulationsReport:
         """
         Creates an HTML report comparing all simulations:
 
-        - Monthly generator energy (system, QH_gen_out & QHW_gen_out, tutte le simulazioni)
+        - Monthly generator energy (system, QH_gen_out & QHW_gen_out, all simulations)
         - Monthly heating consumption (bar chart, building)
         - Monthly cooling consumption (bar chart, building)
         - Annual total heating + cooling [kWh/m²] (bar chart, building)
@@ -420,7 +424,7 @@ class MultiSimulationsReport:
 
         page = Page(layout=Page.SimplePageLayout)
 
-        # 1) System generation chart (se disponibile)
+        # 1) System generation chart (if available)
         if self.system_dfs:
             page.add(
                 self.monthly_generation_comparison(
@@ -453,7 +457,7 @@ class MultiSimulationsReport:
 
 
 # ========================================================================================================
-#   FUNZIONE DI COMODO PER N FILE CSV (BUILDING + SYSTEM)
+#   HELPER FUNCTION FOR N CSV FILES (BUILDING + SYSTEM)
 # ========================================================================================================
 
 def create_multi_simulations_report_from_csv(
@@ -468,26 +472,27 @@ def create_multi_simulations_report_from_csv(
 ):
     """
     High-level function that:
-        - reads N CSV files dei building (results/ecm)
-        - opzionalmente legge N CSV dei system (results/ecm/heating)
+        - reads N building CSV files (results/ecm)
+        - optionally reads N system CSV files (results/ecm/heating)
         - builds the comparison report
         - saves a final HTML file
 
-    :param building_csv_paths: lista di path ai CSV delle simulazioni building
-    :param folder_directory: directory dove salvare il report
-    :param name_file: nome del file HTML del report (senza estensione)
-    :param building_areas: lista delle aree dei building per le simulazioni [m²]
-    :param labels: lista delle label delle simulazioni (se None -> Simulation 1, 2, 3, ...)
-    :param datetime_column: nome della colonna datetime se non è l'indice
-    :param sep: separatore dei CSV (default ',')
-    :param system_csv_paths: lista di path ai CSV dei system (stessa lunghezza di building_csv_paths)
+    :param building_csv_paths: list of paths to building simulation CSVs
+    :param folder_directory: directory where the report is saved
+    :param name_file: name of the HTML report file (without extension)
+    :param building_areas: list of building areas for the simulations [m²]
+    :param labels: list of simulation labels (if None -> Simulation 1, 2, 3, ...)
+    :param datetime_column: name of the datetime column if not used as index
+    :param sep: CSV separator (default ',')
+    :param system_csv_paths: list of paths to system CSVs (same length as building_csv_paths)
     """
 
     if labels is None:
         labels = [f"Simulation {i+1}" for i in range(len(building_csv_paths))]
 
-    assert len(building_csv_paths) == len(building_areas) == len(labels), \
-        "building_csv_paths, building_areas e labels devono avere la stessa lunghezza"
+    assert len(building_csv_paths) == len(building_areas) == len(labels), (
+        "building_csv_paths, building_areas, and labels must have the same length"
+    )
 
     # ---- Building CSV ----
     building_dfs = []
@@ -500,11 +505,12 @@ def create_multi_simulations_report_from_csv(
             df = df.set_index(datetime_column)
         building_dfs.append(df)
 
-    # ---- System CSV (opzionale) ----
+    # ---- System CSV (optional) ----
     system_dfs = None
     if system_csv_paths is not None:
-        assert len(system_csv_paths) == len(building_csv_paths), \
-            "system_csv_paths deve avere la stessa lunghezza di building_csv_paths"
+        assert len(system_csv_paths) == len(building_csv_paths), (
+            "system_csv_paths must have the same length as building_csv_paths"
+        )
         tmp_system_dfs = []
         for path in system_csv_paths:
             if datetime_column is None:
@@ -527,7 +533,7 @@ def create_multi_simulations_report_from_csv(
 
 
 # ========================================================================================================
-#   WRAPPER COMPATIBILE PER 2 SIMULAZIONI (OPZIONALE)
+#   WRAPPER FOR 2 SIMULATIONS (OPTIONAL)
 # ========================================================================================================
 
 def create_two_simulations_report_from_csv(
@@ -545,7 +551,7 @@ def create_two_simulations_report_from_csv(
     system_csv_path_2: str | None = None,
 ):
     """
-    Wrapper che usa internamente la funzione generica per N simulazioni.
+    Wrapper that uses the generic N-simulations function.
     """
     system_paths = None
     if system_csv_path_1 is not None and system_csv_path_2 is not None:
@@ -564,16 +570,19 @@ def create_two_simulations_report_from_csv(
 
 
 # ========================================================================================================
-#   ESEMPIO D'USO (MULTI-SIM, BUILDING + SYSTEM)
+#   TEST ENTRY POINT (MULTI-SIM, BUILDING + SYSTEM)
 # ========================================================================================================
 
-# Nota: qui assumo che:
-#   - i CSV BUILDING siano in: results/ecm/*.csv  (esclusi quelli "annual")
-#   - i CSV SYSTEM siano in:   results/ecm/heating/*.csv
-#   - esista una corrispondenza 1:1 nell'ordine tra i due insiemi di file
+def test_create_multi_simulations_report_from_csv():
+    """
+    Smoke test that generates a multi-simulation report when CSVs are available.
 
-if __name__ == "__main__":
-    # Cartelle
+    Assumes:
+      - building CSVs are in: results/*.csv (excluding "annual")
+      - system CSVs are in:   results/ecm/heating/*.csv
+      - files are aligned 1:1 in order
+    """
+    # Folders
     building_folder = "results/"
     system_folder = "results/ecm/heating"
 
@@ -589,30 +598,26 @@ if __name__ == "__main__":
         str(p) for p in Path(system_folder).glob("*.csv")
     )
 
-    # Controllo minimo (puoi toglierlo se sei sicuro del match)
+    if not building_csv_list:
+        pytest.skip("No building CSVs found for report generation.")
+
+    if not system_csv_list:
+        pytest.skip("No system CSVs found for report generation.")
+
+    # Minimal consistency check
     if len(system_csv_list) != len(building_csv_list):
-        print(
-            "ATTENZIONE: numero di CSV building diverso da numero di CSV system, ",
-            f"building={len(building_csv_list)}, system={len(system_csv_list)}",
+        pytest.skip(
+            "Building CSV count differs from system CSV count."
         )
 
-    # Aree: stessa area per tutte le simulazioni (esempio)
-    # Devi avere BUI accessibile o passarle da fuori
+    # Areas: same area for all simulations (example)
     areas_list = [BUI["building"]["net_floor_area"]] * len(building_csv_list)
-    # areas_list = [100.0] * len(building_csv_list)  # placeholder: sostituisci con l'area reale
 
-    # Label a partire dai nomi file building (esempio simile al tuo pattern)
+    # Labels derived from building file names
     labels_list = [
         os.path.basename(p).split("__")[1].split("___")[0]
         for p in building_csv_list
     ]
-
-    # labels_list = [
-    #     os.path.basename(p).split("_sim_arch_")[1].replace(".csv", "")
-    #     if "_sim_arch_" in os.path.basename(p)
-    #     else os.path.basename(p).replace(".csv", "")
-    #     for p in building_csv_list
-    # ]
 
     create_multi_simulations_report_from_csv(
         building_csv_paths=building_csv_list,

@@ -692,4 +692,11 @@ BUILDING_ARCHETYPES: List[Dict[str, Any]] = [
         "bui": BUI_SINGLE_FAMILY_1946_1969,
         "system": INPUT_SYSTEM_HVAC_CONDENSING_BOILER_AND_RADIATOR,
     },
+    {
+        "name": "SFH_Italy_1946_1969",
+        "category": "Single Family House",
+        "country": "Italy",
+        "bui": BUI_SINGLE_FAMILY_1946_1969,
+        "system": INPUT_SYSTEM_HVAC_CONDENSING_BOILER_AND_RADIATOR,
+    },
 ]

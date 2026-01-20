@@ -1,15 +1,15 @@
 """
-Esempio di simulazione in parallelo di più archetipi con pybuildingenergy.
+Example: parallel simulation of multiple building archetypes with pybuildingenergy.
 
-- Per ogni archetipo in BUILDING_ARCHETYPES:
-    * Simula ISO 52016 (Temperature_and_Energy_needs_calculation)
-    * Simula il sistema di riscaldamento (HeatingSystemCalculator)
-    * Restituisce i DataFrame e un riepilogo sintetico
+- For each archetype in BUILDING_ARCHETYPES:
+    * Run ISO 52016 (Temperature_and_Energy_needs_calculation)
+    * Run the heating system simulation (HeatingSystemCalculator)
+    * Return the DataFrames and a compact summary
 
-Risultati:
+Outputs:
     - results_by_archetype: dict
         {
-            "nome_archetipo": {
+            "archetype_name": {
                 "hourly_building": df_hourly,
                 "annual_building": df_annual,
                 "hourly_system": df_system,
@@ -17,12 +17,11 @@ Risultati:
             ...
         }
 
-    - summary_df: DataFrame di sintesi con una riga per archetipo
+    - summary_df: summary DataFrame with one row per archetype
 """
 
 from __future__ import annotations
 
-import os
 from typing import Dict, Any, Tuple
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -34,49 +33,57 @@ from building_examples import BUILDING_ARCHETYPES
 
 
 # ---------------------------
-# Funzione di simulazione
+# Single-archetype simulation
 # ---------------------------
 
 def simulate_one_archetype(archetype: Dict[str, Any]) -> Tuple[str, Dict[str, pd.DataFrame], pd.Series]:
     """
-    Simula un singolo archetipo.
+    Simulate a single archetype.
 
-    Restituisce:
-        - nome_archetipo
-        - dict con i DataFrame:
+    Returns:
+        - archetype name
+        - dict of DataFrames:
             {
                 "hourly_building": df_hourly,
                 "annual_building": df_annual,
                 "hourly_system": df_system,
             }
-        - una Series con i principali indicatori (usata poi per costruire summary_df)
+        - a Series with the main KPIs (used to build summary_df)
     """
+    # Extract the core inputs for this archetype
     name = archetype["name"]
     bui = archetype["bui"]
     system = archetype["system"]
 
-    # --- 1) Simulazione ISO 52016 (building) ---
+    # --- 1) ISO 52016 simulation (building) ---
+    # This returns an hourly time series and an annual results DataFrame.
     hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
         bui,
-        weather_source="pvgis",  # adatta se vuoi EPW ecc.
+        weather_source="pvgis",  # Change if you want EPW or other sources supported by your setup.
     )
 
-    # --- 2) Simulazione sistema (ISO 15316) ---
+    # --- 2) System simulation (ISO 15316) ---
+    # The system calculator consumes the hourly building simulation outputs.
     calc = pybui.HeatingSystemCalculator(system)
     calc.load_csv_data(hourly_sim)
     df_system = calc.run_timeseries()
 
-    # --- 3) Indicatori sintetici per confronto ---
-    # NB: adatta i nomi delle colonne Q_HC / ecc. alla tua versione
+    # --- 3) Compact KPIs for comparison across archetypes ---
+    # NOTE: Adjust column names (e.g., "Q_HC") to match your pybuildingenergy version.
+    # Convention assumed here:
+    #   - Positive Q_HC = heating demand (Wh)
+    #   - Negative Q_HC = cooling demand (Wh)
     heating_kWh = hourly_sim.loc[hourly_sim["Q_HC"] > 0, "Q_HC"].sum() / 1000.0
     cooling_kWh = -hourly_sim.loc[hourly_sim["Q_HC"] < 0, "Q_HC"].sum() / 1000.0
 
-    # uso net_floor_area come superficie trattata (adatta se hai treated_floor_area)
+    # Use net_floor_area as treated area (replace with treated_floor_area if your input model provides it).
     treated_floor_area = bui["building"].get("net_floor_area", np.nan)
 
+    # Compute specific energy (kWh/m2). Guard against missing/zero areas.
     heating_kWh_m2 = heating_kWh / treated_floor_area if treated_floor_area else np.nan
     cooling_kWh_m2 = cooling_kWh / treated_floor_area if treated_floor_area else np.nan
 
+    # Build a compact summary Series (one row later in summary_df).
     summary = pd.Series(
         {
             "name": name,
@@ -90,6 +97,7 @@ def simulate_one_archetype(archetype: Dict[str, Any]) -> Tuple[str, Dict[str, pd
         }
     )
 
+    # Pack all DataFrames for this archetype.
     dfs = {
         "hourly_building": hourly_sim,
         "annual_building": annual_results_df,
@@ -99,48 +107,50 @@ def simulate_one_archetype(archetype: Dict[str, Any]) -> Tuple[str, Dict[str, pd
     return name, dfs, summary
 
 
-# ---------------------------
-# Funzione batch in parallelo
-# ---------------------------
+# -----------------------------------
+# Parallel batch simulation function
+# -----------------------------------
 
 def simulate_archetypes_in_parallel(
     archetypes: list[Dict[str, Any]],
     max_workers: int | None = None,
 ):
     """
-    Lancia la simulazione di più archetipi in parallelo.
+    Run multiple archetype simulations in parallel.
 
     Args:
-        archetypes: lista di archetipi (BUILDING_ARCHETYPES o un sottoinsieme)
-        max_workers: numero di processi. Se None, usa il default di ProcessPoolExecutor.
+        archetypes: list of archetypes (BUILDING_ARCHETYPES or a subset)
+        max_workers: number of worker processes. If None, uses ProcessPoolExecutor default.
 
     Returns:
-        results_by_archetype: dict[name] -> dict di DataFrame
-        summary_df: DataFrame con una riga per archetipo (indicatori sintetici)
+        results_by_archetype: dict[name] -> dict of DataFrames
+        summary_df: DataFrame with one row per archetype (compact KPIs)
     """
     results_by_archetype: Dict[str, Dict[str, pd.DataFrame]] = {}
-    summaries = []
+    summaries: list[pd.Series] = []
 
+    # ProcessPoolExecutor runs each archetype in a separate process (useful for CPU-bound tasks).
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            executor.submit(simulate_one_archetype, arch): arch["name"]
-            for arch in archetypes
-        }
+        # Submit one job per archetype; keep a mapping from Future -> archetype name for error reporting.
+        futures = {executor.submit(simulate_one_archetype, arch): arch["name"] for arch in archetypes}
 
+        # Collect results as they complete (order is not guaranteed).
         for future in as_completed(futures):
             arch_name = futures[future]
             try:
                 name, dfs, summary = future.result()
                 results_by_archetype[name] = dfs
                 summaries.append(summary)
-                print(f"[OK] Simulazione completata per archetipo: {name}")
+                print(f"[OK] Simulation completed for archetype: {name}")
             except Exception as e:
-                print(f"[ERR] Simulazione fallita per archetipo {arch_name}: {e}")
+                # Continue running other archetypes even if one fails.
+                print(f"[ERR] Simulation failed for archetype {arch_name}: {e}")
 
-    # Costruisco un DataFrame di sintesi
+    # Build a summary DataFrame with one row per archetype.
     if summaries:
         summary_df = pd.DataFrame(summaries).set_index("name")
     else:
+        # Return an empty-but-structured DataFrame if all simulations failed.
         summary_df = pd.DataFrame(
             columns=[
                 "name",
@@ -158,37 +168,37 @@ def simulate_archetypes_in_parallel(
 
 
 # ---------------------------
-# Esempio di utilizzo
+# Example usage
 # ---------------------------
 
 if __name__ == "__main__":
-    # Esempio: simula tutti gli archetipi definiti in BUILDING_ARCHETYPES
-    # Se vuoi solo alcuni, filtra la lista:
-    # archetypes_to_run = [a for a in BUILDING_ARCHETYPES if a["country"] == "Italy"]
+    # Example: simulate all archetypes defined in BUILDING_ARCHETYPES.
+    # If you want only a subset, filter the list, e.g.:
+    # archetypes_to_run = [a for a in BUILDING_ARCHETYPES if a.get("country") == "Italy"]
     archetypes_to_run = BUILDING_ARCHETYPES
 
     results, summary_df = simulate_archetypes_in_parallel(
         archetypes_to_run,
-        max_workers=None,  # o un numero fisso, es. 4
+        max_workers=None,  # Or set a fixed number, e.g. 4
     )
 
-    # Stampa riepilogo
-    print("\n===== RIEPILOGO SINTESI =====")
+    # Print compact summary
+    print("\n===== SUMMARY =====")
     print(summary_df)
 
-    # Esempio: accesso ai DataFrame di un singolo archetipo
+    # Example: access DataFrames for one archetype
     example_name = next(iter(results)) if results else None
     if example_name:
         df_hourly = results[example_name]["hourly_building"]
         df_annual = results[example_name]["annual_building"]
         df_system = results[example_name]["hourly_system"]
 
-        print(f"\nEsempio risultati per: {example_name}")
+        print(f"\nExample results for: {example_name}")
         print("hourly_building:", df_hourly.shape)
         print("annual_building:", df_annual.shape)
         print("hourly_system:", df_system.shape)
 
-        # Se vuoi, puoi anche salvare su CSV/parquet:
+        # Optionally save to CSV/parquet:
         # df_hourly.to_csv(f"hourly_{example_name}.csv", index=False)
         # df_annual.to_csv(f"annual_{example_name}.csv", index=False)
         # df_system.to_csv(f"system_{example_name}.csv", index=False)

@@ -4,107 +4,23 @@
     "azimuth_relative_to_true_north": 41.8,
     "latitude": 37.98880066730187,
     "longitude": 23.733531819066098,
-    "exposed_perimeter": 40,
-    "height": 3,
+    "exposed_perimeter": 46,
+    "height": 2.7,
     "wall_thickness": 0.3,
-    "n_floors": 1,
+    "n_floors": 2,
     "building_type_class": "Residential_apartment",
     "adj_zones_present": false,
-    "number_adj_zone": 2,
-    "net_floor_area": 100,
+    "number_adj_zone": 0,
+    "net_floor_area": 125,
     "construction_class": "class_i"
   },
-  "adjacent_zones": [
-    {
-      "name": "adj_1",
-      "orientation_zone": {
-        "azimuth": 0
-      },
-      "area_facade_elements": [
-        20,
-        60,
-        30,
-        30,
-        50,
-        50
-      ],
-      "typology_elements": [
-        "OP",
-        "OP",
-        "OP",
-        "OP",
-        "GR",
-        "OP"
-      ],
-      "transmittance_U_elements": [
-        0.8196721311475411,
-        0.8196721311475411,
-        0.8196721311475411,
-        0.8196721311475411,
-        0.5156683855612851,
-        1.162633192818565
-      ],
-      "orientation_elements": [
-        "NV",
-        "SV",
-        "EV",
-        "WV",
-        "HOR",
-        "HOR"
-      ],
-      "volume": 300,
-      "building_type_class": "Residential_apartment",
-      "a_use": 50
-    },
-    {
-      "name": "adj_2",
-      "orientation_zone": {
-        "azimuth": 180
-      },
-      "area_facade_elements": [
-        20,
-        60,
-        30,
-        30,
-        50,
-        50
-      ],
-      "typology_elements": [
-        "OP",
-        "OP",
-        "OP",
-        "OP",
-        "GR",
-        "OP"
-      ],
-      "transmittance_U_elements": [
-        0.8196721311475411,
-        0.8196721311475411,
-        0.8196721311475411,
-        0.8196721311475411,
-        0.5156683855612851,
-        1.162633192818565
-      ],
-      "orientation_elements": [
-        "NV",
-        "SV",
-        "EV",
-        "WV",
-        "HOR",
-        "HOR"
-      ],
-      "volume": 300,
-      "building_type_class": "Residential_apartment",
-      "a_use": 50
-    }
-  ],
   "building_surface": [
     {
       "name": "Roof surface",
       "type": "opaque",
-      "area": 130,
+      "area": 120,
       "sky_view_factor": 1.0,
-      "u_value": 2.2,
+      "u_value": 3.05,
       "solar_absorptance": 0.4,
       "thermal_capacity": 741500.0,
       "orientation": {
@@ -125,7 +41,7 @@
         "azimuth": 0,
         "tilt": 90
       },
-      "name_adj_zone": "adj_1"
+      "name_adj_zone": null
     },
     {
       "name": "Opaque south surface",
@@ -139,7 +55,7 @@
         "azimuth": 180,
         "tilt": 90
       },
-      "name_adj_zone": "adj_2"
+      "name_adj_zone": null
     },
     {
       "name": "Opaque east surface",
@@ -172,9 +88,9 @@
     {
       "name": "Slab to ground",
       "type": "opaque",
-      "area": 100,
+      "area": 120,
       "sky_view_factor": 0.0,
-      "u_value": 1.6,
+      "u_value": 1.2,
       "solar_absorptance": 0.6,
       "thermal_capacity": 405801,
       "orientation": {
@@ -188,8 +104,8 @@
       "type": "transparent",
       "area": 4,
       "sky_view_factor": 0.5,
-      "u_value": 5,
-      "g_value": 0.726,
+      "u_value": 3.1,
+      "g_value": 0.76,
       "height": 2,
       "width": 1,
       "parapet": 1.1,
@@ -427,7 +343,7 @@
     ],
     "construction": {
       "wall_thickness": 0.3,
-      "thermal_bridges": 2,
+      "thermal_bridges": 0.8,
       "units": "m (for thickness), W/mK (for thermal bridges)"
     },
     "climate_parameters": {
