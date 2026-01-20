@@ -4,6 +4,8 @@
 #######
 readme_dev.md
 .claude
+.vscode
+src.relife_forecasting.results
 
 ## Python
 #########

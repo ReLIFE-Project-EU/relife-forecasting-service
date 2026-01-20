@@ -29,30 +29,10 @@ try:
 except Exception:
     from routes.EPC_Greece_converter import U_VALUES_BY_CLASS, _norm_surface_name  # type: ignore
 
-from forecasting_service_functions import (
-    # json/data helpers
-    to_jsonable,
-    clean_and_jsonable,
-    dataframe_to_records_safe,
-    json_to_internal_bui,
-    json_to_internal_system,
-    validate_bui_and_system,
-    simulate_building_worker,
-    # ECM helpers
-    apply_u_values_to_bui,
-    build_uvalue_scenarios,
-    # CO2 models & logic
-    EMISSION_FACTORS,
-    EnergySource,
-    ScenarioInput,
-    MultiScenarioInput,
-    EmissionResult,
-    SavingResult,
-    ComparisonResult,
-    InterventionInput,
-    calculate_emissions,
-    calculate_savings,
-)
+try:
+    from relife_forecasting.routes.forecasting_service_functions import *
+except Exception:
+    from routes.forecasting_service_functions import *
 
 
 # -----------------------------------------------------------------------------

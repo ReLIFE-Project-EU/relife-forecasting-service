@@ -1,6 +1,6 @@
 
 def _norm_surface_name(name: str) -> str:
-    """Normalizza i nomi delle superfici per il lookup."""
+    """Normalize th esurface for the lookup ."""
     return " ".join(name.lower().split())
 
 
