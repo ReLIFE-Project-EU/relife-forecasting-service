@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from relife_forecasting.app import app
+from relife_forecasting.main import app
 
 client = TestClient(app)
 
