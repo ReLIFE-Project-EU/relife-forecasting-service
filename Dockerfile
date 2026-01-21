@@ -24,6 +24,9 @@ RUN uv pip install build
 # Build wheel package for distribution
 RUN python -m build --wheel .
 
+# Build wheels for all dependencies to avoid compilation in runtime
+RUN pip wheel --no-cache-dir --wheel-dir=/app/wheels /app/dist/*.whl
+
 # Second stage: Runtime image with minimal dependencies
 FROM python:3.11-slim AS runtime
 
@@ -35,9 +38,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy built wheel from builder stage and install it
-COPY --from=builder /app/dist/*.whl /app/
-RUN pip install --no-cache-dir /app/*.whl
+# Copy built wheels from builder stage (main package + dependencies)
+COPY --from=builder /app/wheels /app/wheels
+# Install the main package and all its dependencies from pre-built wheels
+RUN pip install --no-cache-dir --no-index --find-links=/app/wheels relife-forecasting && \
+    rm -rf /app/wheels
 
 # Configure API server environment variables
 ENV API_HOST=0.0.0.0
