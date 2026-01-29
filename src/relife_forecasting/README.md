@@ -880,9 +880,542 @@ Optional fields:
   }
 }
 ```
+--- 
+# ECM Application 
+
+# `POST /ecm_application` — ECM envelope U-values scenario simulation
+
+This endpoint runs **envelope retrofit scenario simulations** by changing **U-values** (thermal transmittance) of the building envelope and computing energy needs with **ISO 52016** (via `pybuildingenergy`).
+
+It can:
+- simulate **all combinations** of the requested U-value interventions (multi-scenario mode), and/or
+- simulate **a single scenario only** (single-scenario mode) to reduce compute time and payload.
 
 ---
 
+## What the endpoint does
+
+### 1) Selects the base building model (BUI)
+You can run the simulation using:
+
+**A) An internal archetype (default)**  
+- `archetype=true`
+- Requires `category`, `country`, `name`
+- The endpoint looks up the building in `BUILDING_ARCHETYPES` and uses `match["bui"]` as the baseline BUI.
+
+**B) A custom BUI**
+- `archetype=false`
+- Requires `bui_json` (multipart form field) as a JSON string
+- The endpoint parses it and uses it as baseline BUI.
+
+> This endpoint uses only the **building envelope** (BUI). It does **not** run HVAC/system simulation (ISO 15316).
+
+---
+
+### 2) Builds retrofit scenarios (combinations of envelope upgrades)
+You can pass any subset of these U-values:
+- `u_wall`: new U-value for **opaque vertical surfaces** (walls)
+- `u_roof`: new U-value for **opaque horizontal surfaces** (roof)
+- `u_window`: new U-value for **transparent vertical surfaces** (windows)
+
+The endpoint calls:
+
+```python
+scenarios_spec = build_uvalue_scenarios(u_roof=u_roof, u_wall=u_wall, u_window=u_window)
+```
+
+This helper is expected to return a list of scenario specs (non-empty combinations), each containing:
+- `id` (scenario identifier)
+- `label` (human-readable description)
+- `use_roof`, `use_wall`, `use_window` (booleans)
+
+Example: if you provide `u_wall` and `u_window`, scenarios typically include:
+- wall only
+- window only
+- wall + window
+
+---
+
+### 3) Supports **single-scenario mode** (NEW)
+Single-scenario mode lets you simulate only one scenario (or baseline only).
+
+#### A) Baseline only
+- `baseline_only=true`
+
+Behavior:
+- ignores `scenario_id` and `scenario_elements`
+- forces `include_baseline=true`
+- returns only baseline results
+
+#### B) Select scenario by scenario id
+- `scenario_id=<id>`
+
+Behavior:
+- filters generated scenarios to the one whose `spec["id"] == scenario_id`
+- if not found returns HTTP 404 with available IDs
+
+#### C) Select scenario by elements
+- `scenario_elements=wall,window`
+- accepted separators: comma, `+`, semicolon, spaces (e.g. `roof+wall`, `roof wall`)
+
+Behavior:
+- parses requested elements into a set (must be subset of `{roof, wall, window}`)
+- compares it to each generated scenario spec’s elements
+- keeps exactly one matching scenario or returns HTTP 404 with a helpful list of available scenarios
+
+Valid element names are: `roof`, `wall`, `window`.
+
+---
+
+### 4) Weather source
+Choose weather input via:
+- `weather_source=pvgis` (default): weather retrieved via PVGIS inside the simulation library
+- `weather_source=epw`: upload an EPW weather file in `epw_file`
+
+When EPW is used, the file is written to a temporary `.epw` file and deleted at the end.
+
+---
+
+### 5) Runs ISO 52016 simulation
+For each scenario (and optionally baseline), the endpoint runs:
+
+```python
+pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+    bui_variant,
+    weather_source="pvgis" or "epw",
+    path_weather_file=epw_path (if epw),
+    sankey_graph=False,
+)
+```
+
+Retrofit variants are created using:
+
+```python
+apply_u_values_to_bui(
+    base_bui,
+    use_roof=spec["use_roof"],
+    use_wall=spec["use_wall"],
+    use_window=spec["use_window"],
+    u_roof=u_roof,
+    u_wall=u_wall,
+    u_window=u_window,
+)
+```
+
+---
+
+## Endpoint - ecm_application
+
+**Route:** `POST /ecm_application`  
+**Tags:** `Simulation`
+
+---
+
+## Parameters
+
+### Building selection
+| Name | Location | Type | Default | Required | Description |
+|------|----------|------|---------|----------|-------------|
+| `archetype` | query | bool | `true` | yes | Use internal archetype vs custom BUI |
+| `category` | query | str | `None` | if `archetype=true` | Archetype category |
+| `country` | query | str | `None` | if `archetype=true` | Archetype country |
+| `name` | query | str | `None` | if `archetype=true` | Archetype name |
+| `bui_json` | form | str | `None` | if `archetype=false` | JSON string containing BUI |
+
+### Weather
+| Name | Location | Type | Default | Required | Description |
+|------|----------|------|---------|----------|-------------|
+| `weather_source` | query | str | `pvgis` | yes | `pvgis` or `epw` |
+| `epw_file` | file | UploadFile | `None` | if `weather_source=epw` | EPW file upload |
+
+### U-values
+| Name | Location | Type | Default | Required | Description |
+|------|----------|------|---------|----------|-------------|
+| `u_wall` | query | float | `None` | optional | New wall U-value |
+| `u_roof` | query | float | `None` | optional | New roof U-value |
+| `u_window` | query | float | `None` | optional | New window U-value |
+
+### Single-scenario mode (NEW)
+| Name | Location | Type | Default | Description |
+|------|----------|------|---------|-------------|
+| `scenario_elements` | query | str | `None` | Select exactly one scenario (e.g. `wall,window`) |
+| `scenario_id` | query | str | `None` | Select exactly one scenario by ID |
+| `baseline_only` | query | bool | `false` | If `true`, simulate baseline only |
+
+### Baseline inclusion
+| Name | Location | Type | Default | Description |
+|------|----------|------|---------|-------------|
+| `include_baseline` | query | bool | `false` | If `true`, include baseline results alongside scenarios |
+
+---
+
+## Response
+
+Top-level structure:
+
+```json
+{
+  "source": "archetype|custom",
+  "name": "...",
+  "category": "...",
+  "country": "...",
+  "weather_source": "pvgis|epw",
+  "u_values_requested": { "roof": 0.8, "wall": 0.5, "window": 1.0 },
+  "single_scenario_mode": {
+    "baseline_only": false,
+    "scenario_id": null,
+    "scenario_elements": null
+  },
+  "n_scenarios": 3,
+  "scenarios": [
+    {
+      "scenario_id": "baseline",
+      "description": "Baseline (no changes)",
+      "elements": [],
+      "u_values": { "roof": null, "wall": null, "window": null },
+      "results": {
+        "hourly_building": [...],
+        "annual_building": [...]
+      }
+    },
+    {
+      "scenario_id": "wall+window",
+      "description": "...",
+      "elements": ["wall", "window"],
+      "u_values": { "roof": null, "wall": 0.5, "window": 1.0 },
+      "results": {
+        "hourly_building": [...],
+        "annual_building": [...]
+      }
+    }
+  ]
+}
+```
+
+Each scenario includes:
+- `elements`: which envelope parts were modified
+- `u_values`: which U-values were effectively applied
+- `results.hourly_building`: hourly time series (JSON-safe)
+- `results.annual_building`: annual aggregated results (JSON-safe)
+
+---
+
+## Error cases
+
+### `400 Bad Request`
+- `archetype=true` without `category/country/name`
+- `archetype=false` without `bui_json`
+- invalid JSON in `bui_json`
+- invalid `weather_source` (must be `pvgis` or `epw`)
+- `weather_source=epw` without `epw_file`
+- nothing to simulate:
+  - no scenarios produced and `include_baseline=false`
+  - unless `baseline_only=true`
+
+### `404 Not Found`
+- archetype not found in `BUILDING_ARCHETYPES`
+- `scenario_id` not found among generated scenarios
+- `scenario_elements` does not match any generated scenario  
+  (response includes an `available` list with ids, elements, and labels)
+
+---
+
+## Examples
+
+### 1) Multi-scenario (all combinations) + baseline, PVGIS
+```bash
+curl -X POST \
+  "http://127.0.0.1:9091/ecm_application?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=pvgis&u_wall=0.5&u_window=1.0&include_baseline=true"
+```
+
+### 2) Single scenario by elements (wall + window), PVGIS
+```bash
+curl -X POST \
+  "http://127.0.0.1:9091/ecm_application?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=pvgis&u_wall=0.5&u_window=1.0&scenario_elements=wall,window"
+```
+
+### 3) Baseline only, EPW
+```bash
+curl -X POST \
+  "http://127.0.0.1:9091/ecm_application?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=epw&baseline_only=true" \
+  -F "epw_file=@epw_weather/GRC_Athens.167160_IWEC.epw"
+```
+
+---
+
+## Notes / performance
+
+- Multi-scenario mode can be expensive because it runs *one ISO 52016 simulation per scenario*.
+- Single-scenario mode is designed to support:
+  - fast API calls from clients that loop over combinations sequentially
+  - “one scenario per request” workflows
+- The response payload can be large because it includes hourly time series;
+
+
+---
+
+# `POST /ecm_application/run_sequential_save` — Sequential ECM run + save results to disk
+
+This endpoint is a **server-side runner** that executes multiple envelope retrofit scenarios **sequentially** (no multiprocessing) and **saves results to disk** as CSV files (and optionally BUI JSON variants).  
+
+It is designed to avoid returning huge hourly payloads over HTTP: instead it returns **file paths**, per-scenario status, and a summary.
+
+---
+
+## What the endpoint does
+
+### 1) Determines the base building (archetype only)
+Currently this endpoint supports **archetype mode only**:
+
+- `archetype=true` (default)
+- requires `category`, `country`, `name`
+- finds a matching entry in `BUILDING_ARCHETYPES`
+- uses `match["bui"]` as the baseline BUI
+- uses `match["name"]` (or `name`) as `building_name` for filenames
+
+If `archetype=false` the endpoint returns **HTTP 400** (it can be extended later to accept a `bui_json=Form(...)` input).
+
+---
+
+### 2) Determines which ECM elements to combine (`opts`)
+You can explicitly set `ecm_options` or let the endpoint infer it from provided U-values:
+
+**A) Explicit**
+- `ecm_options="wall,window,roof"` (comma-separated)
+
+**B) Inferred**
+- if `ecm_options` is omitted:
+  - includes `"wall"` if `u_wall` is provided
+  - includes `"roof"` if `u_roof` is provided
+  - includes `"window"` if `u_window` is provided
+
+Validation rules:
+- allowed options: `wall`, `roof`, `window`
+- if an option is present, the corresponding `u_*` must be provided
+- if no options and `include_baseline=false` → HTTP 400 (“Nothing to run”)
+
+---
+
+### 3) Generates the scenario combinations
+The endpoint builds the list of combinations:
+
+```python
+combos = _generate_combinations(opts, include_baseline=include_baseline)
+```
+
+This returns:
+- baseline `[]` if `include_baseline=true`
+- all non-empty subsets of `opts`
+
+Example: `opts=["wall","window"]` and `include_baseline=true` →  
+`[]`, `["wall"]`, `["window"]`, `["wall","window"]`
+
+---
+
+### 4) Handles weather source (PVGIS or EPW)
+- `weather_source="pvgis"`: uses PVGIS weather via the simulation library.
+- `weather_source="epw"`: requires file upload `epw_file`, stored once into a temporary `.epw` file and reused for all scenarios. The temp file is deleted at the end.
+
+---
+
+### 5) For each scenario (sequential loop)
+For each combination:
+
+1. **Builds a BUI variant**
+   - baseline: `bui_variant = base_bui`
+   - scenario: calls `apply_u_values_to_bui(...)` with flags:
+     - `use_roof=("roof" in combo)`
+     - `use_wall=("wall" in combo)`
+     - `use_window=("window" in combo)`
+     - and U-values `u_roof/u_wall/u_window`
+
+2. **Optionally saves BUI JSON variant**
+   - if `save_bui=true`:
+     - `_save_bui_variant(bui_variant, combo, bui_dir)`
+     - filename pattern:
+       - `BUI_<building>__baseline.json` (baseline)
+       - `BUI_<building>__wall_window.json` (combo)
+
+3. **Runs ISO 52016 simulation**
+   - PVGIS:
+     ```python
+     pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+         bui_variant, weather_source="pvgis", sankey_graph=False
+     )
+     ```
+   - EPW:
+     ```python
+     pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+         bui_variant, weather_source="epw", path_weather_file=epw_path, sankey_graph=False
+     )
+     ```
+
+4. **Saves results to CSV**
+   - hourly file name via `_build_name_file(...)`:
+     - `<building>__<combo_tag>__<weather_tag>.csv`
+   - annual file:
+     - `<hourly_stem>__annual.csv`
+
+5. **Records outcome**
+   - `success`: includes file paths + elapsed time
+   - `error`: includes exception + traceback + elapsed time (loop continues)
+
+---
+
+## Endpoint - run_sequential_save
+
+**Route:** `POST /ecm_application/run_sequential_save`  
+**Tags:** `Simulation`
+
+This is intended for internal / batch workflows where the server has access to its own filesystem.
+
+---
+
+## Request parameters
+
+### Building selection (archetype)
+| Name | Location | Type | Default | Required | Description |
+|------|----------|------|---------|----------|-------------|
+| `archetype` | query | bool | `true` | yes | Must be `true` in current implementation |
+| `category` | query | str | `None` | yes | Building category (archetype lookup) |
+| `country` | query | str | `None` | yes | Country (archetype lookup) |
+| `name` | query | str | `None` | yes | Archetype name (archetype lookup) |
+
+### Weather
+| Name | Location | Type | Default | Required | Description |
+|------|----------|------|---------|----------|-------------|
+| `weather_source` | query | str | `pvgis` | yes | `pvgis` or `epw` |
+| `epw_file` | file | UploadFile | `None` | if `weather_source=epw` | EPW weather file |
+
+### ECM controls
+| Name | Location | Type | Default | Required | Description |
+|------|----------|------|---------|----------|-------------|
+| `ecm_options` | query | str | `None` | optional | Comma-separated list of elements to combine. If omitted, inferred from provided U-values. |
+| `u_wall` | query | float | `None` | required if `"wall"` in options | New wall U-value |
+| `u_roof` | query | float | `None` | required if `"roof"` in options | New roof U-value |
+| `u_window` | query | float | `None` | required if `"window"` in options | New window U-value |
+| `include_baseline` | query | bool | `true` | optional | If true, baseline scenario is included |
+
+### Saving controls
+| Name | Location | Type | Default | Description |
+|------|----------|------|---------|-------------|
+| `output_dir` | query | str | `results/ecm_api` | Folder where CSV files are written |
+| `save_bui` | query | bool | `true` | If true, save BUI JSON variants |
+| `bui_dir` | query | str | `building_examples_ecm_api` | Folder where BUI JSON variants are written |
+
+---
+
+## Response schema
+
+Top-level response:
+
+```json
+{
+  "status": "completed",
+  "source": "archetype",
+  "building": { "category": "...", "country": "...", "name": "..." },
+  "weather_source": "pvgis|epw",
+  "u_values_requested": { "roof": 0.8, "wall": 0.5, "window": 1.0 },
+  "ecm_options": ["wall", "window"],
+  "include_baseline": true,
+  "output_dir": "results/ecm_api",
+  "bui_dir": "building_examples_ecm_api",
+  "summary": {
+    "total": 4,
+    "successful": 4,
+    "failed": 0,
+    "total_time_s": 12.345
+  },
+  "results": [
+    {
+      "status": "success",
+      "combo": ["wall", "window"],
+      "combo_tag": "wall,window",
+      "files": {
+        "hourly_csv": "...",
+        "annual_csv": "...",
+        "bui_json": "..."
+      },
+      "elapsed_s": 3.21
+    }
+  ]
+}
+```
+
+### Per-scenario result item
+- `status`: `"success"` or `"error"`
+- `combo`: list of elements applied (empty list means baseline)
+- `combo_tag`: human-readable tag (`"BASELINE"` or `"wall,window"`)
+- `files` (success):
+  - `hourly_csv`
+  - `annual_csv`
+  - `bui_json` (may be `null` if `save_bui=false`)
+- `error` and `traceback` (error only)
+- `elapsed_s`: time spent for that scenario
+
+---
+
+## File naming conventions
+
+### Hourly CSV
+Built by `_build_name_file(...)`:
+
+```
+<building_slug>__<combo_tag>__<weather_tag>.csv
+```
+
+- `combo_tag` is `"baseline"` or joined sorted elements (e.g. `wall_window`)
+- `weather_tag` is:
+  - `"pvgis"` if `weather_source="pvgis"`
+  - EPW filename stem if `weather_source="epw"` and EPW exists
+
+### Annual CSV
+```
+<hourly_stem>__annual.csv
+```
+
+### BUI JSON (if enabled)
+Written by `_save_bui_variant(...)`:
+
+```
+BUI_<building_slug>__<combo_tag>.json
+```
+
+---
+
+## Error behavior
+- The endpoint is **best-effort**: one scenario failing does **not** stop the others.
+- EPW temp file cleanup happens in `finally`.
+- Typical errors:
+  - missing archetype inputs
+  - invalid `ecm_options`
+  - `weather_source=epw` without `epw_file`
+  - simulation exceptions inside `pybuildingenergy`
+
+---
+
+## Example calls
+
+### PVGIS mode
+```bash
+curl -X POST \
+  "http://127.0.0.1:9091/ecm_application/run_sequential_save?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=pvgis&ecm_options=wall,window&u_wall=0.5&u_window=1.0&include_baseline=true&output_dir=results/ecm_api&save_bui=true&bui_dir=building_examples_ecm_api"
+```
+
+### EPW mode (multipart upload)
+```bash
+curl -X POST \
+  "http://127.0.0.1:9091/ecm_application/run_sequential_save?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=epw&ecm_options=wall,window&u_wall=0.5&u_window=1.0&include_baseline=true" \
+  -F "epw_file=@epw_weather/GRC_Athens.167160_IWEC.epw"
+```
+
+---
+
+## Operational notes
+- The returned file paths are on the **server filesystem**. If your tests run on a different machine/container, file existence assertions should be adapted.
+- Because it writes to disk, ensure the process has permissions to create `output_dir` / `bui_dir`.
+- This endpoint intentionally avoids returning hourly JSON to keep responses small and fast.
+---
 # Health endpoints (router)
 
 `main.py` includes `app.include_router(health.router)`. Based on your implementation in `relife_forecasting/routes/health.py`, you may have endpoints like:
