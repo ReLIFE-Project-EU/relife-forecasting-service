@@ -700,3 +700,41 @@ BUILDING_ARCHETYPES: List[Dict[str, Any]] = [
         "system": INPUT_SYSTEM_HVAC_CONDENSING_BOILER_AND_RADIATOR,
     },
 ]
+
+# Example input payload for UNI/TS 11300 primary energy calculation
+UNI11300_SIMULATION_EXAMPLE: Dict[str, Any] = {
+    "hourly_sim": [
+        {"timestamp": "2024-01-01 00:00:00", "Q_H": 2103.85, "Q_C": 0.0},
+        {"timestamp": "2024-01-01 01:00:00", "Q_H": 1800.12, "Q_C": 0.0},
+    ],
+    "input_unit": "Wh",
+    "heating_params": {
+        "eta_emission": 0.95,
+        "eta_distribution": 0.93,
+        "eta_storage": 0.98,
+        "eta_generation": 0.92,
+        "f_recov_emission": 1.00,
+        "f_recov_distribution": 0.80,
+        "f_recov_storage": 0.90,
+        "aux_emission_fraction": 0.005,
+        "aux_distribution_fraction": 0.010,
+        "aux_storage_fraction": 0.001,
+        "aux_generation_fraction": 0.015,
+        "fp_thermal": 1.05,
+        "fp_electric": 2.18,
+    },
+    "cooling_params": {
+        "eta_emission": 0.97,
+        "eta_distribution": 0.95,
+        "eta_storage": 1.00,
+        "cop_generation": 3.2,
+        "f_recov_emission": 1.00,
+        "f_recov_distribution": 0.80,
+        "f_recov_storage": 0.90,
+        "aux_emission_fraction": 0.005,
+        "aux_distribution_fraction": 0.010,
+        "aux_storage_fraction": 0.001,
+        "aux_generation_fraction": 0.005,
+        "fp_electric": 2.18,
+    },
+}

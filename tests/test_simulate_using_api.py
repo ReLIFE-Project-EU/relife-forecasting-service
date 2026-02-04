@@ -11,7 +11,17 @@ import requests
     reason="Not self-contained: requires external EPW file and running server"
 )
 def test_simulate_using_api():
-    """Test the /simulate API endpoint using a local EPW file."""
+    """Test the /simulate API endpoint (PVGIS) and UNI/TS 11300 integration.
+
+    Example response excerpt:
+        {
+          "results": {
+            "primary_energy_uni11300": {
+              "summary": { ... }
+            }
+          }
+        }
+    """
 
     url = "http://127.0.0.1:9091/simulate"
 
@@ -27,21 +37,11 @@ def test_simulate_using_api():
         "accept": "application/json",
     }
 
-    epw_path = Path("epw_weather/2020_Athens.epw")
-
-    data = {
-        "bui_json": "string",
-        "system_json": "string",
-    }
-
-    with epw_path.open("rb") as epw_file:
-        files = {
-            "epw_file": (epw_path.name, epw_file, "application/octet-stream"),
-        }
-
-        resp = requests.post(
-            url, params=params, headers=headers, files=files, data=data
-        )
+    resp = requests.post(url, params=params, headers=headers)
 
     resp.raise_for_status()
-    assert resp.json()
+    payload = resp.json()
+    assert payload
+    assert "results" in payload
+    assert "primary_energy_uni11300" in payload["results"]
+    assert "summary" in payload["results"]["primary_energy_uni11300"]

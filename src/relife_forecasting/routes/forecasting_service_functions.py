@@ -285,6 +285,7 @@ def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
 
     Returns:
       - "roof"   for opaque surfaces with tilt=0 and azimuth=0
+      - "slab"   for opaque ground slabs (tilt=0, azimuth=0, typically sky_view_factor=0)
       - "wall"   for opaque surfaces with tilt=90
       - "window" for transparent surfaces with tilt=90
       - None     for non-matching surfaces
@@ -293,8 +294,12 @@ def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
     orientation = surface.get("orientation", {}) or {}
     tilt = orientation.get("tilt")
     azimuth = orientation.get("azimuth")
+    name = str(surface.get("name") or "").lower()
+    sky_view = surface.get("sky_view_factor")
 
     if s_type == "opaque" and tilt == 0 and azimuth == 0:
+        if ("slab" in name) or ("ground" in name) or (sky_view == 0):
+            return "slab"
         return "roof"
 
     if s_type == "opaque" and tilt == 90:
@@ -314,6 +319,8 @@ def apply_u_values_to_bui(
     u_roof: Optional[float],
     u_wall: Optional[float],
     u_window: Optional[float],
+    use_slab: bool = False,
+    u_slab: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Return a deep-copied BUI with updated U-values for the selected surface categories.
@@ -329,21 +336,28 @@ def apply_u_values_to_bui(
             surface["u_value"] = float(u_wall)
         elif kind == "window" and use_window and u_window is not None:
             surface["u_value"] = float(u_window)
+        elif kind == "slab" and use_slab and u_slab is not None:
+            surface["u_value"] = float(u_slab)
 
     return bui_copy
 
 
-def build_uvalue_scenarios(u_roof: Optional[float], u_wall: Optional[float], u_window: Optional[float]) -> List[Dict[str, Any]]:
+def build_uvalue_scenarios(
+    u_roof: Optional[float],
+    u_wall: Optional[float],
+    u_window: Optional[float],
+    u_slab: Optional[float] = None,
+) -> List[Dict[str, Any]]:
     """
     Generate all non-empty combinations of requested U-value interventions.
 
     Returns:
       A list of scenario specs, each containing:
         - id
-        - use_roof/use_wall/use_window
+        - use_roof/use_wall/use_window/use_slab
         - label
     """
-    u_map = {"roof": u_roof, "wall": u_wall, "window": u_window}
+    u_map = {"roof": u_roof, "wall": u_wall, "window": u_window, "slab": u_slab}
     active_types = [k for k, v in u_map.items() if v is not None]
 
     if not active_types:
@@ -356,6 +370,7 @@ def build_uvalue_scenarios(u_roof: Optional[float], u_wall: Optional[float], u_w
             use_roof = "roof" in subset_set
             use_wall = "wall" in subset_set
             use_window = "window" in subset_set
+            use_slab = "slab" in subset_set
 
             label_parts: List[str] = []
             if use_roof:
@@ -364,6 +379,8 @@ def build_uvalue_scenarios(u_roof: Optional[float], u_wall: Optional[float], u_w
                 label_parts.append(f"walls U={u_wall}")
             if use_window:
                 label_parts.append(f"windows U={u_window}")
+            if use_slab:
+                label_parts.append(f"slab U={u_slab}")
 
             scenarios_spec.append(
                 {
@@ -371,11 +388,29 @@ def build_uvalue_scenarios(u_roof: Optional[float], u_wall: Optional[float], u_w
                     "use_roof": use_roof,
                     "use_wall": use_wall,
                     "use_window": use_window,
+                    "use_slab": use_slab,
                     "label": ", ".join(label_parts),
                 }
             )
 
     return scenarios_spec
+
+
+def apply_heat_pump_to_system(system: Dict[str, Any], cop: float = 3.2) -> Dict[str, Any]:
+    """
+    Return a deep-copied system dict updated to represent a heat pump generator.
+
+    Notes:
+      - Adds generator metadata and a COP value.
+      - Sets a parametric efficiency model with eta_max / eta_no_cond expressed in %.
+    """
+    sys_copy = copy.deepcopy(system)
+    sys_copy["generator_type"] = "heat_pump"
+    sys_copy["heat_pump_cop"] = float(cop)
+    sys_copy["efficiency_model"] = "parametric"
+    sys_copy["eta_max"] = float(cop) * 100.0
+    sys_copy["eta_no_cond"] = float(cop) * 100.0
+    return sys_copy
 
 
 # =============================================================================

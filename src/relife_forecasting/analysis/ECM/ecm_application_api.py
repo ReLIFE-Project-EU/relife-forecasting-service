@@ -54,10 +54,18 @@ WEATHER_SOURCE = "epw"  # "pvgis" or "epw"
 EPW_PATH = Path("epw_weather/GRC_Athens.167160_IWEC.epw")  # change to your path if needed
 
 # ECM controls
-ECM_OPTIONS = ["wall", "window"]  # subset of ["roof","wall","window"]
+ECM_OPTIONS = ["wall", "window", "roof", "slab"]  # subset of ["roof","wall","window","slab"]
 U_WALL = 0.5
-U_ROOF = None
+U_ROOF = 0.3
 U_WINDOW = 1.0
+U_FLOOR = 0.4  # slab-to-ground (floor) U-value
+U_SLAB = U_FLOOR  # alias for API parameter name
+
+# Generation update (optional)
+USE_HEAT_PUMP = True
+HEAT_PUMP_COP_DEFAULT = 3.2
+# Optionally override COP per combo tag (e.g. "baseline", "wall", "wall_window", etc.)
+HEAT_PUMP_COP_BY_COMBO: Dict[str, float] = {}
 
 # baseline included?
 INCLUDE_BASELINE = True
@@ -172,13 +180,9 @@ def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
     name = str(surface.get("name", "")).lower()
     svf = float(surface.get("sky_view_factor", 0.0))
 
-    if (
-        s_type == "opaque"
-        and abs(tilt - 0) < 1e-3
-        and abs(azimuth - 0) < 1e-3
-        and svf > 0.01
-        and "slab" not in name
-    ):
+    if s_type == "opaque" and abs(tilt - 0) < 1e-3 and abs(azimuth - 0) < 1e-3:
+        if ("slab" in name) or ("ground" in name) or (svf <= 0.01):
+            return "slab"
         return "roof"
 
     if s_type == "opaque" and abs(tilt - 90) < 1e-3:
@@ -196,6 +200,7 @@ def apply_u_values_to_BUI(
     u_wall: Optional[float],
     u_roof: Optional[float],
     u_window: Optional[float],
+    u_slab: Optional[float],
 ) -> Dict[str, Any]:
     u_map: Dict[str, float] = {}
     if "wall" in active_elements and u_wall is not None:
@@ -204,6 +209,8 @@ def apply_u_values_to_BUI(
         u_map["roof"] = float(u_roof)
     if "window" in active_elements and u_window is not None:
         u_map["window"] = float(u_window)
+    if "slab" in active_elements and u_slab is not None:
+        u_map["slab"] = float(u_slab)
 
     bui_new = copy.deepcopy(bui_base)
 
@@ -226,6 +233,7 @@ class ApiTask:
     u_wall: Optional[float]
     u_roof: Optional[float]
     u_window: Optional[float]
+    u_slab: Optional[float]
     weather_source: str
     epw_path: Optional[str]
     output_dir: str
@@ -243,6 +251,10 @@ class ApiTask:
     scenario_elements: Optional[str] = None
     baseline_only: bool = False
 
+    # generation update (optional)
+    use_heat_pump: bool = False
+    heat_pump_cop: float = 3.2
+
 
 def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
     """
@@ -252,6 +264,7 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
     """
     start = time.time()
     combo = task.combo
+    combo_tag = "_".join(sorted(combo)) if combo else "baseline"
 
     params: Dict[str, Any] = {
         "archetype": str(task.archetype).lower(),
@@ -259,7 +272,11 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
         "u_wall": task.u_wall,
         "u_roof": task.u_roof,
         "u_window": task.u_window,
+        "u_slab": task.u_slab,
     }
+    if task.use_heat_pump:
+        params["use_heat_pump"] = "true"
+        params["heat_pump_cop"] = task.heat_pump_cop
 
     # single scenario selector
     if task.baseline_only:
@@ -321,11 +338,13 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
         return {
             "status": "success",
             "combo": combo,
+            "combo_tag": combo_tag,
             "scenario_id": chosen.get("scenario_id"),
             "file_hourly": name_file,
             "file_annual": annual_file,
             "elapsed": elapsed,
             "size_kb": size_kb,
+            "heat_pump_cop": task.heat_pump_cop if task.use_heat_pump else None,
         }
 
     except Exception as e:
@@ -333,9 +352,11 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
         return {
             "status": "error",
             "combo": combo,
+            "combo_tag": combo_tag,
             "elapsed": elapsed,
             "error": f"{type(e).__name__}: {e}",
             "traceback": traceback.format_exc(),
+            "heat_pump_cop": task.heat_pump_cop if task.use_heat_pump else None,
         }
 
 
@@ -348,6 +369,7 @@ def run_ecm_api_sequential(
     u_wall: Optional[float],
     u_roof: Optional[float],
     u_window: Optional[float],
+    u_slab: Optional[float],
     weather_source: str,
     epw_path: Optional[Union[str, Path]],
     output_dir: Union[str, Path],
@@ -365,6 +387,8 @@ def run_ecm_api_sequential(
         raise ValueError("For ECM 'roof' you must provide u_roof.")
     if "window" in ecm_options and u_window is None:
         raise ValueError("For ECM 'window' you must provide u_window.")
+    if "slab" in ecm_options and u_slab is None:
+        raise ValueError("For ECM 'slab' you must provide u_slab.")
 
     ensure_dir(output_dir)
     ensure_dir(BUILDING_EXAMPLES_DIR)
@@ -384,7 +408,11 @@ def run_ecm_api_sequential(
                 u_wall=u_wall,
                 u_roof=u_roof,
                 u_window=u_window,
+                u_slab=u_slab,
             )
+
+        combo_tag = "_".join(sorted(combo)) if combo else "baseline"
+        cop = HEAT_PUMP_COP_BY_COMBO.get(combo_tag, HEAT_PUMP_COP_DEFAULT)
 
         tasks.append(
             ApiTask(
@@ -392,6 +420,7 @@ def run_ecm_api_sequential(
                 u_wall=u_wall if ("wall" in ecm_options) else None,
                 u_roof=u_roof if ("roof" in ecm_options) else None,
                 u_window=u_window if ("window" in ecm_options) else None,
+                u_slab=u_slab if ("slab" in ecm_options) else None,
                 weather_source=weather_source,
                 epw_path=str(epw_path) if epw_path else None,
                 output_dir=str(output_dir),
@@ -402,6 +431,8 @@ def run_ecm_api_sequential(
                 bui_json=bui_json,
                 scenario_elements=None if is_baseline else ",".join(combo),
                 baseline_only=is_baseline,
+                use_heat_pump=USE_HEAT_PUMP,
+                heat_pump_cop=cop,
             )
         )
 
@@ -428,6 +459,25 @@ def run_ecm_api_sequential(
     }
 
 
+def build_summary_table(results: List[Dict[str, Any]]) -> pd.DataFrame:
+    rows: List[Dict[str, Any]] = []
+    for r in results:
+        rows.append(
+            {
+                "combo": r.get("combo_tag") or ("_".join(sorted(r.get("combo", []))) if r.get("combo") else "baseline"),
+                "status": r.get("status"),
+                "scenario_id": r.get("scenario_id"),
+                "elapsed_s": round(float(r.get("elapsed", 0.0)), 3) if r.get("elapsed") is not None else None,
+                "size_kb": round(float(r.get("size_kb", 0.0)), 2) if r.get("size_kb") is not None else None,
+                "heat_pump_cop": r.get("heat_pump_cop"),
+                "file_hourly": r.get("file_hourly"),
+                "file_annual": r.get("file_annual"),
+                "error": r.get("error"),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 # =============================================================================
 # RUN
 # =============================================================================
@@ -438,6 +488,7 @@ if __name__ == "__main__":
         u_wall=U_WALL,
         u_roof=U_ROOF,
         u_window=U_WINDOW,
+        u_slab=U_SLAB,
         weather_source=WEATHER_SOURCE,
         epw_path=EPW_PATH if WEATHER_SOURCE == "epw" else None,
         output_dir=RESULTS_DIR,
@@ -454,6 +505,11 @@ if __name__ == "__main__":
     print(f"Successes: {stats['successful']}/{stats['total']}")
     print(f"Failed: {stats['failed']}/{stats['total']}")
     print(f"Time: {stats['total_time']:.1f}s")
+
+    summary_df = build_summary_table(stats["results"])
+    if not summary_df.empty:
+        print("\nSUMMARY TABLE (per simulation)")
+        print(summary_df.to_string(index=False))
 
     if stats["failed"]:
         print("\n[ERRORS]")

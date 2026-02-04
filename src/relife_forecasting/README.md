@@ -115,7 +115,8 @@ Required fields: `bui`, `system`.
   "category": "...",
   "country": "...",
   "bui": { ... },
-  "system": { ... }
+  "system": { ... },
+  "uni11300_input_example": { ... }
 }
 ```
 
@@ -524,7 +525,13 @@ If `weather_source=epw` then **required**:
     "system_messages": [ ... ]
   },
   "results": {
-    "hourly_building": [ {"timestamp": "...", "Q_HC": ..., ...}, ... ]
+    "hourly_building": [ {"timestamp": "...", "Q_HC": ..., ...}, ... ],
+    "primary_energy_uni11300": {
+      "input_unit": "Wh",
+      "ideal_unit": "kWh",
+      "n_hours": 8760,
+      "summary": { ... }
+    }
   }
 }
 ```
@@ -532,7 +539,83 @@ If `weather_source=epw` then **required**:
 
 ---
 
-## 5) POST `/simulate/batch`
+## 5) POST `/primary-energy/uni11300`
+**Purpose**: compute delivered and primary energy from hourly ideal loads (UNI/TS 11300).
+
+Input JSON supports:
+- Direct hourly list: `hourly_sim` or `hourly_building`
+- Full `/simulate` response: `results.hourly_building`
+- If needed, wrap any of the above in `simulate_result`
+
+`Q_H` and `Q_C` are mapped to ideal loads (`q_ideal_heat`, `q_ideal_cool`).
+By default, inputs are assumed in **Wh** (as returned by `/simulate`). Use `input_unit="kWh"` if already in kWh.
+
+### Body JSON (required)
+```json
+{
+  "hourly_sim": [
+    {"timestamp": "2024-01-01 00:00:00", "Q_H": 2103.85, "Q_C": 0.0},
+    {"timestamp": "2024-01-01 01:00:00", "Q_H": 1800.12, "Q_C": 0.0}
+  ],
+  "input_unit": "Wh",
+  "heating_params": { ... },
+  "cooling_params": { ... }
+}
+```
+
+### Response (200)
+```json
+{
+  "input_unit": "Wh",
+  "ideal_unit": "kWh",
+  "n_hours": 8760,
+  "hourly_results": [ ... ],
+  "summary": {
+    "EP_total_kWh": 12345.67
+  }
+}
+```
+
+### Example call
+```bash
+curl -X POST \
+  "http://127.0.0.1:9091/primary-energy/uni11300" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "hourly_sim": [
+      {"timestamp": "2024-01-01 00:00:00", "Q_H": 2103.85, "Q_C": 0.0},
+      {"timestamp": "2024-01-01 01:00:00", "Q_H": 1800.12, "Q_C": 0.0}
+    ],
+    "input_unit": "Wh"
+  }'
+```
+
+---
+
+## 6) GET `/primary-energy/uni11300/input-example`
+**Purpose**: return a ready-to-use input payload example (including default parameters).
+
+### Response (200)
+```json
+{
+  "hourly_sim": [
+    {"timestamp": "2024-01-01 00:00:00", "Q_H": 2103.85, "Q_C": 0.0},
+    {"timestamp": "2024-01-01 01:00:00", "Q_H": 1800.12, "Q_C": 0.0}
+  ],
+  "input_unit": "Wh",
+  "heating_params": { ... },
+  "cooling_params": { ... }
+}
+```
+
+### Example call
+```bash
+curl -X GET "http://127.0.0.1:9091/primary-energy/uni11300/input-example"
+```
+
+---
+
+## 7) POST `/simulate/batch`
 **Purpose**: simulate multiple buildings in parallel (multiprocessing). Returns detailed results and a summary table.
 
 ### Body JSON (required)
@@ -593,7 +676,7 @@ Required fields:
 
 ---
 
-## 6) POST `/report`
+## 8) POST `/report`
 **Purpose**: generate an HTML report (statistical analysis and charts) from an hourly time series.
 
 ### Body JSON (required)
@@ -612,12 +695,15 @@ Required fields:
 
 ---
 
-## 7) POST `/bui/epc_update_u_values`
+## 9) POST `/bui/epc_update_u_values`
 **Purpose**: update envelope U-values according to an EPC energy class (Greece).
 
 ### Query params
 - `energy_class` (string, **required**, regex `^[ABCD]$`)
 - `archetype` (bool, default `true`)
+- `u_slab` (float, optional) — override U-value for slab to ground
+- `use_heat_pump` (bool, default `false`) — update system to heat pump
+- `heat_pump_cop` (float, default `3.2`) — COP used when `use_heat_pump=true`
 
 If `archetype=true`, these are **required**:
 - `category`
@@ -631,10 +717,11 @@ Optional:
 **Body JSON (required)**:
 ```json
 {
-  "bui": { ... }
+  "bui": { ... },
+  "system": { ... }
 }
 ```
-Required field: `bui`.
+Required field: `bui`. `system` is required only if `use_heat_pump=true` in custom mode.
 
 ### Effect
 - `archetype=true`: creates a **new** archetype and adds it to `BUILDING_ARCHETYPES` in memory.
@@ -649,13 +736,14 @@ Required field: `bui`.
   "base_country": "...",
   "energy_class": "A" | "B" | "C" | "D",
   "new_archetype_name": "..." | null,
-  "bui": { ... }
+  "bui": { ... },
+  "system": { ... }
 }
 ```
 
 ---
 
-## 8) POST `/ecm_application`
+## 10) POST `/ecm_application`
 **Purpose**: generate all non-empty combinations of requested U-value interventions (roof/walls/windows) and simulate each scenario with ISO 52016.
 
 ### Query params
@@ -664,9 +752,12 @@ Required field: `bui`.
 - `u_wall` (float, optional)
 - `u_roof` (float, optional)
 - `u_window` (float, optional)
+- `u_slab` (float, optional)
+- `use_heat_pump` (bool, default `false`) — update system to heat pump
+- `heat_pump_cop` (float, default `3.2`) — COP used when `use_heat_pump=true`
 
 Required rule:
-- you must specify **at least one** of `u_wall`, `u_roof`, `u_window`.
+- you must specify **at least one** of `u_wall`, `u_roof`, `u_window`, `u_slab`.
 
 If `archetype=true`, these are **required**:
 - `category`
@@ -678,6 +769,7 @@ If `archetype=true`, these are **required**:
 
 Required field:
 - `bui_json` (JSON string)
+- `system_json` (JSON string, required only if `use_heat_pump=true`)
 
 ### EPW weather
 If `weather_source=epw` then **required**:
@@ -709,7 +801,7 @@ If `weather_source=epw` then **required**:
 
 ---
 
-## 9) GET `/emission-factors`
+## 11) GET `/emission-factors`
 **Purpose**: returns emission factors (kgCO2eq/kWh) for a country.
 
 ### Query params
@@ -733,7 +825,7 @@ Expected values in code:
 
 ---
 
-## 10) POST `/calculate`
+## 12) POST `/calculate`
 **Purpose**: compute CO2e for a single scenario.
 
 ### Body JSON (required)
@@ -782,7 +874,7 @@ Schema (Pydantic `EmissionResult`):
 
 ---
 
-## 11) POST `/compare`
+## 13) POST `/compare`
 **Purpose**: compare N scenarios in terms of emissions. The first scenario in the list is the **baseline**.
 
 ### Body JSON (required)
@@ -828,7 +920,7 @@ Schema (Pydantic `ComparisonResult`):
 
 ---
 
-## 12) POST `/calculate-intervention`
+## 14) POST `/calculate-intervention`
 **Purpose**: compute the CO2e impact of a retrofit intervention, with consumption reduction and/or source change.
 
 ### Body JSON (required)
@@ -908,7 +1000,8 @@ You can run the simulation using:
 - Requires `bui_json` (multipart form field) as a JSON string
 - The endpoint parses it and uses it as baseline BUI.
 
-> This endpoint uses only the **building envelope** (BUI). It does **not** run HVAC/system simulation (ISO 15316).
+> This endpoint uses only the **building envelope** (BUI). It does **not** run HVAC/system simulation (ISO 15316).  
+> If `use_heat_pump=true`, the system is updated and returned in `system_variant`, but it does not affect ISO 52016 results.
 
 ---
 
@@ -917,17 +1010,18 @@ You can pass any subset of these U-values:
 - `u_wall`: new U-value for **opaque vertical surfaces** (walls)
 - `u_roof`: new U-value for **opaque horizontal surfaces** (roof)
 - `u_window`: new U-value for **transparent vertical surfaces** (windows)
+- `u_slab`: new U-value for **slab to ground** (opaque ground surface)
 
 The endpoint calls:
 
 ```python
-scenarios_spec = build_uvalue_scenarios(u_roof=u_roof, u_wall=u_wall, u_window=u_window)
+scenarios_spec = build_uvalue_scenarios(u_roof=u_roof, u_wall=u_wall, u_window=u_window, u_slab=u_slab)
 ```
 
 This helper is expected to return a list of scenario specs (non-empty combinations), each containing:
 - `id` (scenario identifier)
 - `label` (human-readable description)
-- `use_roof`, `use_wall`, `use_window` (booleans)
+- `use_roof`, `use_wall`, `use_window`, `use_slab` (booleans)
 
 Example: if you provide `u_wall` and `u_window`, scenarios typically include:
 - wall only
@@ -959,11 +1053,11 @@ Behavior:
 - accepted separators: comma, `+`, semicolon, spaces (e.g. `roof+wall`, `roof wall`)
 
 Behavior:
-- parses requested elements into a set (must be subset of `{roof, wall, window}`)
+- parses requested elements into a set (must be subset of `{roof, wall, window, slab}`)
 - compares it to each generated scenario spec’s elements
 - keeps exactly one matching scenario or returns HTTP 404 with a helpful list of available scenarios
 
-Valid element names are: `roof`, `wall`, `window`.
+Valid element names are: `roof`, `wall`, `window`, `slab` (also accepts `ground` as an alias).
 
 ---
 
@@ -996,9 +1090,11 @@ apply_u_values_to_bui(
     use_roof=spec["use_roof"],
     use_wall=spec["use_wall"],
     use_window=spec["use_window"],
+    use_slab=spec["use_slab"],
     u_roof=u_roof,
     u_wall=u_wall,
     u_window=u_window,
+    u_slab=u_slab,
 )
 ```
 
@@ -1034,6 +1130,13 @@ apply_u_values_to_bui(
 | `u_wall` | query | float | `None` | optional | New wall U-value |
 | `u_roof` | query | float | `None` | optional | New roof U-value |
 | `u_window` | query | float | `None` | optional | New window U-value |
+| `u_slab` | query | float | `None` | optional | New slab-to-ground U-value |
+
+### System update (optional)
+| Name | Location | Type | Default | Description |
+|------|----------|------|---------|-------------|
+| `use_heat_pump` | query | bool | `false` | If `true`, update system to heat pump |
+| `heat_pump_cop` | query | float | `3.2` | COP used when `use_heat_pump=true` |
 
 ### Single-scenario mode (NEW)
 | Name | Location | Type | Default | Description |
@@ -1060,7 +1163,8 @@ Top-level structure:
   "category": "...",
   "country": "...",
   "weather_source": "pvgis|epw",
-  "u_values_requested": { "roof": 0.8, "wall": 0.5, "window": 1.0 },
+  "u_values_requested": { "roof": 0.8, "wall": 0.5, "window": 1.0, "slab": 0.6 },
+  "system_variant": { ... },
   "single_scenario_mode": {
     "baseline_only": false,
     "scenario_id": null,
@@ -1138,7 +1242,7 @@ curl -X POST \
 ```bash
 curl -X POST \
   "http://127.0.0.1:9091/ecm_application?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=epw&baseline_only=true" \
-  -F "epw_file=@epw_weather/GRC_Athens.167160_IWEC.epw"
+  -F "epw_file=@src/relife_forecasting/epw_weather/GRC_Athens.167160_IWEC.epw"
 ```
 
 ---
@@ -1181,7 +1285,7 @@ If `archetype=false` the endpoint returns **HTTP 400** (it can be extended later
 You can explicitly set `ecm_options` or let the endpoint infer it from provided U-values:
 
 **A) Explicit**
-- `ecm_options="wall,window,roof"` (comma-separated)
+- `ecm_options="wall,window,roof,slab"` (comma-separated)
 
 **B) Inferred**
 - if `ecm_options` is omitted:
@@ -1227,7 +1331,8 @@ For each combination:
      - `use_roof=("roof" in combo)`
      - `use_wall=("wall" in combo)`
      - `use_window=("window" in combo)`
-     - and U-values `u_roof/u_wall/u_window`
+     - `use_slab=("slab" in combo)`
+     - and U-values `u_roof/u_wall/u_window/u_slab`
 
 2. **Optionally saves BUI JSON variant**
    - if `save_bui=true`:
@@ -1290,10 +1395,11 @@ This is intended for internal / batch workflows where the server has access to i
 ### ECM controls
 | Name | Location | Type | Default | Required | Description |
 |------|----------|------|---------|----------|-------------|
-| `ecm_options` | query | str | `None` | optional | Comma-separated list of elements to combine. If omitted, inferred from provided U-values. |
+| `ecm_options` | query | str | `None` | optional | Comma-separated list of elements to combine (wall, window, roof, slab). If omitted, inferred from provided U-values. |
 | `u_wall` | query | float | `None` | required if `"wall"` in options | New wall U-value |
 | `u_roof` | query | float | `None` | required if `"roof"` in options | New roof U-value |
 | `u_window` | query | float | `None` | required if `"window"` in options | New window U-value |
+| `u_slab` | query | float | `None` | required if `"slab"` in options | New slab-to-ground U-value |
 | `include_baseline` | query | bool | `true` | optional | If true, baseline scenario is included |
 
 ### Saving controls
@@ -1399,14 +1505,14 @@ BUI_<building_slug>__<combo_tag>.json
 ### PVGIS mode
 ```bash
 curl -X POST \
-  "http://127.0.0.1:9091/ecm_application/run_sequential_save?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=pvgis&ecm_options=wall,window&u_wall=0.5&u_window=1.0&include_baseline=true&output_dir=results/ecm_api&save_bui=true&bui_dir=building_examples_ecm_api"
+  "http://127.0.0.1:9091/ecm_application/run_sequential_save?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=pvgis&ecm_options=wall,window&u_wall=0.5&u_window=1.0&include_baseline=true&output_dir=results/ecm_api&save_bui=true&bui_dir=building_examples_ecm"
 ```
 
 ### EPW mode (multipart upload)
 ```bash
 curl -X POST \
   "http://127.0.0.1:9091/ecm_application/run_sequential_save?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=epw&ecm_options=wall,window&u_wall=0.5&u_window=1.0&include_baseline=true" \
-  -F "epw_file=@epw_weather/GRC_Athens.167160_IWEC.epw"
+  -F "epw_file=@src/relife_forecasting/epw_weather/GRC_Athens.167160_IWEC.epw"
 ```
 
 ---
