@@ -54,7 +54,7 @@ WEATHER_SOURCE = "epw"  # "pvgis" or "epw"
 EPW_PATH = Path("epw_weather/GRC_Athens.167160_IWEC.epw")  # change to your path if needed
 
 # ECM controls
-ECM_OPTIONS = ["wall", "window", "roof", "slab"]  # subset of ["roof","wall","window","slab"]
+ECM_OPTIONS = ["wall", "window", "roof", "slab", "heat_pump"]  # subset of ["roof","wall","window","slab","heat_pump"]
 U_WALL = 0.5
 U_ROOF = 0.3
 U_WINDOW = 1.0
@@ -380,6 +380,11 @@ def run_ecm_api_sequential(
     name: Optional[str] = None,
     bui_json: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
+    allowed = {"wall", "roof", "window", "slab", "heat_pump"}
+    bad = [o for o in ecm_options if o not in allowed]
+    if bad:
+        raise ValueError(f"Invalid ECM option(s): {bad}. Allowed: {sorted(list(allowed))}.")
+
     # validations
     if "wall" in ecm_options and u_wall is None:
         raise ValueError("For ECM 'wall' you must provide u_wall.")
@@ -398,13 +403,14 @@ def run_ecm_api_sequential(
     # Build tasks (one after another)
     tasks: List[ApiTask] = []
     for combo in combos:
-        is_baseline = (len(combo) == 0)
+        combo_no_hp = [c for c in combo if c != "heat_pump"]
+        is_baseline = (len(combo_no_hp) == 0)
 
         # Optional: save local BUI variants (ONLY works if you have bui_json, i.e. custom mode)
         if not archetype and bui_json is not None:
             _ = apply_u_values_to_BUI(
                 bui_base=bui_json,
-                active_elements=combo,
+                active_elements=combo_no_hp,
                 u_wall=u_wall,
                 u_roof=u_roof,
                 u_window=u_window,
@@ -413,6 +419,7 @@ def run_ecm_api_sequential(
 
         combo_tag = "_".join(sorted(combo)) if combo else "baseline"
         cop = HEAT_PUMP_COP_BY_COMBO.get(combo_tag, HEAT_PUMP_COP_DEFAULT)
+        use_hp = ("heat_pump" in combo) if ("heat_pump" in ecm_options) else USE_HEAT_PUMP
 
         tasks.append(
             ApiTask(
@@ -429,9 +436,9 @@ def run_ecm_api_sequential(
                 country=country,
                 name=name,
                 bui_json=bui_json,
-                scenario_elements=None if is_baseline else ",".join(combo),
+                scenario_elements=None if is_baseline else ",".join(combo_no_hp),
                 baseline_only=is_baseline,
-                use_heat_pump=USE_HEAT_PUMP,
+                use_heat_pump=use_hp,
                 heat_pump_cop=cop,
             )
         )
