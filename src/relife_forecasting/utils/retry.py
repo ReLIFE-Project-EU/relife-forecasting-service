@@ -5,13 +5,36 @@ import time
 from functools import wraps
 from typing import TypeVar, Callable
 
+try:
+    # `requests` is used by the calling code; include its base exception when available.
+    from requests.exceptions import RequestException as _RequestsRequestException
+except Exception:  # ImportError or if `requests` is not installed
+    _RequestsRequestException = None  # type: ignore[assignment]
+
+try:
+    # `urllib3` underpins `requests`; include its HTTPError when available.
+    from urllib3.exceptions import HTTPError as _Urllib3HTTPError
+except Exception:  # ImportError or if `urllib3` is not installed
+    _Urllib3HTTPError = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
 # Exceptions that indicate a transient network issue worth retrying.
-TRANSIENT_EXCEPTIONS = (ConnectionError, TimeoutError, OSError)
+_transient_exceptions: list[type[BaseException]] = [
+    ConnectionError,
+    TimeoutError,
+    OSError,
+]
 
+if _RequestsRequestException is not None:
+    _transient_exceptions.append(_RequestsRequestException)
+
+if _Urllib3HTTPError is not None:
+    _transient_exceptions.append(_Urllib3HTTPError)
+
+TRANSIENT_EXCEPTIONS = tuple(_transient_exceptions)
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_INITIAL_DELAY = 1.0
 DEFAULT_BACKOFF_FACTOR = 2.0
@@ -58,7 +81,11 @@ def retry_on_transient_error(
                             max_retries,
                             exc,
                         )
-            raise last_exc  # type: ignore[misc]
+            if last_exc is not None:
+                raise last_exc
+            raise RuntimeError(
+                "retry_on_transient_error exhausted retries without capturing an exception"
+            )
 
         return wrapper
 
