@@ -1319,11 +1319,16 @@ async def ecm_application_run_sequential_save(
 
                 # simulate (ISO52016)
                 if weather_source == "pvgis":
-                    hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
-                        bui_variant,
-                        weather_source="pvgis",
-                        sankey_graph=False,
-                    )
+
+                    @retry_on_transient_error()
+                    def _run_sequential_pvgis():
+                        return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                            bui_variant,
+                            weather_source="pvgis",
+                            sankey_graph=False,
+                        )
+
+                    hourly_sim, annual_results_df = _run_sequential_pvgis()
                 else:
                     hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
                         bui_variant,

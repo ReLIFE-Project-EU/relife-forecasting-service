@@ -1,5 +1,7 @@
 """Retry utilities for resilient external API calls (e.g., PVGIS)."""
 
+import asyncio
+import inspect
 import logging
 import time
 from functools import wraps
@@ -50,11 +52,56 @@ def retry_on_transient_error(
     Uses exponential backoff between attempts.  Only retries on exceptions
     that are subclasses of ``TRANSIENT_EXCEPTIONS``; all other exceptions
     propagate immediately.
+    
+    Supports both sync and async functions; will automatically detect coroutines
+    and use asyncio.sleep instead of time.sleep to avoid blocking the event loop.
     """
+    if max_retries < 1:
+        raise ValueError(f"max_retries must be >= 1, got {max_retries}")
+    if initial_delay < 0:
+        raise ValueError(f"initial_delay must be >= 0, got {initial_delay}")
+    if backoff_factor <= 0:
+        raise ValueError(f"backoff_factor must be > 0, got {backoff_factor}")
 
     def decorator(fn: Callable[..., T]) -> Callable[..., T]:
+        is_coroutine = inspect.iscoroutinefunction(fn)
+        
         @wraps(fn)
-        def wrapper(*args, **kwargs) -> T:
+        async def async_wrapper(*args, **kwargs) -> T:
+            delay = initial_delay
+            last_exc: BaseException | None = None
+            for attempt in range(1, max_retries + 1):
+                try:
+                    return await fn(*args, **kwargs)
+                except TRANSIENT_EXCEPTIONS as exc:
+                    last_exc = exc
+                    if attempt < max_retries:
+                        logger.warning(
+                            "Transient error in %s (attempt %d/%d): %s — retrying in %.1fs",
+                            fn.__name__,
+                            attempt,
+                            max_retries,
+                            exc,
+                            delay,
+                        )
+                        await asyncio.sleep(delay)
+                        delay *= backoff_factor
+                    else:
+                        logger.error(
+                            "Transient error in %s (attempt %d/%d): %s — no retries left",
+                            fn.__name__,
+                            attempt,
+                            max_retries,
+                            exc,
+                        )
+            if last_exc is not None:
+                raise last_exc
+            raise RuntimeError(
+                "retry_on_transient_error exhausted retries without capturing an exception"
+            )
+
+        @wraps(fn)
+        def sync_wrapper(*args, **kwargs) -> T:
             delay = initial_delay
             last_exc: BaseException | None = None
             for attempt in range(1, max_retries + 1):
@@ -87,6 +134,6 @@ def retry_on_transient_error(
                 "retry_on_transient_error exhausted retries without capturing an exception"
             )
 
-        return wrapper
+        return async_wrapper if is_coroutine else sync_wrapper  # type: ignore[return-value]
 
     return decorator
