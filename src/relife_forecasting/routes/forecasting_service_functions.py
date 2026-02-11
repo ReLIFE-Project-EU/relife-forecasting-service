@@ -157,14 +157,49 @@ def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
     Convert a JSON system representation into the internal format expected by pybuildingenergy.
 
     Note:
-      - `gen_outdoor_temp_data` may come as list[dict]; pybuildingenergy expects a DataFrame.
+      All three DataFrame fields may arrive from the API in one of two JSON shapes:
+        - list[dict] (records format, e.g. from explicit serialisation)
+        - dict[str, list] (column-oriented format produced by to_jsonable())
+      Both shapes are handled by passing the value directly to pd.DataFrame(), which
+      understands both.  The index is then assigned explicitly because to_jsonable()
+      discards the row labels that pybuildingenergy expects.
+
+      - `gen_outdoor_temp_data`: 1-row DataFrame; index = ["Generator curve"]
+      - `heat_emission_data`: 5-row DataFrame; index = [
+          "Max flow temperature HZ1", "Max Δθ flow / return HZ1",
+          "Desired return temperature HZ1", "Desired load factor with ON-OFF for HZ1",
+          "Minimum flow temperature for HZ1"]
+      - `outdoor_temp_data`: 4-row DataFrame; index = [
+          "Minimum outdoor temperature", "Maximum outdoor temperature",
+          "Maximum flow temperature", "Minimum flow temperature"]
     """
     system = copy.deepcopy(system_json)
 
-    if "gen_outdoor_temp_data" in system and isinstance(system["gen_outdoor_temp_data"], list):
+    if "gen_outdoor_temp_data" in system and not isinstance(system["gen_outdoor_temp_data"], pd.DataFrame):
         df = pd.DataFrame(system["gen_outdoor_temp_data"])
         df.index = ["Generator curve"] * len(df)
         system["gen_outdoor_temp_data"] = df
+
+    if "heat_emission_data" in system and not isinstance(system["heat_emission_data"], pd.DataFrame):
+        df = pd.DataFrame(system["heat_emission_data"])
+        df.index = [
+            "Max flow temperature HZ1",
+            "Max Δθ flow / return HZ1",
+            "Desired return temperature HZ1",
+            "Desired load factor with ON-OFF for HZ1",
+            "Minimum flow temperature for HZ1",
+        ]
+        system["heat_emission_data"] = df
+
+    if "outdoor_temp_data" in system and not isinstance(system["outdoor_temp_data"], pd.DataFrame):
+        df = pd.DataFrame(system["outdoor_temp_data"])
+        df.index = [
+            "Minimum outdoor temperature",
+            "Maximum outdoor temperature",
+            "Maximum flow temperature",
+            "Minimum flow temperature",
+        ]
+        system["outdoor_temp_data"] = df
 
     return system
 
