@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import itertools
+import logging
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
@@ -13,6 +14,8 @@ from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
 from relife_forecasting.utils.retry import retry_on_transient_error
+
+logger = logging.getLogger(__name__)
 
 
 # =============================================================================
@@ -173,33 +176,148 @@ def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
           "Minimum outdoor temperature", "Maximum outdoor temperature",
           "Maximum flow temperature", "Minimum flow temperature"]
     """
+    def _coerce_system_df(
+        field_name: str,
+        value: Any,
+        expected_index: List[str],
+        strict_rows: bool = True,
+    ) -> pd.DataFrame:
+        if isinstance(value, pd.DataFrame):
+            return value
+
+        if not isinstance(value, (list, dict)):
+            logger.warning(
+                "Invalid system payload for '%s': unsupported type '%s' (expected list or dict).",
+                field_name,
+                type(value).__name__,
+            )
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Invalid '{field_name}': expected a JSON list or object compatible "
+                    f"with a tabular structure, but got '{type(value).__name__}'."
+                ),
+            )
+
+        try:
+            df = pd.DataFrame(value)
+        except (TypeError, ValueError) as exc:
+            logger.warning(
+                "Failed to convert '%s' into DataFrame: type=%s error=%s",
+                field_name,
+                type(value).__name__,
+                exc,
+            )
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Invalid '{field_name}': payload is not DataFrame-compatible "
+                    f"({type(exc).__name__}: {exc})."
+                ),
+            ) from exc
+        except Exception:
+            logger.exception(
+                "Unexpected error while converting '%s' into DataFrame (type=%s).",
+                field_name,
+                type(value).__name__,
+            )
+            raise
+
+        expected_rows = len(expected_index)
+        actual_rows = len(df)
+
+        if strict_rows and actual_rows != expected_rows:
+            logger.warning(
+                "Invalid row count for '%s': expected=%d actual=%d columns=%d",
+                field_name,
+                expected_rows,
+                actual_rows,
+                len(df.columns),
+            )
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Invalid '{field_name}': expected {expected_rows} rows, "
+                    f"but got {actual_rows}."
+                ),
+            )
+
+        if not strict_rows and actual_rows != expected_rows:
+            logger.warning(
+                "Unexpected row count for '%s': expected=%d actual=%d. "
+                "Preserving backward compatibility.",
+                field_name,
+                expected_rows,
+                actual_rows,
+            )
+
+        try:
+            if strict_rows:
+                df.index = expected_index
+            else:
+                df.index = [expected_index[0]] * actual_rows
+        except (TypeError, ValueError) as exc:
+            logger.warning(
+                "Failed assigning expected index for '%s': expected_rows=%d actual_rows=%d error=%s",
+                field_name,
+                expected_rows,
+                actual_rows,
+                exc,
+            )
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Invalid '{field_name}': cannot assign expected index "
+                    f"for {actual_rows} rows ({type(exc).__name__}: {exc})."
+                ),
+            ) from exc
+        except Exception:
+            logger.exception(
+                "Unexpected error while assigning index for '%s': expected_rows=%d actual_rows=%d",
+                field_name,
+                expected_rows,
+                actual_rows,
+            )
+            raise
+
+        return df
+
     system = copy.deepcopy(system_json)
 
-    if "gen_outdoor_temp_data" in system and not isinstance(system["gen_outdoor_temp_data"], pd.DataFrame):
-        df = pd.DataFrame(system["gen_outdoor_temp_data"])
-        df.index = ["Generator curve"] * len(df)
-        system["gen_outdoor_temp_data"] = df
+    if "gen_outdoor_temp_data" in system:
+        system["gen_outdoor_temp_data"] = _coerce_system_df(
+            "gen_outdoor_temp_data",
+            system["gen_outdoor_temp_data"],
+            ["Generator curve"],
+            strict_rows=False,
+        )
 
-    if "heat_emission_data" in system and not isinstance(system["heat_emission_data"], pd.DataFrame):
-        df = pd.DataFrame(system["heat_emission_data"])
-        df.index = [
-            "Max flow temperature HZ1",
-            "Max Δθ flow / return HZ1",
-            "Desired return temperature HZ1",
-            "Desired load factor with ON-OFF for HZ1",
-            "Minimum flow temperature for HZ1",
-        ]
-        system["heat_emission_data"] = df
+    if "heat_emission_data" in system:
+        system["heat_emission_data"] = _coerce_system_df(
+            "heat_emission_data",
+            system["heat_emission_data"],
+            [
+                "Max flow temperature HZ1",
+                "Max Δθ flow / return HZ1",
+                "Desired return temperature HZ1",
+                "Desired load factor with ON-OFF for HZ1",
+                "Minimum flow temperature for HZ1",
+            ],
+            strict_rows=True,
+        )
 
-    if "outdoor_temp_data" in system and not isinstance(system["outdoor_temp_data"], pd.DataFrame):
-        df = pd.DataFrame(system["outdoor_temp_data"])
-        df.index = [
-            "Minimum outdoor temperature",
-            "Maximum outdoor temperature",
-            "Maximum flow temperature",
-            "Minimum flow temperature",
-        ]
-        system["outdoor_temp_data"] = df
+    if "outdoor_temp_data" in system:
+        system["outdoor_temp_data"] = _coerce_system_df(
+            "outdoor_temp_data",
+            system["outdoor_temp_data"],
+            [
+                "Minimum outdoor temperature",
+                "Maximum outdoor temperature",
+                "Maximum flow temperature",
+                "Minimum flow temperature",
+            ],
+            strict_rows=True,
+        )
 
     return system
 
