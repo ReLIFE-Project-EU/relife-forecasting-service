@@ -13,7 +13,10 @@ import pybuildingenergy as pybui
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
-from relife_forecasting.utils.retry import retry_on_transient_error
+try:
+    from relife_forecasting.utils.retry import retry_on_transient_error
+except Exception:
+    from utils.retry import retry_on_transient_error
 
 logger = logging.getLogger(__name__)
 

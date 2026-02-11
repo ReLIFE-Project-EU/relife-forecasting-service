@@ -19,7 +19,10 @@ from fastapi.responses import HTMLResponse
 
 from relife_forecasting.config.logging import configure_logging
 from relife_forecasting.routes import health
-from relife_forecasting.utils.retry import retry_on_transient_error
+try: 
+    from relife_forecasting.utils.retry import retry_on_transient_error
+except Exception:
+    from utils.retry import retry_on_transient_error
 
 # Prefer your package imports; keep a small fallback to reduce friction during refactors.
 try:
