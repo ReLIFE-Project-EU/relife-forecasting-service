@@ -51,6 +51,11 @@ except Exception:
         build_uni11300_input_example,
     )
 
+
+from relife_forecasting.routes import health
+
+
+
 # -----------------------------------------------------------------------------
 # Version + logging
 # -----------------------------------------------------------------------------
@@ -1530,3 +1535,251 @@ def calculate_intervention_impact(payload: InterventionInput):
             "km_car_avoided": current["equivalent_km_car"] - future["equivalent_km_car"],
         },
     }
+
+# =============================================================================
+# PV + Heat Pump endpoint
+# =============================================================================
+
+# Import the PV+HP core function (NOT the router endpoint)
+try:
+    from relife_forecasting.routes.pv_hp_analysis import analyze_pv_hp_from_uni11300, BatteryParams
+except Exception:
+    from routes.pv_hp_analysis import analyze_pv_hp_from_uni11300, BatteryParams  # type: ignore
+
+
+def _compute_uni11300_full_from_hourly_df(
+    hourly_df: pd.DataFrame,
+    input_unit: str = "Wh",
+    heating_params_payload: Optional[Dict[str, Any]] = None,
+    cooling_params_payload: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Compute UNI/TS 11300 results from ISO52016 hourly df.
+
+    Returns FULL UNI output:
+      - hourly_results (records)
+      - summary
+    """
+    if hourly_df is None or hourly_df.empty:
+        raise HTTPException(status_code=400, detail="Hourly simulation data is empty.")
+
+    input_unit = str(input_unit or "Wh").strip().lower()
+    if input_unit not in {"wh", "kwh"}:
+        raise HTTPException(status_code=400, detail="input_unit must be 'Wh' or 'kWh'.")
+    scale_to_kwh = 0.001 if input_unit == "wh" else 1.0
+
+    heat_series = None
+    cool_series = None
+
+    if "Q_H" in hourly_df.columns:
+        heat_series = hourly_df["Q_H"].astype(float)
+    elif "Q_HC" in hourly_df.columns:
+        heat_series = hourly_df["Q_HC"].clip(lower=0.0).astype(float)
+
+    if "Q_C" in hourly_df.columns:
+        cool_series = hourly_df["Q_C"].astype(float)
+    elif "Q_HC" in hourly_df.columns:
+        cool_series = (-hourly_df["Q_HC"]).clip(lower=0.0).astype(float)
+
+    if heat_series is None and cool_series is None:
+        raise HTTPException(status_code=400, detail="Hourly data must include Q_H/Q_C (or Q_HC).")
+
+    df_ideal = pd.DataFrame(index=hourly_df.index)
+    if heat_series is not None:
+        df_ideal["Q_ideal_heat_kWh"] = heat_series * scale_to_kwh
+    if cool_series is not None:
+        df_ideal["Q_ideal_cool_kWh"] = cool_series * scale_to_kwh
+
+    heating_params_payload = heating_params_payload or {}
+    cooling_params_payload = cooling_params_payload or {}
+
+    if not isinstance(heating_params_payload, dict):
+        raise HTTPException(status_code=400, detail="'heating_params' must be a JSON object.")
+    if not isinstance(cooling_params_payload, dict):
+        raise HTTPException(status_code=400, detail="'cooling_params' must be a JSON object.")
+
+    try:
+        heating_params = HeatingSystemParams(**heating_params_payload)
+    except TypeError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid heating_params: {exc}") from exc
+
+    try:
+        cooling_params = CoolingSystemParams(**cooling_params_payload)
+    except TypeError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid cooling_params: {exc}") from exc
+
+    results_df = compute_primary_energy_from_hourly_ideal(
+        df_hourly=df_ideal,
+        heat_col="Q_ideal_heat_kWh",
+        cool_col="Q_ideal_cool_kWh",
+        heating_params=heating_params,
+        cooling_params=cooling_params,
+    )
+
+    summary_fields = [
+        "Q_ideal_heat_kWh",
+        "Q_ideal_cool_kWh",
+        "E_delivered_thermal_kWh",
+        "E_delivered_electric_heat_kWh",
+        "E_delivered_electric_cool_kWh",
+        "E_delivered_electric_total_kWh",
+        "EP_heat_total_kWh",
+        "EP_cool_total_kWh",
+        "EP_total_kWh",
+    ]
+    summary = {col: float(results_df[col].sum()) for col in summary_fields if col in results_df.columns}
+
+    return {
+        "input_unit": input_unit,
+        "ideal_unit": "kWh",
+        "n_hours": int(len(results_df)),
+        "hourly_results": dataframe_to_records_safe(results_df),
+        "summary": summary,
+    }
+
+
+@app.post("/run/iso52016-uni11300-pv", tags=["Simulation"])
+def run_iso52016_uni11300_pv(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    One-shot pipeline:
+      1) ISO 52016 (hourly Q_H/Q_C from BUI)
+      2) UNI/TS 11300 (delivered electricity)
+      3) PV + optional battery matching (PVGIS or simplified fallback)
+
+    JSON body (minimal):
+    {
+      "bui": {...},
+      "pv": {
+        "pv_kwp": 10,
+        "tilt_deg": 30,
+        "azimuth_deg": 0,
+        "use_pvgis": true,
+        "pvgis_loss_percent": 14,
+        "pvgis_year": 2019,
+        "annual_pv_yield_kwh_per_kwp": 1400,
+        "battery_params": {...}
+      },
+      "uni11300": { "input_unit": "Wh", "heating_params": {...}, "cooling_params": {...} },
+      "return_hourly_building": false
+    }
+    """
+    bui = payload.get("bui")
+    if bui is None or not isinstance(bui, dict):
+        raise HTTPException(status_code=400, detail="Missing or invalid 'bui' (must be a JSON object).")
+
+    pv = payload.get("pv") or {}
+    if not isinstance(pv, dict):
+        raise HTTPException(status_code=400, detail="'pv' must be a JSON object.")
+
+    # --- PV required inputs ---
+    pv_kwp = pv.get("pv_kwp")
+    if pv_kwp is None:
+        raise HTTPException(status_code=400, detail="Missing pv.pv_kwp")
+
+    # coords: allow override in pv, otherwise use bui.building
+    latitude = pv.get("latitude", bui.get("building", {}).get("latitude"))
+    longitude = pv.get("longitude", bui.get("building", {}).get("longitude"))
+    if latitude is None or longitude is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Missing coordinates. Provide pv.latitude/pv.longitude or bui.building.latitude/longitude.",
+        )
+
+    tilt_deg = float(pv.get("tilt_deg", 30.0))
+    azimuth_deg = float(pv.get("azimuth_deg", 0.0))
+    use_pvgis = bool(pv.get("use_pvgis", True))
+    pvgis_loss_percent = float(pv.get("pvgis_loss_percent", 14.0))
+    pvgis_year = pv.get("pvgis_year", None)
+    pvgis_year = int(pvgis_year) if pvgis_year is not None else None
+    annual_yield = float(pv.get("annual_pv_yield_kwh_per_kwp", 1400.0))
+
+    battery_params_obj = None
+    if pv.get("battery_params") is not None:
+        if not isinstance(pv["battery_params"], dict):
+            raise HTTPException(status_code=400, detail="pv.battery_params must be a JSON object.")
+        try:
+            battery_params_obj = BatteryParams(**pv["battery_params"])
+        except TypeError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid pv.battery_params: {exc}") from exc
+
+    # UNI optional overrides
+    uni_cfg = payload.get("uni11300") or {}
+    if not isinstance(uni_cfg, dict):
+        raise HTTPException(status_code=400, detail="'uni11300' must be a JSON object.")
+    uni_input_unit = uni_cfg.get("input_unit", "Wh")
+    heating_params_payload = uni_cfg.get("heating_params") or {}
+    cooling_params_payload = uni_cfg.get("cooling_params") or {}
+
+    return_hourly_building = bool(payload.get("return_hourly_building", False))
+
+    # -------------------------
+    # 1) ISO 52016 (PVGIS weather)
+    # -------------------------
+    try:
+        hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+            bui,
+            weather_source="pvgis",
+            sankey_graph=False,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"ISO52016 simulation failed: {type(exc).__name__}: {exc}") from exc
+
+    # -------------------------
+    # 2) UNI/TS 11300 full (needs hourly_results for PV step)
+    # -------------------------
+    uni11300_results = _compute_uni11300_full_from_hourly_df(
+        hourly_df=hourly_sim,
+        input_unit=uni_input_unit,
+        heating_params_payload=heating_params_payload,
+        cooling_params_payload=cooling_params_payload,
+    )
+
+    # -------------------------
+    # 3) PV + battery matching from UNI results
+    # -------------------------
+    pv_hp_results = analyze_pv_hp_from_uni11300(
+        uni_payload={"hourly_results": uni11300_results["hourly_results"]},
+        pv_kwp=float(pv_kwp),
+        latitude=float(latitude),
+        longitude=float(longitude),
+        tilt_deg=tilt_deg,
+        azimuth_deg=azimuth_deg,
+        use_pvgis=use_pvgis,
+        annual_pv_yield_kwh_per_kwp=annual_yield,
+        battery_params=battery_params_obj,
+        pvgis_loss_percent=pvgis_loss_percent,
+        pvgis_year=pvgis_year,
+    )
+
+    out = {
+        "inputs": {
+            "pv": {
+                "pv_kwp": float(pv_kwp),
+                "latitude": float(latitude),
+                "longitude": float(longitude),
+                "tilt_deg": float(tilt_deg),
+                "azimuth_deg": float(azimuth_deg),
+                "use_pvgis": bool(use_pvgis),
+                "pvgis_loss_percent": float(pvgis_loss_percent),
+                "pvgis_year": pvgis_year,
+                "annual_pv_yield_kwh_per_kwp": float(annual_yield),
+                "has_battery": battery_params_obj is not None,
+            },
+            "uni11300": {
+                "input_unit": str(uni_input_unit),
+                "heating_params_overridden": bool(heating_params_payload),
+                "cooling_params_overridden": bool(cooling_params_payload),
+            },
+        },
+        "results": {
+            "uni11300": uni11300_results,
+            "pv_hp": pv_hp_results,
+        },
+    }
+
+    if return_hourly_building:
+        out["results"]["hourly_building"] = dataframe_to_records_safe(hourly_sim)
+        # (optional) annual ISO52016 if you want it:
+        # out["results"]["annual_building"] = dataframe_to_records_safe(annual_results_df)
+
+    return out
