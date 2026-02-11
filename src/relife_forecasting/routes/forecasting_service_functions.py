@@ -12,6 +12,8 @@ import pybuildingenergy as pybui
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
+from relife_forecasting.utils.retry import retry_on_transient_error
+
 
 # =============================================================================
 # JSON / Data utilities
@@ -240,10 +242,15 @@ def simulate_building_worker(building_name: str, bui: dict, system: dict) -> Dic
       }
     """
     try:
-        hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
-            bui,
-            weather_source="pvgis",
-        )
+
+        @retry_on_transient_error()
+        def _run_worker_pvgis():
+            return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                bui,
+                weather_source="pvgis",
+            )
+
+        hourly_sim, annual_results_df = _run_worker_pvgis()
 
         calc = pybui.HeatingSystemCalculator(system)
         calc.load_csv_data(hourly_sim)

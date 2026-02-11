@@ -19,6 +19,7 @@ from fastapi.responses import HTMLResponse
 
 from relife_forecasting.config.logging import configure_logging
 from relife_forecasting.routes import health
+from relife_forecasting.utils.retry import retry_on_transient_error
 
 # Prefer your package imports; keep a small fallback to reduce friction during refactors.
 try:
@@ -308,11 +309,16 @@ async def simulate_building(
 
     # 3) Weather + ISO 52016
     if weather_source == "pvgis":
-        hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
-            bui_checked,
-            weather_source="pvgis",
-            sankey_graph=False,
-        )
+
+        @retry_on_transient_error()
+        def _run_pvgis_simulation():
+            return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                bui_checked,
+                weather_source="pvgis",
+                sankey_graph=False,
+            )
+
+        hourly_sim, annual_results_df = _run_pvgis_simulation()
 
     elif weather_source == "epw":
         if epw_file is None:
@@ -987,7 +993,12 @@ async def simulate_uvalues(
         # 5) Baseline (optional)
         if include_baseline:
             if weather_source == "pvgis":
-                hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(base_bui, weather_source="pvgis", sankey_graph=False,)
+
+                @retry_on_transient_error()
+                def _run_baseline_pvgis():
+                    return pybui.ISO52016.Temperature_and_Energy_needs_calculation(base_bui, weather_source="pvgis", sankey_graph=False,)
+
+                hourly_sim, annual_results_df = _run_baseline_pvgis()
             else:
                 hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
                     base_bui, weather_source="epw", path_weather_file=epw_path, sankey_graph=False, 
@@ -1031,7 +1042,12 @@ async def simulate_uvalues(
             )
 
             if weather_source == "pvgis":
-                hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(bui_variant, weather_source="pvgis", sankey_graph=False,)
+
+                @retry_on_transient_error()
+                def _run_scenario_pvgis():
+                    return pybui.ISO52016.Temperature_and_Energy_needs_calculation(bui_variant, weather_source="pvgis", sankey_graph=False,)
+
+                hourly_sim, annual_results_df = _run_scenario_pvgis()
             else:
                 hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
                     bui_variant, weather_source="epw", path_weather_file=epw_path, sankey_graph=False,
@@ -1303,11 +1319,16 @@ async def ecm_application_run_sequential_save(
 
                 # simulate (ISO52016)
                 if weather_source == "pvgis":
-                    hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
-                        bui_variant,
-                        weather_source="pvgis",
-                        sankey_graph=False,
-                    )
+
+                    @retry_on_transient_error()
+                    def _run_sequential_pvgis():
+                        return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                            bui_variant,
+                            weather_source="pvgis",
+                            sankey_graph=False,
+                        )
+
+                    hourly_sim, annual_results_df = _run_sequential_pvgis()
                 else:
                     hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
                         bui_variant,
