@@ -389,7 +389,7 @@ def validate_bui_and_system(bui: Dict[str, Any], system: Dict[str, Any]) -> Dict
     system_checked = json_to_internal_system(system)
 
     try:
-        res_sys = pybui.check_heating_system_inputs(system)
+        res_sys = pybui.check_heating_system_inputs(system_checked)
         system_checked = res_sys["config"]
         system_messages.extend(res_sys.get("messages", []))
     except AttributeError:
