@@ -167,7 +167,11 @@ def get_building_config(
             "country": match["country"],
             "bui": to_jsonable(match["bui"]),
             "system": to_jsonable(match["system"]),
-            "uni11300_input_example": UNI11300_SIMULATION_EXAMPLE,
+            "uni11300_input_example": to_jsonable(
+                match.get("uni11300")
+                or match.get("systems_archetype")
+                or UNI11300_SIMULATION_EXAMPLE
+            ),
         }
 
     if payload is None:
@@ -1141,6 +1145,20 @@ def _json_safe(obj: Any) -> Any:
     return obj
 
 
+def _deep_merge_dict(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Deep-merge two dictionaries without mutating inputs.
+    Values from `override` win over `base`.
+    """
+    out = copy.deepcopy(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = _deep_merge_dict(out[key], value)
+        else:
+            out[key] = copy.deepcopy(value)
+    return out
+
+
 def _build_name_file(
     building_name: str,
     combo: List[str],
@@ -1415,6 +1433,356 @@ async def ecm_application_run_sequential_save(
     }
 
 
+@app.post("/ecm_application/run_single_save", tags=["Simulation"])
+async def ecm_application_run_single_save(
+    # Input selection
+    archetype: bool = Query(True, description="If True, use an archetype."),
+    category: Optional[str] = Query(None, description="Building category. Required when archetype=True."),
+    country: Optional[str] = Query(None, description="Country. Required when archetype=True."),
+    name: Optional[str] = Query(None, description="Archetype name. Required when archetype=True."),
+    weather_source: str = Query("pvgis", description="Weather source: 'pvgis' or 'epw'."),
+    epw_file: Optional[UploadFile] = File(None, description="EPW weather file (required when weather_source='epw')."),
+    # Envelope options (single scenario: no combinations)
+    ecm_options: Optional[str] = Query(
+        None,
+        description="Comma-separated subset of elements to apply in one single run, e.g. 'wall,window'. If omitted, inferred from provided u-values.",
+    ),
+    u_wall: Optional[float] = Query(None, description="New wall U-value."),
+    u_roof: Optional[float] = Query(None, description="New roof U-value."),
+    u_window: Optional[float] = Query(None, description="New window U-value."),
+    u_slab: Optional[float] = Query(None, description="New slab-to-ground U-value."),
+    include_baseline: bool = Query(False, description="If True, also run baseline."),
+    # Heat pump option (integrated here, not in a separate endpoint)
+    use_heat_pump: bool = Query(False, description="If True, apply heat pump option in integrated UNI/PV results."),
+    heat_pump_cop: float = Query(3.2, description="Heat pump COP used in integrated UNI/PV results."),
+    # PV option (integrated here, not in a separate endpoint)
+    use_pv: bool = Query(False, description="If True, run integrated ISO52016+UNI11300+PV analysis."),
+    pv_kwp: Optional[float] = Query(None, description="Installed PV power [kWp]. Required when use_pv=true."),
+    pv_tilt_deg: float = Query(30.0, description="PV tilt [deg]."),
+    pv_azimuth_deg: float = Query(0.0, description="PV azimuth [deg] (0=south in PVGIS convention used by pipeline)."),
+    pv_use_pvgis: bool = Query(True, description="If True, use PVGIS hourly PV generation."),
+    pv_pvgis_loss_percent: float = Query(14.0, description="PVGIS loss percentage."),
+    pv_pvgis_year: Optional[int] = Query(None, description="Optional fixed PVGIS year."),
+    annual_pv_yield_kwh_per_kwp: float = Query(1400.0, description="Fallback annual PV yield [kWh/kWp]."),
+    pv_battery_params_json: Optional[str] = Form(None, description="Optional JSON object for PV battery parameters."),
+    # UNI11300 optional overrides
+    uni_input_unit: Optional[str] = Query(None, description="Override UNI input unit ('Wh' or 'kWh')."),
+    uni_heating_params_json: Optional[str] = Form(None, description="Optional JSON object override for UNI heating_params."),
+    uni_cooling_params_json: Optional[str] = Form(None, description="Optional JSON object override for UNI cooling_params."),
+    return_hourly_building: bool = Query(False, description="If True, include ISO hourly building output in integrated UNI/PV payload."),
+    # Saving controls
+    output_dir: str = Query("results/ecm_api_single", description="Folder where CSV results are saved."),
+    save_bui: bool = Query(True, description="If True, save BUI JSON variants on disk."),
+    bui_dir: str = Query("building_examples_ecm_api_single", description="Folder where BUI JSON variants are saved."),
+) -> Dict[str, Any]:
+    """
+    Sequential runner without ECM combinations.
+
+    If more U-values are provided (e.g. wall + window), a single scenario is simulated with all of them together.
+    Optionally, the same run can include UNI11300 + PV and heat pump analysis.
+    """
+    if not archetype:
+        raise HTTPException(status_code=400, detail="This endpoint currently supports archetype=true only.")
+    if not category or not country or not name:
+        raise HTTPException(status_code=400, detail="With archetype=true you must provide 'category', 'country' and 'name'.")
+
+    match = next(
+        (b for b in BUILDING_ARCHETYPES if b.get("category") == category and b.get("country") == country and b.get("name") == name),
+        None,
+    )
+    if match is None:
+        raise HTTPException(status_code=404, detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.")
+
+    base_bui = match["bui"]
+    building_name = match.get("name", name) or "building"
+    base_uni_cfg = copy.deepcopy(
+        match.get("uni11300")
+        or match.get("systems_archetype")
+        or UNI11300_SIMULATION_EXAMPLE
+    )
+
+    # Which envelope changes are active (single scenario only)
+    if ecm_options:
+        opts = [x.strip().lower() for x in ecm_options.split(",") if x.strip()]
+    else:
+        opts = []
+        if u_wall is not None:
+            opts.append("wall")
+        if u_roof is not None:
+            opts.append("roof")
+        if u_window is not None:
+            opts.append("window")
+        if u_slab is not None:
+            opts.append("slab")
+
+    allowed = {"wall", "roof", "window", "slab"}
+    bad = [o for o in opts if o not in allowed]
+    if bad:
+        raise HTTPException(status_code=400, detail=f"Invalid ecm_options={bad}. Allowed: wall, roof, window, slab.")
+    if "wall" in opts and u_wall is None:
+        raise HTTPException(status_code=400, detail="For option 'wall' you must provide u_wall.")
+    if "roof" in opts and u_roof is None:
+        raise HTTPException(status_code=400, detail="For option 'roof' you must provide u_roof.")
+    if "window" in opts and u_window is None:
+        raise HTTPException(status_code=400, detail="For option 'window' you must provide u_window.")
+    if "slab" in opts and u_slab is None:
+        raise HTTPException(status_code=400, detail="For option 'slab' you must provide u_slab.")
+
+    if use_heat_pump and heat_pump_cop <= 0:
+        raise HTTPException(status_code=400, detail="heat_pump_cop must be > 0.")
+    if use_pv and (pv_kwp is None or pv_kwp <= 0):
+        raise HTTPException(status_code=400, detail="When use_pv=true you must provide pv_kwp > 0.")
+
+    run_modified = bool(opts) or bool(use_heat_pump) or bool(use_pv)
+    if not run_modified and not include_baseline:
+        raise HTTPException(
+            status_code=400,
+            detail="Nothing to run: provide at least one U-value and/or use_pv/use_heat_pump, or set include_baseline=true.",
+        )
+
+    def _parse_json_form_obj(raw: Optional[str], field_name: str) -> Optional[Dict[str, Any]]:
+        if raw is None:
+            return None
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail=f"'{field_name}' must be a valid JSON string.") from exc
+        if not isinstance(parsed, dict):
+            raise HTTPException(status_code=400, detail=f"'{field_name}' must be a JSON object.")
+        return parsed
+
+    battery_params_payload = _parse_json_form_obj(pv_battery_params_json, "pv_battery_params_json")
+    uni_heating_override = _parse_json_form_obj(uni_heating_params_json, "uni_heating_params_json")
+    uni_cooling_override = _parse_json_form_obj(uni_cooling_params_json, "uni_cooling_params_json")
+
+    uni_cfg = copy.deepcopy(base_uni_cfg if isinstance(base_uni_cfg, dict) else {})
+    if uni_input_unit is not None:
+        uni_cfg["input_unit"] = uni_input_unit
+    if uni_heating_override:
+        current_heating = uni_cfg.get("heating_params", {})
+        if not isinstance(current_heating, dict):
+            current_heating = {}
+        uni_cfg["heating_params"] = _deep_merge_dict(current_heating, uni_heating_override)
+    if uni_cooling_override:
+        current_cooling = uni_cfg.get("cooling_params", {})
+        if not isinstance(current_cooling, dict):
+            current_cooling = {}
+        uni_cfg["cooling_params"] = _deep_merge_dict(current_cooling, uni_cooling_override)
+
+    # Weather EPW handling
+    epw_path: Optional[str] = None
+    if weather_source == "epw":
+        if epw_file is None:
+            raise HTTPException(status_code=400, detail="With weather_source='epw' you must upload 'epw_file'.")
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".epw") as tmp:
+            tmp.write(await epw_file.read())
+            epw_path = tmp.name
+    elif weather_source != "pvgis":
+        raise HTTPException(status_code=400, detail="weather_source must be 'pvgis' or 'epw'.")
+
+    _ensure_dir(output_dir)
+    if save_bui:
+        _ensure_dir(bui_dir)
+
+    start_all = time.time()
+    results: List[Dict[str, Any]] = []
+
+    scenario_specs: List[Dict[str, Any]] = []
+    if include_baseline:
+        scenario_specs.append(
+            {
+                "scenario_id": "baseline",
+                "combo": [],
+                "apply_u": False,
+                "run_integrated": False,
+                "use_pv": False,
+                "use_heat_pump": False,
+            }
+        )
+    if run_modified:
+        combo = sorted(set(opts + (["heat_pump"] if use_heat_pump else []) + (["pv"] if use_pv else [])))
+        scenario_specs.append(
+            {
+                "scenario_id": "single",
+                "combo": combo,
+                "apply_u": bool(opts),
+                "run_integrated": bool(use_pv or use_heat_pump),
+                "use_pv": bool(use_pv),
+                "use_heat_pump": bool(use_heat_pump),
+            }
+        )
+
+    try:
+        for spec in scenario_specs:
+            t0 = time.time()
+            combo = spec["combo"]
+            combo_tag = ",".join(combo) if combo else "BASELINE"
+            try:
+                bui_variant = (
+                    apply_u_values_to_bui(
+                        base_bui,
+                        use_roof=("roof" in opts),
+                        use_wall=("wall" in opts),
+                        use_window=("window" in opts),
+                        use_slab=("slab" in opts),
+                        u_roof=u_roof,
+                        u_wall=u_wall,
+                        u_window=u_window,
+                        u_slab=u_slab,
+                    )
+                    if spec["apply_u"]
+                    else base_bui
+                )
+
+                bui_json_path = _save_bui_variant(bui_variant, combo, bui_dir) if save_bui else None
+
+                if weather_source == "pvgis":
+
+                    @retry_on_transient_error()
+                    def _run_single_pvgis():
+                        return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                            bui_variant,
+                            weather_source="pvgis",
+                            sankey_graph=False,
+                        )
+
+                    hourly_sim, annual_results_df = _run_single_pvgis()
+                else:
+                    hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                        bui_variant,
+                        weather_source="epw",
+                        path_weather_file=epw_path,
+                        sankey_graph=False,
+                    )
+
+                hourly_csv = _build_name_file(
+                    building_name=building_name,
+                    combo=combo,
+                    weather_source=weather_source,
+                    epw_path=epw_path,
+                    base_dir=output_dir,
+                )
+                pd.DataFrame(hourly_sim).to_csv(hourly_csv, index=False)
+                annual_csv = str(Path(hourly_csv).with_name(Path(hourly_csv).stem + "__annual.csv"))
+                pd.DataFrame(annual_results_df).to_csv(annual_csv, index=False)
+
+                integrated_results = None
+                if spec["run_integrated"]:
+                    if spec["use_pv"]:
+                        pv_cfg: Dict[str, Any] = {
+                            "pv_kwp": float(pv_kwp),
+                            "tilt_deg": float(pv_tilt_deg),
+                            "azimuth_deg": float(pv_azimuth_deg),
+                            "use_pvgis": bool(pv_use_pvgis),
+                            "pvgis_loss_percent": float(pv_pvgis_loss_percent),
+                            "annual_pv_yield_kwh_per_kwp": float(annual_pv_yield_kwh_per_kwp),
+                        }
+                        if pv_pvgis_year is not None:
+                            pv_cfg["pvgis_year"] = int(pv_pvgis_year)
+                        if battery_params_payload is not None:
+                            pv_cfg["battery_params"] = battery_params_payload
+
+                        integrated_results = _run_iso52016_uni11300_pv_pipeline(
+                            bui=bui_variant,
+                            pv=pv_cfg,
+                            uni_cfg=uni_cfg,
+                            return_hourly_building=return_hourly_building,
+                            hourly_sim=hourly_sim,
+                            use_heat_pump=bool(spec["use_heat_pump"]),
+                            heat_pump_cop=float(heat_pump_cop),
+                        )
+                    else:
+                        uni_results = _compute_uni11300_full_from_hourly_df(
+                            hourly_df=hourly_sim,
+                            input_unit=uni_cfg.get("input_unit", "Wh"),
+                            heating_params_payload=uni_cfg.get("heating_params") or {},
+                            cooling_params_payload=uni_cfg.get("cooling_params") or {},
+                        )
+                        try:
+                            fp_electric = float((uni_cfg.get("heating_params") or {}).get("fp_electric", 2.18))
+                        except Exception:
+                            fp_electric = 2.18
+                        uni_results = _apply_heat_pump_to_uni11300_results(
+                            uni11300_results=uni_results,
+                            heat_pump_cop=float(heat_pump_cop),
+                            fp_electric=fp_electric,
+                        )
+                        integrated_results = {
+                            "inputs": {
+                                "heat_pump": {"enabled": True, "cop": float(heat_pump_cop)},
+                                "uni11300": {
+                                    "input_unit": str(uni_cfg.get("input_unit", "Wh")),
+                                    "heating_params_overridden": bool(uni_cfg.get("heating_params")),
+                                    "cooling_params_overridden": bool(uni_cfg.get("cooling_params")),
+                                },
+                            },
+                            "results": {"uni11300": uni_results},
+                        }
+                        if return_hourly_building:
+                            integrated_results["results"]["hourly_building"] = dataframe_to_records_safe(hourly_sim)
+
+                results.append(
+                    {
+                        "status": "success",
+                        "scenario_id": spec["scenario_id"],
+                        "combo": combo,
+                        "combo_tag": combo_tag,
+                        "files": {
+                            "hourly_csv": hourly_csv,
+                            "annual_csv": annual_csv,
+                            "bui_json": bui_json_path,
+                        },
+                        "integrated_results": integrated_results,
+                        "elapsed_s": round(time.time() - t0, 3),
+                    }
+                )
+
+            except Exception as exc:
+                results.append(
+                    {
+                        "status": "error",
+                        "scenario_id": spec["scenario_id"],
+                        "combo": combo,
+                        "combo_tag": combo_tag,
+                        "error": f"{type(exc).__name__}: {exc}",
+                        "traceback": traceback.format_exc(),
+                        "elapsed_s": round(time.time() - t0, 3),
+                    }
+                )
+    finally:
+        if epw_path and os.path.exists(epw_path):
+            try:
+                os.remove(epw_path)
+            except OSError:
+                pass
+
+    total_time = time.time() - start_all
+    ok = [r for r in results if r["status"] == "success"]
+    ko = [r for r in results if r["status"] == "error"]
+
+    return {
+        "status": "completed",
+        "source": "archetype",
+        "building": {"category": category, "country": country, "name": name},
+        "weather_source": weather_source,
+        "u_values_requested": {"roof": u_roof, "wall": u_wall, "window": u_window, "slab": u_slab},
+        "single_scenario_elements": opts,
+        "include_baseline": include_baseline,
+        "use_heat_pump": use_heat_pump,
+        "heat_pump_cop": heat_pump_cop if use_heat_pump else None,
+        "use_pv": use_pv,
+        "output_dir": output_dir,
+        "bui_dir": bui_dir if save_bui else None,
+        "summary": {
+            "total": len(results),
+            "successful": len(ok),
+            "failed": len(ko),
+            "total_time_s": round(total_time, 3),
+        },
+        "results": results,
+    }
+
+
 
 # =============================================================================
 # CO2 endpoints
@@ -1662,45 +2030,95 @@ def _compute_uni11300_full_from_hourly_df(
     }
 
 
-@app.post("/run/iso52016-uni11300-pv", tags=["Simulation"])
-def run_iso52016_uni11300_pv(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+def _apply_heat_pump_to_uni11300_results(
+    uni11300_results: Dict[str, Any],
+    heat_pump_cop: float,
+    fp_electric: float = 2.18,
+) -> Dict[str, Any]:
     """
-    One-shot pipeline:
-      1) ISO 52016 (hourly Q_H/Q_C from BUI)
-      2) UNI/TS 11300 (delivered electricity)
-      3) PV + optional battery matching (PVGIS or simplified fallback)
+    Post-process UNI11300 hourly results to represent electric heat pump heating.
+    """
+    if heat_pump_cop <= 0:
+        raise HTTPException(status_code=400, detail="heat_pump_cop must be > 0.")
 
-    JSON body (minimal):
-    {
-      "bui": {...},
-      "pv": {
-        "pv_kwp": 10,
-        "tilt_deg": 30,
-        "azimuth_deg": 0,
-        "use_pvgis": true,
-        "pvgis_loss_percent": 14,
-        "pvgis_year": 2019,
-        "annual_pv_yield_kwh_per_kwp": 1400,
-        "battery_params": {...}
-      },
-      "uni11300": { "input_unit": "Wh", "heating_params": {...}, "cooling_params": {...} },
-      "return_hourly_building": false
+    hourly_records = uni11300_results.get("hourly_results")
+    if not isinstance(hourly_records, list) or not hourly_records:
+        raise HTTPException(status_code=400, detail="UNI11300 results must include a non-empty 'hourly_results' list.")
+
+    df = pd.DataFrame(hourly_records)
+    if df.empty:
+        raise HTTPException(status_code=400, detail="UNI11300 hourly_results parsed empty.")
+
+    q_ideal_heat = pd.to_numeric(df.get("Q_ideal_heat_kWh", 0.0), errors="coerce").fillna(0.0).clip(lower=0.0)
+    e_aux_heat = pd.to_numeric(
+        df.get("E_aux_total_heat_kWh", df.get("E_delivered_electric_heat_kWh", 0.0)),
+        errors="coerce",
+    ).fillna(0.0).clip(lower=0.0)
+    e_electric_cool = pd.to_numeric(df.get("E_delivered_electric_cool_kWh", 0.0), errors="coerce").fillna(0.0).clip(lower=0.0)
+
+    e_hp_heating = (q_ideal_heat / float(heat_pump_cop)).clip(lower=0.0)
+    e_electric_heat_total = e_hp_heating + e_aux_heat
+
+    df["E_hp_heating_kWh"] = e_hp_heating
+    df["E_delivered_electric_heat_kWh"] = e_electric_heat_total
+    df["E_delivered_electric_total_kWh"] = e_electric_heat_total + e_electric_cool
+    df["EP_heat_total_kWh"] = df["E_delivered_electric_heat_kWh"] * float(fp_electric)
+
+    ep_cool = pd.to_numeric(df.get("EP_cool_total_kWh", 0.0), errors="coerce").fillna(0.0)
+    df["EP_total_kWh"] = df["EP_heat_total_kWh"] + ep_cool
+
+    summary_fields = [
+        "Q_ideal_heat_kWh",
+        "Q_ideal_cool_kWh",
+        "E_delivered_thermal_kWh",
+        "E_delivered_electric_heat_kWh",
+        "E_delivered_electric_cool_kWh",
+        "E_delivered_electric_total_kWh",
+        "EP_heat_total_kWh",
+        "EP_cool_total_kWh",
+        "EP_total_kWh",
+        "E_hp_heating_kWh",
+    ]
+    summary = {
+        col: float(pd.to_numeric(df[col], errors="coerce").fillna(0.0).sum())
+        for col in summary_fields
+        if col in df.columns
     }
+    summary["heat_pump_cop"] = float(heat_pump_cop)
+
+    out = copy.deepcopy(uni11300_results)
+    out["hourly_results"] = dataframe_to_records_safe(df)
+    out["summary"] = summary
+    out["heat_pump_applied"] = True
+    out["heat_pump_cop"] = float(heat_pump_cop)
+    return out
+
+
+def _run_iso52016_uni11300_pv_pipeline(
+    *,
+    bui: Dict[str, Any],
+    pv: Dict[str, Any],
+    uni_cfg: Optional[Dict[str, Any]] = None,
+    return_hourly_building: bool = False,
+    hourly_sim: Optional[pd.DataFrame] = None,
+    use_heat_pump: bool = False,
+    heat_pump_cop: float = 3.2,
+) -> Dict[str, Any]:
     """
-    bui = payload.get("bui")
+    Shared one-shot pipeline:
+      1) ISO 52016 (from provided hourly df or new PVGIS simulation)
+      2) UNI/TS 11300
+      3) PV + optional battery matching
+    """
     if bui is None or not isinstance(bui, dict):
         raise HTTPException(status_code=400, detail="Missing or invalid 'bui' (must be a JSON object).")
-
-    pv = payload.get("pv") or {}
     if not isinstance(pv, dict):
         raise HTTPException(status_code=400, detail="'pv' must be a JSON object.")
 
-    # --- PV required inputs ---
     pv_kwp = pv.get("pv_kwp")
     if pv_kwp is None:
         raise HTTPException(status_code=400, detail="Missing pv.pv_kwp")
 
-    # coords: allow override in pv, otherwise use bui.building
     latitude = pv.get("latitude", bui.get("building", {}).get("latitude"))
     longitude = pv.get("longitude", bui.get("building", {}).get("longitude"))
     if latitude is None or longitude is None:
@@ -1726,31 +2144,25 @@ def run_iso52016_uni11300_pv(payload: Dict[str, Any] = Body(...)) -> Dict[str, A
         except TypeError as exc:
             raise HTTPException(status_code=400, detail=f"Invalid pv.battery_params: {exc}") from exc
 
-    # UNI optional overrides
-    uni_cfg = payload.get("uni11300") or {}
+    uni_cfg = uni_cfg or {}
     if not isinstance(uni_cfg, dict):
         raise HTTPException(status_code=400, detail="'uni11300' must be a JSON object.")
     uni_input_unit = uni_cfg.get("input_unit", "Wh")
     heating_params_payload = uni_cfg.get("heating_params") or {}
     cooling_params_payload = uni_cfg.get("cooling_params") or {}
 
-    return_hourly_building = bool(payload.get("return_hourly_building", False))
+    if hourly_sim is None:
+        try:
+            hourly_sim, _ = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                bui,
+                weather_source="pvgis",
+                sankey_graph=False,
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"ISO52016 simulation failed: {type(exc).__name__}: {exc}") from exc
+    elif not isinstance(hourly_sim, pd.DataFrame):
+        hourly_sim = pd.DataFrame(hourly_sim)
 
-    # -------------------------
-    # 1) ISO 52016 (PVGIS weather)
-    # -------------------------
-    try:
-        hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
-            bui,
-            weather_source="pvgis",
-            sankey_graph=False,
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"ISO52016 simulation failed: {type(exc).__name__}: {exc}") from exc
-
-    # -------------------------
-    # 2) UNI/TS 11300 full (needs hourly_results for PV step)
-    # -------------------------
     uni11300_results = _compute_uni11300_full_from_hourly_df(
         hourly_df=hourly_sim,
         input_unit=uni_input_unit,
@@ -1758,9 +2170,17 @@ def run_iso52016_uni11300_pv(payload: Dict[str, Any] = Body(...)) -> Dict[str, A
         cooling_params_payload=cooling_params_payload,
     )
 
-    # -------------------------
-    # 3) PV + battery matching from UNI results
-    # -------------------------
+    if use_heat_pump:
+        try:
+            fp_electric = float((heating_params_payload or {}).get("fp_electric", 2.18))
+        except Exception:
+            fp_electric = 2.18
+        uni11300_results = _apply_heat_pump_to_uni11300_results(
+            uni11300_results=uni11300_results,
+            heat_pump_cop=float(heat_pump_cop),
+            fp_electric=fp_electric,
+        )
+
     pv_hp_results = analyze_pv_hp_from_uni11300(
         uni_payload={"hourly_results": uni11300_results["hourly_results"]},
         pv_kwp=float(pv_kwp),
@@ -1794,6 +2214,10 @@ def run_iso52016_uni11300_pv(payload: Dict[str, Any] = Body(...)) -> Dict[str, A
                 "heating_params_overridden": bool(heating_params_payload),
                 "cooling_params_overridden": bool(cooling_params_payload),
             },
+            "heat_pump": {
+                "enabled": bool(use_heat_pump),
+                "cop": float(heat_pump_cop) if use_heat_pump else None,
+            },
         },
         "results": {
             "uni11300": uni11300_results,
@@ -1803,7 +2227,48 @@ def run_iso52016_uni11300_pv(payload: Dict[str, Any] = Body(...)) -> Dict[str, A
 
     if return_hourly_building:
         out["results"]["hourly_building"] = dataframe_to_records_safe(hourly_sim)
-        # (optional) annual ISO52016 if you want it:
-        # out["results"]["annual_building"] = dataframe_to_records_safe(annual_results_df)
 
     return out
+
+
+@app.post("/run/iso52016-uni11300-pv", tags=["Simulation"])
+def run_iso52016_uni11300_pv(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    One-shot pipeline:
+      1) ISO 52016 (hourly Q_H/Q_C from BUI)
+      2) UNI/TS 11300 (delivered electricity)
+      3) PV + optional battery matching (PVGIS or simplified fallback)
+
+    JSON body (minimal):
+    {
+      "bui": {...},
+      "pv": {
+        "pv_kwp": 10,
+        "tilt_deg": 30,
+        "azimuth_deg": 0,
+        "use_pvgis": true,
+        "pvgis_loss_percent": 14,
+        "pvgis_year": 2019,
+        "annual_pv_yield_kwh_per_kwp": 1400,
+        "battery_params": {...}
+      },
+      "uni11300": { "input_unit": "Wh", "heating_params": {...}, "cooling_params": {...} },
+      "return_hourly_building": false
+    }
+    """
+    bui = payload.get("bui")
+    pv = payload.get("pv") or {}
+    uni_cfg = payload.get("uni11300") or {}
+    return_hourly_building = bool(payload.get("return_hourly_building", False))
+    use_heat_pump = bool(payload.get("use_heat_pump", False))
+    heat_pump_cop = float(payload.get("heat_pump_cop", 3.2))
+
+    return _run_iso52016_uni11300_pv_pipeline(
+        bui=bui,
+        pv=pv,
+        uni_cfg=uni_cfg,
+        return_hourly_building=return_hourly_building,
+        hourly_sim=None,
+        use_heat_pump=use_heat_pump,
+        heat_pump_cop=heat_pump_cop,
+    )
