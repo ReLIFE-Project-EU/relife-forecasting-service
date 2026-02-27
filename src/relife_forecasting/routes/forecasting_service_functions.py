@@ -163,9 +163,10 @@ def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
     Convert a JSON system representation into the internal format expected by pybuildingenergy.
 
     Note:
-      All three DataFrame fields may arrive from the API in one of two JSON shapes:
+      All three DataFrame fields may arrive from the API in one of several JSON shapes:
         - list[dict] (records format, e.g. from explicit serialisation)
         - dict[str, list] (column-oriented format produced by to_jsonable())
+        - list[dict] with a single wide row (legacy archetypes with 4/5 columns)
       Both shapes are handled by passing the value directly to pd.DataFrame(), which
       understands both.  The index is then assigned explicitly because to_jsonable()
       discards the row labels that pybuildingenergy expects.
@@ -183,6 +184,7 @@ def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
         field_name: str,
         value: Any,
         expected_index: List[str],
+        expected_columns: Optional[List[str]] = None,
         strict_rows: bool = True,
     ) -> pd.DataFrame:
         if isinstance(value, pd.DataFrame):
@@ -228,6 +230,33 @@ def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
 
         expected_rows = len(expected_index)
         actual_rows = len(df)
+
+        if strict_rows and actual_rows == 1 and len(df.columns) == expected_rows:
+            # Legacy archetype payloads may encode emission/outdoor tables as one wide row.
+            # pybuildingenergy accesses these tables via .loc[row_label, column_key], so keep
+            # original column names and expand to the expected labeled index.
+            wide_row = df.iloc[0].to_dict()
+            df = pd.DataFrame(
+                {str(col): [val] for col, val in wide_row.items()},
+                index=expected_index,
+            )
+            actual_rows = len(df)
+
+        if (
+            strict_rows
+            and expected_columns
+            and len(expected_columns) == expected_rows
+            and actual_rows == expected_rows
+            and len(df.columns) == 1
+        ):
+            # Some normalization paths collapse tables into a single unnamed/value column.
+            # Rebuild canonical columns required by pybuildingenergy's .loc(row, column) access.
+            values = df.iloc[:, 0].tolist()
+            df = pd.DataFrame(
+                {col: [values[idx]] for idx, col in enumerate(expected_columns)},
+                index=expected_index,
+            )
+            actual_rows = len(df)
 
         if strict_rows and actual_rows != expected_rows:
             logger.warning(
@@ -306,6 +335,13 @@ def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
                 "Desired load factor with ON-OFF for HZ1",
                 "Minimum flow temperature for HZ1",
             ],
+            expected_columns=[
+                "θH_em_flw_max_sahz_i",
+                "ΔθH_em_w_max_sahz_i",
+                "θH_em_ret_req_sahz_i",
+                "βH_em_req_sahz_i",
+                "θH_em_flw_min_tz_i",
+            ],
             strict_rows=True,
         )
 
@@ -318,6 +354,12 @@ def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
                 "Maximum outdoor temperature",
                 "Maximum flow temperature",
                 "Minimum flow temperature",
+            ],
+            expected_columns=[
+                "θext_min_sahz_i",
+                "θext_max_sahz_i",
+                "θem_flw_max_sahz_i",
+                "θem_flw_min_sahz_i",
             ],
             strict_rows=True,
         )
@@ -343,10 +385,11 @@ def validate_bui_and_system(bui: Dict[str, Any], system: Dict[str, Any]) -> Dict
       A dict containing fixed/checked objects and validation reports/messages.
     """
     system_messages: List[str] = []
-    system_checked = system
+    # Normalize legacy/JSON system payloads before pybuildingenergy checks.
+    system_checked = json_to_internal_system(system)
 
     try:
-        res_sys = pybui.check_heating_system_inputs(system)
+        res_sys = pybui.check_heating_system_inputs(system_checked)
         system_checked = res_sys["config"]
         system_messages.extend(res_sys.get("messages", []))
     except AttributeError:
@@ -354,6 +397,10 @@ def validate_bui_and_system(bui: Dict[str, Any], system: Dict[str, Any]) -> Dict
             "Function 'check_heating_system_inputs' is not available in the installed "
             "pybuildingenergy version: HVAC inputs are not validated automatically."
         )
+
+    # Some pybuildingenergy versions return JSON-like lists for *_data tables in
+    # the checked config; normalize again to preserve DataFrame semantics.
+    system_checked = json_to_internal_system(system_checked)
 
     bui_fixed, report_fixed = pybui.sanitize_and_validate_BUI(bui, fix=True)
     bui_checked, issues = pybui.sanitize_and_validate_BUI(bui_fixed, fix=False)

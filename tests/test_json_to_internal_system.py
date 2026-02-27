@@ -70,6 +70,93 @@ def test_json_to_internal_system_accepts_column_oriented_dict():
     ]
 
 
+def test_json_to_internal_system_accepts_single_row_wide_legacy_tables():
+    system = {
+        "heat_emission_data": [
+            {
+                "theta_flow_max": 70.0,
+                "delta_theta_max": 20.0,
+                "theta_return_req": 45.0,
+                "beta_req": 0.8,
+                "theta_flow_min": 30.0,
+            }
+        ],
+        "outdoor_temp_data": [
+            {
+                "theta_ext_min": -10.0,
+                "theta_ext_max": 16.0,
+                "theta_flow_max": 70.0,
+                "theta_flow_min": 30.0,
+            }
+        ],
+    }
+
+    converted = json_to_internal_system(system)
+
+    heat_df = converted["heat_emission_data"]
+    outdoor_df = converted["outdoor_temp_data"]
+
+    assert isinstance(heat_df, pd.DataFrame)
+    assert isinstance(outdoor_df, pd.DataFrame)
+    assert list(heat_df.index) == [
+        "Max flow temperature HZ1",
+        "Max Δθ flow / return HZ1",
+        "Desired return temperature HZ1",
+        "Desired load factor with ON-OFF for HZ1",
+        "Minimum flow temperature for HZ1",
+    ]
+    assert list(outdoor_df.index) == [
+        "Minimum outdoor temperature",
+        "Maximum outdoor temperature",
+        "Maximum flow temperature",
+        "Minimum flow temperature",
+    ]
+    assert list(heat_df.columns) == [
+        "theta_flow_max",
+        "delta_theta_max",
+        "theta_return_req",
+        "beta_req",
+        "theta_flow_min",
+    ]
+    assert list(outdoor_df.columns) == [
+        "theta_ext_min",
+        "theta_ext_max",
+        "theta_flow_max",
+        "theta_flow_min",
+    ]
+    assert len(heat_df) == 5
+    assert len(outdoor_df) == 4
+
+
+def test_json_to_internal_system_accepts_scalar_lists_with_canonical_columns():
+    system = {
+        "heat_emission_data": [70.0, 20.0, 45.0, 0.8, 30.0],
+        "outdoor_temp_data": [-10.0, 16.0, 70.0, 30.0],
+    }
+
+    converted = json_to_internal_system(system)
+    heat_df = converted["heat_emission_data"]
+    outdoor_df = converted["outdoor_temp_data"]
+
+    assert isinstance(heat_df, pd.DataFrame)
+    assert isinstance(outdoor_df, pd.DataFrame)
+    assert "θH_em_ret_req_sahz_i" in heat_df.columns
+    assert "θext_min_sahz_i" in outdoor_df.columns
+    assert list(heat_df.index) == [
+        "Max flow temperature HZ1",
+        "Max Δθ flow / return HZ1",
+        "Desired return temperature HZ1",
+        "Desired load factor with ON-OFF for HZ1",
+        "Minimum flow temperature for HZ1",
+    ]
+    assert list(outdoor_df.index) == [
+        "Minimum outdoor temperature",
+        "Maximum outdoor temperature",
+        "Maximum flow temperature",
+        "Minimum flow temperature",
+    ]
+
+
 def test_json_to_internal_system_invalid_type_returns_422_and_logs(caplog):
     with caplog.at_level("WARNING"):
         with pytest.raises(HTTPException) as exc_info:
