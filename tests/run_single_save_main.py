@@ -5,7 +5,7 @@ import json
 import runpy
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -91,6 +91,128 @@ def _load_runtime_deps():
     return TestClient, main_module
 
 
+def _pick_column(columns: List[str], candidates: List[str]) -> Optional[str]:
+    for col in candidates:
+        if col in columns:
+            return col
+    lower_map = {col.lower(): col for col in columns}
+    for col in candidates:
+        key = col.lower()
+        if key in lower_map:
+            return lower_map[key]
+    return None
+
+
+def _plot_run_single_results(payload: Dict[str, Any], plot_dir: Path) -> List[Path]:
+    try:
+        import matplotlib
+        import pandas as pd
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except Exception as exc:
+        raise RuntimeError(
+            "Dipendenze plotting mancanti: installa matplotlib e pandas per generare i grafici."
+        ) from exc
+
+    plot_dir.mkdir(parents=True, exist_ok=True)
+    saved_plots: List[Path] = []
+
+    results = payload.get("results")
+    if not isinstance(results, list):
+        return saved_plots
+
+    successful_results = [item for item in results if isinstance(item, dict) and item.get("status") == "success"]
+    if not successful_results:
+        return saved_plots
+
+    hourly_series: List[Dict[str, Any]] = []
+    annual_rows: List[Dict[str, float]] = []
+
+    for item in successful_results:
+        scenario_id = str(item.get("scenario_id") or item.get("combo_tag") or "scenario")
+        files = item.get("files") if isinstance(item.get("files"), dict) else {}
+
+        hourly_csv = files.get("hourly_csv")
+        if isinstance(hourly_csv, str) and Path(hourly_csv).exists():
+            df_hourly = pd.read_csv(hourly_csv)
+            columns = list(df_hourly.columns)
+            h_col = _pick_column(columns, ["Q_H_ideal", "Q_H", "QH", "heating"])
+            c_col = _pick_column(columns, ["Q_C_ideal", "Q_C", "QC", "cooling"])
+            if h_col or c_col:
+                hourly_series.append(
+                    {
+                        "scenario_id": scenario_id,
+                        "df": df_hourly,
+                        "heating_col": h_col,
+                        "cooling_col": c_col,
+                    }
+                )
+
+        annual_csv = files.get("annual_csv")
+        if isinstance(annual_csv, str) and Path(annual_csv).exists():
+            df_annual = pd.read_csv(annual_csv)
+            if not df_annual.empty:
+                columns = list(df_annual.columns)
+                h_col = _pick_column(columns, ["Q_H_annual", "Q_H", "QH"])
+                c_col = _pick_column(columns, ["Q_C_annual", "Q_C", "QC"])
+                row0 = df_annual.iloc[0]
+                heating = float(pd.to_numeric(row0.get(h_col), errors="coerce")) if h_col else 0.0
+                cooling = float(pd.to_numeric(row0.get(c_col), errors="coerce")) if c_col else 0.0
+                annual_rows.append(
+                    {
+                        "scenario_id": scenario_id,
+                        "Q_H_annual": 0.0 if heating != heating else heating,
+                        "Q_C_annual": 0.0 if cooling != cooling else cooling,
+                    }
+                )
+
+    if hourly_series:
+        fig, (ax_h, ax_c) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+        for item in hourly_series:
+            df_hourly = item["df"]
+            x_axis = range(len(df_hourly))
+            if item["heating_col"]:
+                y_h = pd.to_numeric(df_hourly[item["heating_col"]], errors="coerce").fillna(0.0)
+                ax_h.plot(x_axis, y_h, label=item["scenario_id"])
+            if item["cooling_col"]:
+                y_c = pd.to_numeric(df_hourly[item["cooling_col"]], errors="coerce").fillna(0.0)
+                ax_c.plot(x_axis, y_c, label=item["scenario_id"])
+
+        ax_h.set_title("Hourly Heating Demand")
+        ax_h.set_ylabel("Heating")
+        ax_h.grid(True, alpha=0.3)
+        ax_h.legend()
+
+        ax_c.set_title("Hourly Cooling Demand")
+        ax_c.set_xlabel("Hour index")
+        ax_c.set_ylabel("Cooling")
+        ax_c.grid(True, alpha=0.3)
+        ax_c.legend()
+
+        fig.tight_layout()
+        hourly_plot_path = plot_dir / "run_single_save_hourly.png"
+        fig.savefig(hourly_plot_path, dpi=150)
+        plt.close(fig)
+        saved_plots.append(hourly_plot_path)
+
+    if annual_rows:
+        df_bar = pd.DataFrame(annual_rows).set_index("scenario_id")[["Q_H_annual", "Q_C_annual"]]
+        fig, ax = plt.subplots(figsize=(10, 5))
+        df_bar.plot(kind="bar", ax=ax)
+        ax.set_title("Annual Heating/Cooling by Scenario")
+        ax.set_xlabel("Scenario")
+        ax.set_ylabel("Energy")
+        ax.grid(axis="y", alpha=0.3)
+        fig.tight_layout()
+        annual_plot_path = plot_dir / "run_single_save_annual.png"
+        fig.savefig(annual_plot_path, dpi=150)
+        plt.close(fig)
+        saved_plots.append(annual_plot_path)
+
+    return saved_plots
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Test endpoint /ecm_application/run_single_save usando dati archetipi."
@@ -114,6 +236,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--bui-dir", default="building_examples_ecm_api_single_script", help="Cartella BUI output.")
     parser.add_argument("--save-bui", action="store_true", default=True, help="Salva BUI modificati.")
     parser.add_argument("--no-save-bui", dest="save_bui", action="store_false")
+    parser.add_argument("--plot", action="store_true", default=True, help="Genera grafici PNG dai CSV restituiti.")
+    parser.add_argument("--no-plot", dest="plot", action="store_false", help="Disattiva generazione grafici.")
+    parser.add_argument("--plot-dir", default=None, help="Cartella output grafici (default: <output-dir>/plots).")
     parser.add_argument(
         "--real-iso",
         action="store_true",
@@ -187,7 +312,25 @@ def main() -> int:
         return 1
 
     print(json.dumps(payload, indent=2, ensure_ascii=False))
-    return 0 if response.status_code == 200 else 1
+    if response.status_code != 200:
+        return 1
+
+    if args.plot:
+        plot_dir = Path(args.plot_dir) if args.plot_dir else Path(args.output_dir) / "plots"
+        try:
+            plots = _plot_run_single_results(payload=payload, plot_dir=plot_dir)
+        except RuntimeError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+
+        if plots:
+            print("Grafici salvati:")
+            for plot_path in plots:
+                print(f"- {plot_path}")
+        else:
+            print("Nessun grafico generato (dati non disponibili nei CSV).")
+
+    return 0
 
 
 if __name__ == "__main__":
