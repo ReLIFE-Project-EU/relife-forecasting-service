@@ -155,7 +155,8 @@ def compute_heating_from_ideal(
     _validate_eta(eta_em, "eta_emission")
     _validate_eta(eta_dist, "eta_distribution")
     _validate_eta(eta_acc, "eta_storage")
-    _validate_eta(eta_gen, "eta_generation")
+    # Generation efficiency can exceed 1.0 for conventions such as condensing boilers.
+    _validate_eta(eta_gen, "eta_generation", allow_gt1=True)
 
     _validate_fraction(f_recov_em, "f_recov_emission")
     _validate_fraction(f_recov_dist, "f_recov_distribution")

@@ -1,0 +1,2 @@
+Q_H_annual_kWh,Q_C_annual_kWh,EP_heat_total_kWh,EP_cool_total_kWh,EP_total_kWh,pv_generation_kWh,pv_self_consumption_kWh,pv_grid_import_kWh,pv_grid_export_kWh,pv_self_consumption_rate,pv_self_sufficiency_rate
+0.0,0.0,40939.3013341009,3671.2198749666586,44610.52120906756,8400.0,5495.111289154751,12938.98838401366,2904.888710845249,0.6541799153755656,0.2980949103336525

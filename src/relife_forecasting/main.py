@@ -55,6 +55,10 @@ except Exception:
         build_uni11300_input_example,
     )
 
+try:
+    from relife_forecasting.utils.ecm_report_html import build_ecm_comparison_report_html
+except Exception:
+    from utils.ecm_report_html import build_ecm_comparison_report_html
 
 from relife_forecasting.routes import health
 
@@ -324,7 +328,7 @@ async def simulate_building(
 
         @retry_on_transient_error()
         def _run_pvgis_simulation():
-            return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+            return run_iso52016_simulation(
                 bui_checked,
                 weather_source="pvgis",
                 sankey_graph=False,
@@ -342,7 +346,7 @@ async def simulate_building(
             with open(epw_path, "wb") as f:
                 f.write(contents)
 
-            hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+            hourly_sim, annual_results_df = run_iso52016_simulation(
                 bui_checked,
                 weather_source="epw",
                 path_weather_file=epw_path,
@@ -844,6 +848,14 @@ async def simulate_uvalues(
     u_slab: Optional[float] = Query(None, description="New slab-to-ground U-value (opaque ground surface)."),
     use_heat_pump: bool = Query(False, description="If True, switch generation to heat pump (system update)."),
     heat_pump_cop: float = Query(3.2, description="Heat pump COP used for system update (if enabled)."),
+    uni_generation_mode: str = Query(
+        "default",
+        description="UNI/TS 11300 heating generation mask: 'default' or 'condensing_boiler'. If use_heat_pump=true, the heat pump COP from ECM takes precedence.",
+    ),
+    uni_eta_generation: Optional[float] = Query(
+        None,
+        description="Optional UNI/TS 11300 eta_generation override. If uni_generation_mode='condensing_boiler' and omitted, 1.1 is used. Ignored when use_heat_pump=true.",
+    ),
 
     # ---------------------------
     # NEW: single scenario mode
@@ -874,10 +886,12 @@ async def simulate_uvalues(
     Optional:
       - u_slab: slab-to-ground U-value
       - use_heat_pump: update system to heat pump (returned as system_variant)
+      - each returned scenario also includes UNI/TS 11300 primary energy results
     """
 
     # 1) Base BUI
     base_system = None
+    base_uni_cfg: Dict[str, Any] = copy.deepcopy(UNI11300_SIMULATION_EXAMPLE)
     if archetype:
         if not category or not country or not name:
             raise HTTPException(status_code=400, detail="With archetype=true you must provide 'category', 'country' and 'name'.")
@@ -889,6 +903,11 @@ async def simulate_uvalues(
             raise HTTPException(status_code=404, detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.")
         base_bui = match["bui"]
         base_system = match.get("system")
+        base_uni_cfg = copy.deepcopy(
+            match.get("uni11300")
+            or match.get("systems_archetype")
+            or UNI11300_SIMULATION_EXAMPLE
+        )
     else:
         if bui_json is None:
             raise HTTPException(status_code=400, detail="With archetype=false you must send 'bui_json' as a form field.")
@@ -989,6 +1008,14 @@ async def simulate_uvalues(
             )
         system_variant = apply_heat_pump_to_system(base_system, cop=heat_pump_cop)
 
+    uni11300_cfg, uni11300_generation_mask = _build_ecm_uni11300_config(
+        base_uni_cfg=base_uni_cfg,
+        requested_generation_mode=uni_generation_mode,
+        requested_eta_generation=uni_eta_generation,
+        use_heat_pump=use_heat_pump,
+        heat_pump_cop=heat_pump_cop,
+    )
+
     # 4) Weather handling for EPW (as before)
     epw_path: Optional[str] = None
     if weather_source == "epw":
@@ -1008,13 +1035,19 @@ async def simulate_uvalues(
 
                 @retry_on_transient_error()
                 def _run_baseline_pvgis():
-                    return pybui.ISO52016.Temperature_and_Energy_needs_calculation(base_bui, weather_source="pvgis", sankey_graph=False,)
+                    return run_iso52016_simulation(base_bui, weather_source="pvgis", sankey_graph=False)
 
                 hourly_sim, annual_results_df = _run_baseline_pvgis()
             else:
-                hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                hourly_sim, annual_results_df = run_iso52016_simulation(
                     base_bui, weather_source="epw", path_weather_file=epw_path, sankey_graph=False, 
                 )
+            uni11300_results = _compute_ecm_uni11300_results(
+                hourly_sim=hourly_sim,
+                uni_cfg=uni11300_cfg,
+                generation_mask=uni11300_generation_mask,
+                heat_pump_cop=heat_pump_cop,
+            )
 
             scenario_results.append(
                 {
@@ -1025,6 +1058,7 @@ async def simulate_uvalues(
                     "results": {
                         "hourly_building": clean_and_jsonable(hourly_sim),
                         "annual_building": clean_and_jsonable(annual_results_df),
+                        "primary_energy_uni11300": clean_and_jsonable(uni11300_results),
                     },
                 }
             )
@@ -1057,13 +1091,19 @@ async def simulate_uvalues(
 
                 @retry_on_transient_error()
                 def _run_scenario_pvgis():
-                    return pybui.ISO52016.Temperature_and_Energy_needs_calculation(bui_variant, weather_source="pvgis", sankey_graph=False,)
+                    return run_iso52016_simulation(bui_variant, weather_source="pvgis", sankey_graph=False)
 
                 hourly_sim, annual_results_df = _run_scenario_pvgis()
             else:
-                hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                hourly_sim, annual_results_df = run_iso52016_simulation(
                     bui_variant, weather_source="epw", path_weather_file=epw_path, sankey_graph=False,
                 )
+            uni11300_results = _compute_ecm_uni11300_results(
+                hourly_sim=hourly_sim,
+                uni_cfg=uni11300_cfg,
+                generation_mask=uni11300_generation_mask,
+                heat_pump_cop=heat_pump_cop,
+            )
 
             scenario_results.append(
                 {
@@ -1079,6 +1119,7 @@ async def simulate_uvalues(
                     "results": {
                         "hourly_building": clean_and_jsonable(hourly_sim),
                         "annual_building": clean_and_jsonable(annual_results_df),
+                        "primary_energy_uni11300": clean_and_jsonable(uni11300_results),
                     },
                 }
             )
@@ -1098,6 +1139,7 @@ async def simulate_uvalues(
         "weather_source": weather_source,
         "u_values_requested": {"roof": u_roof, "wall": u_wall, "window": u_window, "slab": u_slab},
         "system_variant": to_jsonable(system_variant) if system_variant is not None else None,
+        "uni11300_generation_mask": to_jsonable(uni11300_generation_mask),
         "single_scenario_mode": {
             "baseline_only": baseline_only,
             "scenario_id": scenario_id,
@@ -1106,6 +1148,331 @@ async def simulate_uvalues(
         "n_scenarios": len(scenario_results),
         "scenarios": scenario_results,
     }
+
+
+@app.post("/ecm_application/report", response_class=HTMLResponse, tags=["Reports"])
+async def generate_ecm_application_report(
+    archetype: bool = Query(True, description="If True, use an archetype; if False, use a custom BUI from JSON."),
+    category: Optional[str] = Query(None, description="Building category. Required when archetype=True."),
+    country: Optional[str] = Query(None, description="Country. Required when archetype=True."),
+    name: Optional[str] = Query(None, description="Archetype name. Required when archetype=True."),
+    weather_source: str = Query("pvgis", description="Weather source: 'pvgis' or 'epw'."),
+    epw_file: Optional[UploadFile] = File(None, description="EPW weather file (required when weather_source='epw')."),
+    bui_json: Optional[str] = Form(None, description="JSON string with the BUI (required when archetype=False)."),
+    system_json: Optional[str] = Form(None, description="JSON string with SYSTEM (required when use_heat_pump=true in custom mode)."),
+    u_wall: Optional[float] = Query(None, description="New wall U-value (opaque vertical surfaces)."),
+    u_roof: Optional[float] = Query(None, description="New roof U-value (opaque horizontal surface)."),
+    u_window: Optional[float] = Query(None, description="New window U-value (transparent vertical surfaces)."),
+    u_slab: Optional[float] = Query(None, description="New slab-to-ground U-value (opaque ground surface)."),
+    use_heat_pump: bool = Query(False, description="If True, switch generation to heat pump (system update)."),
+    heat_pump_cop: float = Query(3.2, description="Heat pump COP used for system update (if enabled)."),
+    uni_generation_mode: str = Query(
+        "default",
+        description="UNI/TS 11300 heating generation mask: 'default' or 'condensing_boiler'. If use_heat_pump=true, the heat pump COP from ECM takes precedence.",
+    ),
+    uni_eta_generation: Optional[float] = Query(
+        None,
+        description="Optional UNI/TS 11300 eta_generation override. If uni_generation_mode='condensing_boiler' and omitted, 1.1 is used. Ignored when use_heat_pump=true.",
+    ),
+    scenario_elements: Optional[str] = Query(
+        None,
+        description="Single scenario mode: elements to apply, e.g. 'wall,window' or 'roof+wall'. If omitted, the combined scenario of all provided U-values is used.",
+    ),
+    scenario_id: Optional[str] = Query(
+        None,
+        description="Single scenario mode: pick a scenario by id returned by build_uvalue_scenarios().",
+    ),
+    report_title: Optional[str] = Query(
+        None,
+        description="Optional custom HTML report title.",
+    ),
+):
+    """
+    Generate an HTML ECharts report that compares the baseline building with a single ECM scenario.
+
+    If multiple envelope ECM inputs are provided and no specific scenario is selected, the report
+    uses the combined scenario that applies all requested envelope changes. Generation-only ECMs
+    (heat pump or UNI/TS 11300 eta_generation changes) are also supported.
+    """
+
+    base_system = None
+    base_uni_cfg: Dict[str, Any] = copy.deepcopy(UNI11300_SIMULATION_EXAMPLE)
+    if archetype:
+        if not category or not country or not name:
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=true you must provide 'category', 'country' and 'name'.",
+            )
+        match = next(
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b.get("category") == category
+                and b.get("country") == country
+                and b.get("name") == name
+            ),
+            None,
+        )
+        if match is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.",
+            )
+        base_bui = match["bui"]
+        base_system = match.get("system")
+        base_uni_cfg = copy.deepcopy(
+            match.get("uni11300")
+            or match.get("systems_archetype")
+            or UNI11300_SIMULATION_EXAMPLE
+        )
+    else:
+        if bui_json is None:
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=false you must send 'bui_json' as a form field.",
+            )
+        try:
+            base_bui = json.loads(bui_json)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="'bui_json' must be a valid JSON string.")
+        if system_json is not None:
+            try:
+                system_raw = json.loads(system_json)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="'system_json' must be a valid JSON string.")
+            base_system = json_to_internal_system(system_raw)
+
+    scenarios_spec = build_uvalue_scenarios(
+        u_roof=u_roof,
+        u_wall=u_wall,
+        u_window=u_window,
+        u_slab=u_slab,
+    )
+
+    def _parse_elements(raw_elements: str) -> Set[str]:
+        normalized_raw = raw_elements.replace("+", ",").replace(";", ",").replace(" ", ",")
+        parts = [part.strip().lower() for part in normalized_raw.split(",") if part.strip()]
+        mapping = {"ground": "slab"}
+        normalized = [mapping.get(part, part) for part in parts]
+        allowed = {"roof", "wall", "window", "slab"}
+        invalid = [part for part in normalized if part not in allowed]
+        if invalid:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid scenario_elements: {invalid}. Allowed: roof, wall, window, slab.",
+            )
+        return set(normalized)
+
+    def _spec_to_elements(spec: Dict[str, Any]) -> Set[str]:
+        elements: Set[str] = set()
+        if spec.get("use_roof"):
+            elements.add("roof")
+        if spec.get("use_wall"):
+            elements.add("wall")
+        if spec.get("use_window"):
+            elements.add("window")
+        if spec.get("use_slab"):
+            elements.add("slab")
+        return elements
+
+    generation_ecm_requested = (
+        use_heat_pump
+        or str(uni_generation_mode or "default").strip().lower() != "default"
+        or uni_eta_generation is not None
+    )
+
+    if (scenario_id or scenario_elements) and not scenarios_spec:
+        raise HTTPException(
+            status_code=400,
+            detail="scenario_id/scenario_elements require at least one of u_wall/u_roof/u_window/u_slab.",
+        )
+
+    selected_spec: Optional[Dict[str, Any]] = None
+    active_elements = {key for key, value in {"roof": u_roof, "wall": u_wall, "window": u_window, "slab": u_slab}.items() if value is not None}
+
+    if scenario_id:
+        selected_spec = next((spec for spec in scenarios_spec if str(spec.get("id")) == str(scenario_id)), None)
+        if selected_spec is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"scenario_id='{scenario_id}' not found. Available ids: {[spec.get('id') for spec in scenarios_spec]}",
+            )
+    elif scenario_elements:
+        wanted_elements = _parse_elements(scenario_elements)
+        selected_spec = next(
+            (spec for spec in scenarios_spec if _spec_to_elements(spec) == wanted_elements),
+            None,
+        )
+        if selected_spec is None:
+            available = [
+                {
+                    "id": spec.get("id"),
+                    "elements": sorted(_spec_to_elements(spec)),
+                    "label": spec.get("label"),
+                }
+                for spec in scenarios_spec
+            ]
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "message": f"scenario_elements='{scenario_elements}' not found among generated scenarios.",
+                    "available": available,
+                },
+            )
+    elif active_elements:
+        selected_spec = next(
+            (spec for spec in scenarios_spec if _spec_to_elements(spec) == active_elements),
+            None,
+        )
+
+    if selected_spec is None and not generation_ecm_requested:
+        raise HTTPException(
+            status_code=400,
+            detail="Report comparison requires at least one ECM. Specify envelope U-values and/or a generation ECM.",
+        )
+
+    if use_heat_pump:
+        if heat_pump_cop <= 0:
+            raise HTTPException(status_code=400, detail="heat_pump_cop must be > 0.")
+        if base_system is None:
+            raise HTTPException(
+                status_code=400,
+                detail="use_heat_pump=true requires a system in the archetype or in the request payload.",
+            )
+
+    baseline_uni_cfg, baseline_generation_mask = _build_ecm_uni11300_config(
+        base_uni_cfg=base_uni_cfg,
+        requested_generation_mode="default",
+        requested_eta_generation=None,
+        use_heat_pump=False,
+        heat_pump_cop=heat_pump_cop,
+    )
+    scenario_uni_cfg, scenario_generation_mask = _build_ecm_uni11300_config(
+        base_uni_cfg=base_uni_cfg,
+        requested_generation_mode=uni_generation_mode,
+        requested_eta_generation=uni_eta_generation,
+        use_heat_pump=use_heat_pump,
+        heat_pump_cop=heat_pump_cop,
+    )
+
+    def _as_hourly_df(hourly_output: Union[pd.DataFrame, List[Dict[str, Any]], Dict[str, Any]]) -> pd.DataFrame:
+        if isinstance(hourly_output, pd.DataFrame):
+            return hourly_output.copy()
+        return pd.DataFrame(hourly_output)
+
+    def _run_iso_for_bui(bui_payload: Dict[str, Any]) -> tuple[pd.DataFrame, Any]:
+        if weather_source == "pvgis":
+
+            @retry_on_transient_error()
+            def _run_pvgis():
+                return run_iso52016_simulation(
+                    bui_payload,
+                    weather_source="pvgis",
+                    sankey_graph=False,
+                )
+
+            hourly_out, annual_out = _run_pvgis()
+        else:
+            hourly_out, annual_out = run_iso52016_simulation(
+                bui_payload,
+                weather_source="epw",
+                path_weather_file=epw_path,
+                sankey_graph=False,
+            )
+        return _as_hourly_df(hourly_out), annual_out
+
+    def _build_scenario_label(spec: Optional[Dict[str, Any]], generation_mask: Dict[str, Any]) -> str:
+        label_parts: List[str] = []
+        if spec is not None:
+            label_parts.append(str(spec.get("label") or spec.get("id") or "Envelope ECM"))
+
+        applied_mode = generation_mask.get("applied_mode")
+        mask_value = generation_mask.get("mask_value")
+        if applied_mode == "heat_pump":
+            label_parts.append(f"heat pump COP={mask_value}")
+        elif generation_mask.get("requested_mode") == "condensing_boiler":
+            label_parts.append(f"condensing boiler eta_generation={mask_value}")
+        elif uni_eta_generation is not None and mask_value is not None:
+            label_parts.append(f"UNI eta_generation={mask_value}")
+
+        if not label_parts:
+            return "Scenario ECM"
+        return " + ".join(label_parts)
+
+    epw_path: Optional[str] = None
+    if weather_source == "epw":
+        if epw_file is None:
+            raise HTTPException(status_code=400, detail="With weather_source='epw' you must upload 'epw_file'.")
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".epw") as tmp:
+            tmp.write(await epw_file.read())
+            epw_path = tmp.name
+    elif weather_source != "pvgis":
+        raise HTTPException(status_code=400, detail="weather_source must be 'pvgis' or 'epw'.")
+
+    try:
+        baseline_hourly_df, _baseline_annual = _run_iso_for_bui(base_bui)
+        baseline_uni_results = _compute_ecm_uni11300_results(
+            hourly_sim=baseline_hourly_df,
+            uni_cfg=baseline_uni_cfg,
+            generation_mask=baseline_generation_mask,
+            heat_pump_cop=heat_pump_cop,
+        )
+
+        if selected_spec is not None:
+            scenario_bui = apply_u_values_to_bui(
+                base_bui,
+                use_roof=bool(selected_spec.get("use_roof")),
+                use_wall=bool(selected_spec.get("use_wall")),
+                use_window=bool(selected_spec.get("use_window")),
+                use_slab=bool(selected_spec.get("use_slab")),
+                u_roof=u_roof,
+                u_wall=u_wall,
+                u_window=u_window,
+                u_slab=u_slab,
+            )
+            scenario_hourly_df, _scenario_annual = _run_iso_for_bui(scenario_bui)
+        else:
+            scenario_bui = copy.deepcopy(base_bui)
+            scenario_hourly_df = baseline_hourly_df.copy()
+
+        scenario_uni_results = _compute_ecm_uni11300_results(
+            hourly_sim=scenario_hourly_df,
+            uni_cfg=scenario_uni_cfg,
+            generation_mask=scenario_generation_mask,
+            heat_pump_cop=heat_pump_cop,
+        )
+    finally:
+        if epw_path and os.path.exists(epw_path):
+            try:
+                os.remove(epw_path)
+            except OSError:
+                pass
+
+    building_data = base_bui.get("building") if isinstance(base_bui.get("building"), dict) else {}
+    building_name = name or building_data.get("name") or "building"
+    effective_category = category or building_data.get("building_type_class")
+
+    html_content = build_ecm_comparison_report_html(
+        report_title=report_title or f"ECM report - {building_name}",
+        building_meta={
+            "name": building_name,
+            "category": effective_category,
+            "country": country,
+            "weather_source": weather_source,
+        },
+        scenario_meta={
+            "id": selected_spec.get("id") if selected_spec is not None else "generation-only",
+            "label": _build_scenario_label(selected_spec, scenario_generation_mask),
+            "elements": sorted(_spec_to_elements(selected_spec)) if selected_spec is not None else [],
+            "generation_mask": scenario_generation_mask,
+        },
+        baseline_hourly=baseline_hourly_df,
+        scenario_hourly=scenario_hourly_df,
+        baseline_uni_results=baseline_uni_results,
+        scenario_uni_results=scenario_uni_results,
+    )
+
+    return HTMLResponse(content=html_content)
 
 
 
@@ -1348,7 +1715,7 @@ async def ecm_application_run_sequential_save(
 
                     @retry_on_transient_error()
                     def _run_sequential_pvgis():
-                        return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                        return run_iso52016_simulation(
                             bui_variant,
                             weather_source="pvgis",
                             sankey_graph=False,
@@ -1356,7 +1723,7 @@ async def ecm_application_run_sequential_save(
 
                     hourly_sim, annual_results_df = _run_sequential_pvgis()
                 else:
-                    hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                    hourly_sim, annual_results_df = run_iso52016_simulation(
                         bui_variant,
                         weather_source="epw",
                         path_weather_file=epw_path,
@@ -1640,7 +2007,7 @@ async def ecm_application_run_single_save(
 
                     @retry_on_transient_error()
                     def _run_single_pvgis():
-                        return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                        return run_iso52016_simulation(
                             bui_variant,
                             weather_source="pvgis",
                             sankey_graph=False,
@@ -1648,7 +2015,7 @@ async def ecm_application_run_single_save(
 
                     hourly_sim, annual_results_df = _run_single_pvgis()
                 else:
-                    hourly_sim, annual_results_df = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+                    hourly_sim, annual_results_df = run_iso52016_simulation(
                         bui_variant,
                         weather_source="epw",
                         path_weather_file=epw_path,
@@ -2030,6 +2397,84 @@ def _compute_uni11300_full_from_hourly_df(
     }
 
 
+def _build_ecm_uni11300_config(
+    *,
+    base_uni_cfg: Optional[Dict[str, Any]],
+    requested_generation_mode: str,
+    requested_eta_generation: Optional[float],
+    use_heat_pump: bool,
+    heat_pump_cop: float,
+) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Build the UNI/TS 11300 config used by /ecm_application and expose the applied generation mask.
+    """
+    mode_raw = str(requested_generation_mode or "default").strip().lower()
+    mode_aliases = {
+        "default": "default",
+        "condensing": "condensing_boiler",
+        "condensing_boiler": "condensing_boiler",
+        "condensing-boiler": "condensing_boiler",
+        "boiler": "condensing_boiler",
+    }
+    mode = mode_aliases.get(mode_raw, mode_raw)
+    if mode not in {"default", "condensing_boiler"}:
+        raise HTTPException(
+            status_code=400,
+            detail="uni_generation_mode must be 'default' or 'condensing_boiler'.",
+        )
+
+    if requested_eta_generation is not None and float(requested_eta_generation) <= 0:
+        raise HTTPException(status_code=400, detail="uni_eta_generation must be > 0.")
+
+    uni_cfg = copy.deepcopy(base_uni_cfg) if isinstance(base_uni_cfg, dict) else {}
+    heating_params = copy.deepcopy(uni_cfg.get("heating_params") or {})
+    cooling_params = copy.deepcopy(uni_cfg.get("cooling_params") or {})
+
+    if not isinstance(heating_params, dict):
+        heating_params = {}
+    if not isinstance(cooling_params, dict):
+        cooling_params = {}
+
+    applied_mode = "heat_pump" if use_heat_pump else mode
+    mask_metric = "cop_generation" if applied_mode == "heat_pump" else "eta_generation"
+    mask_value: Optional[float] = None
+
+    if applied_mode == "heat_pump":
+        mask_value = float(heat_pump_cop)
+    else:
+        if mode == "condensing_boiler":
+            heating_params["eta_generation"] = float(
+                requested_eta_generation if requested_eta_generation is not None else 1.1
+            )
+        elif requested_eta_generation is not None:
+            heating_params["eta_generation"] = float(requested_eta_generation)
+
+        try:
+            mask_value = float(heating_params["eta_generation"])
+        except Exception:
+            mask_value = None
+
+    uni_cfg["input_unit"] = uni_cfg.get("input_unit", "Wh")
+    uni_cfg["heating_params"] = heating_params
+    uni_cfg["cooling_params"] = cooling_params
+
+    generation_mask = {
+        "requested_mode": mode,
+        "applied_mode": applied_mode,
+        "metric": mask_metric,
+        "mask_value": mask_value,
+        "heating_eta_generation": (
+            float(heating_params["eta_generation"])
+            if "eta_generation" in heating_params
+            else None
+        ),
+        "heat_pump_cop": float(heat_pump_cop) if applied_mode == "heat_pump" else None,
+        "input_unit": uni_cfg["input_unit"],
+    }
+
+    return uni_cfg, generation_mask
+
+
 def _apply_heat_pump_to_uni11300_results(
     uni11300_results: Dict[str, Any],
     heat_pump_cop: float,
@@ -2094,6 +2539,47 @@ def _apply_heat_pump_to_uni11300_results(
     return out
 
 
+def _compute_ecm_uni11300_results(
+    *,
+    hourly_sim: Union[pd.DataFrame, List[Dict[str, Any]], Dict[str, Any]],
+    uni_cfg: Dict[str, Any],
+    generation_mask: Dict[str, Any],
+    heat_pump_cop: float,
+) -> Dict[str, Any]:
+    """
+    Compute UNI/TS 11300 for /ecm_application scenarios using the selected generation mask.
+    """
+    if isinstance(hourly_sim, pd.DataFrame):
+        hourly_df = hourly_sim
+    else:
+        hourly_df = pd.DataFrame(hourly_sim)
+
+    heating_params_payload = uni_cfg.get("heating_params") or {}
+    cooling_params_payload = uni_cfg.get("cooling_params") or {}
+
+    uni11300_results = _compute_uni11300_full_from_hourly_df(
+        hourly_df=hourly_df,
+        input_unit=uni_cfg.get("input_unit", "Wh"),
+        heating_params_payload=heating_params_payload,
+        cooling_params_payload=cooling_params_payload,
+    )
+
+    if generation_mask.get("applied_mode") == "heat_pump":
+        try:
+            fp_electric = float((heating_params_payload or {}).get("fp_electric", 2.18))
+        except Exception:
+            fp_electric = 2.18
+        uni11300_results = _apply_heat_pump_to_uni11300_results(
+            uni11300_results=uni11300_results,
+            heat_pump_cop=float(heat_pump_cop),
+            fp_electric=fp_electric,
+        )
+
+    out = copy.deepcopy(uni11300_results)
+    out["generation_mask"] = copy.deepcopy(generation_mask)
+    return out
+
+
 def _run_iso52016_uni11300_pv_pipeline(
     *,
     bui: Dict[str, Any],
@@ -2153,7 +2639,7 @@ def _run_iso52016_uni11300_pv_pipeline(
 
     if hourly_sim is None:
         try:
-            hourly_sim, _ = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+            hourly_sim, _ = run_iso52016_simulation(
                 bui,
                 weather_source="pvgis",
                 sankey_graph=False,

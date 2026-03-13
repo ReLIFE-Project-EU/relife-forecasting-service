@@ -18,7 +18,34 @@ try:
 except Exception:
     from utils.retry import retry_on_transient_error
 
+try:
+    from pybuildingenergy.source.table_iso_16798_1 import (
+        occupants_schedule_workdays as _PBE_OCCUPANTS_SCHEDULE_WORKDAYS,
+    )
+except Exception:
+    _PBE_OCCUPANTS_SCHEDULE_WORKDAYS = {}
+
 logger = logging.getLogger(__name__)
+
+_BUILDING_TYPE_CLASS_ALIASES = {
+    "Residential_single_family": "Residential_detached_house",
+    "Residential_multi_family": "Residential_apartment",
+    "single family house": "Residential_detached_house",
+    "single-family house": "Residential_detached_house",
+    "multi family house": "Residential_apartment",
+    "multi-family house": "Residential_apartment",
+    "office": "Office",
+}
+_SUPPORTED_BUILDING_TYPE_CLASSES = frozenset(_PBE_OCCUPANTS_SCHEDULE_WORKDAYS.keys()) or frozenset(
+    {
+        "Department_store",
+        "Kindergarten",
+        "Office",
+        "Residential_apartment",
+        "Residential_detached_house",
+        "School",
+    }
+)
 
 
 # =============================================================================
@@ -129,6 +156,116 @@ def dataframe_to_records_safe(df: pd.DataFrame) -> List[Dict[str, Any]]:
             df[col] = df[col].astype(str)
 
     return df.to_dict(orient="records")
+
+
+def normalize_building_type_class(building_type_class: Any) -> Any:
+    """
+    Map common local aliases to the canonical pybuildingenergy building type keys.
+    """
+    if building_type_class is None:
+        return None
+
+    raw_value = str(building_type_class).strip()
+    if not raw_value:
+        return raw_value
+
+    if raw_value in _SUPPORTED_BUILDING_TYPE_CLASSES:
+        return raw_value
+
+    return _BUILDING_TYPE_CLASS_ALIASES.get(
+        raw_value,
+        _BUILDING_TYPE_CLASS_ALIASES.get(raw_value.lower(), raw_value),
+    )
+
+
+def prepare_bui_for_iso52016(bui: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Normalize BUI fields that pybuildingenergy expects in canonical form.
+    """
+    bui_prepared = copy.deepcopy(bui)
+    building = bui_prepared.get("building")
+
+    if not isinstance(building, dict):
+        return bui_prepared
+
+    original_bt = building.get("building_type_class")
+    normalized_bt = normalize_building_type_class(original_bt)
+    if normalized_bt and normalized_bt != original_bt:
+        logger.info(
+            "Normalized building_type_class from '%s' to '%s' for ISO 52016.",
+            original_bt,
+            normalized_bt,
+        )
+        building["building_type_class"] = normalized_bt
+
+    return bui_prepared
+
+
+def run_iso52016_simulation(
+    bui: Dict[str, Any],
+    *,
+    weather_source: str,
+    path_weather_file: Optional[str] = None,
+    sankey_graph: bool = False,
+):
+    """
+    Run ISO 52016 after normalizing building-type aliases used by this service.
+    """
+    bui_prepared = prepare_bui_for_iso52016(bui)
+    building_type_class = (
+        bui_prepared.get("building", {}).get("building_type_class")
+        if isinstance(bui_prepared.get("building"), dict)
+        else None
+    )
+
+    if (
+        building_type_class
+        and building_type_class not in _SUPPORTED_BUILDING_TYPE_CLASSES
+    ):
+        supported = ", ".join(sorted(_SUPPORTED_BUILDING_TYPE_CLASSES))
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Unsupported building.building_type_class="
+                f"'{building_type_class}'. Supported values for the installed "
+                f"pybuildingenergy version are: {supported}."
+            ),
+        )
+
+    kwargs: Dict[str, Any] = {
+        "weather_source": weather_source,
+        "sankey_graph": sankey_graph,
+    }
+    if path_weather_file is not None:
+        kwargs["path_weather_file"] = path_weather_file
+
+    try:
+        return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+            bui_prepared,
+            **kwargs,
+        )
+    except KeyError as exc:
+        detail = str(exc)
+        if detail in {"'building'", "'building_type_class'"} or "building_type_class" in detail:
+            supported = ", ".join(sorted(_SUPPORTED_BUILDING_TYPE_CLASSES))
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "BUI must include building.building_type_class. Supported values "
+                    f"for the installed pybuildingenergy version are: {supported}."
+                ),
+            ) from exc
+        if "default profiles" in detail or "profili di default" in detail:
+            supported = ", ".join(sorted(_SUPPORTED_BUILDING_TYPE_CLASSES))
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "ISO 52016 category-profile lookup failed for "
+                    f"building_type_class='{building_type_class}'. Supported values: "
+                    f"{supported}."
+                ),
+            ) from exc
+        raise
 
 
 # =============================================================================
@@ -448,7 +585,7 @@ def simulate_building_worker(building_name: str, bui: dict, system: dict) -> Dic
 
         @retry_on_transient_error()
         def _run_worker_pvgis():
-            return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+            return run_iso52016_simulation(
                 bui,
                 weather_source="pvgis",
             )
