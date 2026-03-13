@@ -81,6 +81,8 @@ def test_main_builds_report_locally_without_recalling_report_endpoint(monkeypatc
         "scenario_meta": {
             "id": "wall",
             "label": "walls U=0.25",
+            "description": "Wall insulation upgrade",
+            "combo": ["wall"],
             "elements": ["wall"],
             "generation_mask": {
                 "requested_mode": "default",
@@ -150,6 +152,10 @@ def test_main_builds_report_locally_without_recalling_report_endpoint(monkeypatc
     html = report_path.read_text(encoding="utf-8")
     assert "<title>Local ECM Report</title>" in html
     assert "walls U=0.25" in html
+    assert "Scenario summary" in html
+    assert "Wall insulation upgrade" in html
+    assert "ISO 52016 saving [%]" in html
+    assert "Primary energy saving [%]" in html
     assert "Indivisible" in html
     assert "grid-template-columns: 1fr;" in html
 
@@ -180,6 +186,8 @@ def test_main_library_builds_multi_scenario_report(monkeypatch, tmp_path):
         "scenario_meta": {
             "id": "deep_envelope",
             "label": "deep_envelope",
+            "description": "Deep envelope retrofit",
+            "combo": ["wall", "window", "roof", "slab"],
             "elements": ["wall", "window", "roof", "slab"],
             "generation_mask": {
                 "requested_mode": "default",
@@ -195,6 +203,8 @@ def test_main_library_builds_multi_scenario_report(monkeypatch, tmp_path):
         "scenario_meta": {
             "id": "condensing_boiler",
             "label": "condensing_boiler",
+            "description": "Condensing boiler replacement",
+            "combo": ["condensing_boiler"],
             "elements": [],
             "generation_mask": {
                 "requested_mode": "condensing_boiler",
@@ -279,13 +289,17 @@ def test_main_library_builds_multi_scenario_report(monkeypatch, tmp_path):
     assert report_path.exists()
     html = report_path.read_text(encoding="utf-8")
     assert "<title>Scenario Library Report</title>" in html
-    assert "Compared scenarios" in html
-    assert "deep_envelope, condensing_boiler" in html
-    assert "Scenario count" in html
+    assert "Scenario summary" in html
+    assert "Deep envelope retrofit" in html
+    assert "Condensing boiler replacement" in html
+    assert "ECM options" in html
+    assert "Generation setup" in html
+    assert "Eta / COP" in html
     assert "deep_envelope Q_H" in html
     assert "condensing_boiler + condensing boiler eta_generation=1.1" in html
     assert "condensing_boiler + condensing boiler eta_generation=1.1 Q_H" in html
-    assert "Saving %" in html
+    assert "40.0%" in html
+    assert "20.0%" in html
 
 
 def test_renovation_scenario_library_includes_pv_and_condensing_boiler():

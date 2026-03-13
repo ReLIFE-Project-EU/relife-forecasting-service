@@ -189,7 +189,7 @@ RENOVATION_SCENARIOS: List[RenovationScenario] = [
     #     ecm_options=["roof"],
     # ),
     # RenovationScenario(
-    #     name="floor_insulationf",
+    #     name="floor_insulation",
     #     description="Slab or floor insulation retrofit",
     #     ecm_options=["slab"],
     # ),
@@ -457,6 +457,7 @@ class ApiTask:
     uni_generation_mode: str = "default"
     uni_eta_generation: Optional[float] = None
     pv_config: Optional[Dict[str, Any]] = None
+    scenario_description: Optional[str] = None
 
 
 def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
@@ -554,6 +555,11 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
             if scenario_name != "baseline"
             else (chosen.get("description") or chosen.get("scenario_id") or combo_tag)
         )
+        scenario_description = (
+            task.scenario_description
+            or chosen.get("description")
+            or scenario_label
+        )
 
         hourly = to_dataframe(chosen_results.get("hourly_building"))
         annual = to_dataframe(chosen_results.get("annual_building"))
@@ -596,6 +602,8 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
                 "scenario_meta": {
                     "id": chosen.get("scenario_id"),
                     "label": scenario_label,
+                    "description": scenario_description,
+                    "combo": list(combo),
                     "elements": chosen.get("elements") or [],
                     "generation_mask": generation_mask,
                 },
@@ -858,6 +866,8 @@ def call_iso52016_uni11300_pv(task: ApiTask) -> Dict[str, Any]:
                 "scenario_meta": {
                     "id": scenario_name,
                     "label": scenario_name,
+                    "description": task.scenario_description or scenario_name,
+                    "combo": list(combo),
                     "elements": scenario_elements,
                     "generation_mask": (uni_results.get("generation_mask") if isinstance(uni_results, dict) else None) or {},
                     "pv_config": copy.deepcopy(pv_cfg) if task.use_pv else None,
@@ -914,6 +924,12 @@ def _normalize_report_scenario_context(result: Dict[str, Any]) -> Dict[str, Any]
         label_parts.append(generation_suffix)
 
     scenario_meta["label"] = " + ".join([part for part in label_parts if part]) or "ECM scenario"
+    scenario_meta["description"] = str(
+        scenario_meta.get("description")
+        or scenario_meta.get("label")
+        or scenario_meta.get("id")
+        or "ECM scenario"
+    ).strip()
     context["scenario_meta"] = scenario_meta
     return context
 
@@ -1128,6 +1144,7 @@ def run_predefined_renovation_scenarios(
                     heat_pump_cop=HEAT_PUMP_COP_DEFAULT,
                     uni_generation_mode="default",
                     uni_eta_generation=None,
+                    scenario_description="Baseline reference scenario",
                 ),
             )
         )
@@ -1172,6 +1189,7 @@ def run_predefined_renovation_scenarios(
             heat_pump_cop=scenario.heat_pump_cop,
             uni_generation_mode=scenario.uni_generation_mode,
             uni_eta_generation=scenario.uni_eta_generation,
+            scenario_description=scenario.description,
         )
         task.pv_config = copy.deepcopy(scenario.pv_config) if scenario.pv_config else None
         runner_type = "iso52016_uni11300_pv" if scenario.use_pv else "ecm_application"

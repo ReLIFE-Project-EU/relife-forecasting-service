@@ -98,7 +98,7 @@
       line-height: 1.6;
       color: var(--muted);
     }
-    .meta-grid, .metric-grid {
+    .meta-grid {
       display: grid;
       gap: 16px;
       margin-top: 24px;
@@ -106,19 +106,16 @@
     .meta-grid {
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
-    .metric-grid {
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    }
-    .meta-card, .metric-card, .chart-card, .table-card {
+    .meta-card, .chart-card, .table-card {
       background: var(--panel);
       border: 1px solid rgba(255, 255, 255, 0.6);
       border-radius: 22px;
       box-shadow: var(--shadow);
     }
-    .meta-card, .metric-card {
+    .meta-card {
       padding: 18px 20px;
     }
-    .meta-label, .metric-label {
+    .meta-label {
       display: block;
       font-size: 12px;
       text-transform: uppercase;
@@ -126,7 +123,7 @@
       color: var(--muted);
       margin-bottom: 8px;
     }
-    .meta-value, .metric-value {
+    .meta-value {
       font-size: 20px;
       line-height: 1.35;
       color: var(--ink);
@@ -171,6 +168,9 @@
     .table-card {
       padding: 18px;
     }
+    .summary-table-card {
+      margin-top: 24px;
+    }
     .table-wrap {
       overflow-x: auto;
     }
@@ -214,8 +214,8 @@
       <h1>ECM comparison report</h1>
       <p class="subtitle">
         Comparison between the baseline and the selected renovation scenarios for <strong>SFH_Greece_1946_1969 / Greece / Single Family House</strong>.
-        Included scenarios: <strong>deep_envelope, condensing_boiler + condensing boiler eta_generation=1.1</strong>. The report shows hourly temperatures,
-        ISO 52016 energy needs, UNI/TS 11300 primary energy and savings against the baseline in the same charts.
+        Included scenarios: <strong>deep_envelope, condensing_boiler + condensing boiler eta_generation=1.1</strong>. The summary table below lists the scenario description,
+        selected ECM options, generation setup and annual savings against the baseline.
       </p>
       <div class="meta-grid">
         <article class="meta-card"><span class="meta-label">Building</span><strong class="meta-value">SFH_Greece_1946_1969</strong></article>
@@ -223,7 +223,7 @@
         <article class="meta-card"><span class="meta-label">Country</span><strong class="meta-value">Greece</strong></article>
         <article class="meta-card"><span class="meta-label">Weather Source</span><strong class="meta-value">pvgis</strong></article>
       </div>
-      <div class="metric-grid"><article class='metric-card'><span class='metric-label'>Compared scenarios</span><strong class='metric-value'>deep_envelope, condensing_boiler + condensing boiler eta_generation=1.1</strong></article><article class='metric-card'><span class='metric-label'>Scenario count</span><strong class='metric-value'>2</strong></article><article class='metric-card'><span class='metric-label'>Applied elements</span><strong class='metric-value'>deep_envelope: roof, wall, window, slab | condensing_boiler + condensing boiler eta_generation=1.1: generation only</strong></article><article class='metric-card'><span class='metric-label'>Generation setup</span><strong class='metric-value'>deep_envelope: default (eta_generation: 0.8) | condensing_boiler + condensing boiler eta_generation=1.1: condensing_boiler (eta_generation: 1.1)</strong></article><article class='metric-card'><span class='metric-label'>Best total primary energy saving</span><strong class='metric-value'>deep_envelope: 58.9%</strong></article></div>
+      <section class='table-card summary-table-card'><h3>Scenario summary</h3><p class='chart-note'>Each row is compared against the baseline. ISO 52016 saving uses annual heating and cooling needs; primary energy saving uses annual UNI/TS 11300 total primary energy.</p><div class='table-wrap'><table><thead><tr><th>Scenario</th><th>Description</th><th>ECM options</th><th>Generation setup</th><th>Eta / COP</th><th>ISO 52016 saving [%]</th><th>Primary energy saving [%]</th></tr></thead><tbody><tr><td>deep_envelope</td><td>Deep envelope retrofit</td><td>roof, slab, wall, window</td><td>default</td><td>eta_generation=0.80</td><td>57.6%</td><td>58.9%</td></tr><tr><td>condensing_boiler + condensing boiler eta_generation=1.1</td><td>Condensing boiler replacement</td><td>condensing boiler</td><td>condensing boiler</td><td>eta_generation=1.10</td><td>0.0%</td><td>26.1%</td></tr></tbody></table></div></section>
     </section>
 
     <h2 class="section-title">Charts</h2>

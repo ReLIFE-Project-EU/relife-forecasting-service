@@ -277,6 +277,142 @@ def _build_mask_text(generation_mask: Dict[str, Any]) -> str:
     return f"{applied_mode} ({metric or '-'}: {value_text})"
 
 
+def _humanize_token(value: Any) -> str:
+    return str(value).replace("_", " ").strip()
+
+
+def _format_metric_value(value: Any) -> str:
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _format_saving_text(value: Optional[float]) -> str:
+    if value is None:
+        return "n.a."
+    return f"{float(value):.1f}%"
+
+
+def _scenario_option_tokens(meta: Dict[str, Any], generation_mask: Dict[str, Any]) -> List[str]:
+    tokens: List[str] = []
+    raw_tokens = meta.get("combo") or meta.get("elements") or []
+    for token in raw_tokens:
+        token_text = str(token).strip()
+        if token_text and token_text not in tokens:
+            tokens.append(token_text)
+
+    applied_mode = str(generation_mask.get("applied_mode") or "").strip()
+    requested_mode = str(generation_mask.get("requested_mode") or "").strip()
+    if applied_mode == "heat_pump" and "heat_pump" not in tokens:
+        tokens.append("heat_pump")
+    elif requested_mode not in {"", "default"} and requested_mode not in tokens:
+        tokens.append(requested_mode)
+
+    if meta.get("pv_config") and "pv" not in tokens:
+        tokens.append("pv")
+
+    return tokens
+
+
+def _build_scenario_options_text(meta: Dict[str, Any], generation_mask: Dict[str, Any]) -> str:
+    tokens = _scenario_option_tokens(meta, generation_mask)
+    if not tokens:
+        return "generation only"
+    return ", ".join(_humanize_token(token) for token in tokens)
+
+
+def _build_generation_setup_text(meta: Dict[str, Any], generation_mask: Dict[str, Any]) -> str:
+    parts: List[str] = []
+    applied_mode = str(generation_mask.get("applied_mode") or "").strip()
+    requested_mode = str(generation_mask.get("requested_mode") or "").strip()
+    mode = applied_mode if applied_mode not in {"", "default"} else requested_mode
+    if mode not in {"", "default"}:
+        parts.append(_humanize_token(mode))
+    else:
+        parts.append("default")
+
+    pv_config = meta.get("pv_config") or {}
+    pv_kwp = pv_config.get("pv_kwp")
+    if pv_kwp not in {None, ""}:
+        parts.append(f"PV {_format_metric_value(pv_kwp)} kWp")
+    elif pv_config:
+        parts.append("PV")
+
+    return " + ".join(parts)
+
+
+def _build_eta_values_text(generation_mask: Dict[str, Any]) -> str:
+    values: List[str] = []
+    heating_eta = generation_mask.get("heating_eta_generation")
+    if heating_eta is None and generation_mask.get("metric") == "eta_generation":
+        heating_eta = generation_mask.get("mask_value")
+    if heating_eta not in {None, ""}:
+        values.append(f"eta_generation={_format_metric_value(heating_eta)}")
+
+    heat_pump_cop = generation_mask.get("heat_pump_cop")
+    if heat_pump_cop is None and str(generation_mask.get("applied_mode") or "").strip() == "heat_pump":
+        heat_pump_cop = generation_mask.get("mask_value")
+    if heat_pump_cop not in {None, ""}:
+        values.append(f"COP={_format_metric_value(heat_pump_cop)}")
+
+    return ", ".join(values) if values else "-"
+
+
+def _build_scenario_summary_table_html(
+    *,
+    baseline_entry: Dict[str, Any],
+    scenario_entries: List[Dict[str, Any]],
+) -> str:
+    headers = [
+        "Scenario",
+        "Description",
+        "ECM options",
+        "Generation setup",
+        "Eta / COP",
+        "ISO 52016 saving [%]",
+        "Primary energy saving [%]",
+    ]
+
+    baseline_iso_total = float(baseline_entry["iso_annual"].get("Q_H_kWh", 0.0)) + float(
+        baseline_entry["iso_annual"].get("Q_C_kWh", 0.0)
+    )
+    baseline_primary_total = float(baseline_entry["uni_summary"].get("EP_total_kWh", 0.0))
+
+    header_html = "".join(f"<th>{html.escape(header)}</th>" for header in headers)
+    body_rows: List[str] = []
+    for entry in scenario_entries:
+        scenario_iso_total = float(entry["iso_annual"].get("Q_H_kWh", 0.0)) + float(
+            entry["iso_annual"].get("Q_C_kWh", 0.0)
+        )
+        scenario_primary_total = float(entry["uni_summary"].get("EP_total_kWh", 0.0))
+        iso_saving = _safe_percent_saving(baseline_iso_total, scenario_iso_total)
+        primary_saving = _safe_percent_saving(baseline_primary_total, scenario_primary_total)
+        meta = entry["meta"]
+        generation_mask = entry["generation_mask"]
+
+        values = [
+            entry["label"],
+            str(meta.get("description") or entry["label"] or "-"),
+            _build_scenario_options_text(meta, generation_mask),
+            _build_generation_setup_text(meta, generation_mask),
+            _build_eta_values_text(generation_mask),
+            _format_saving_text(iso_saving),
+            _format_saving_text(primary_saving),
+        ]
+        row_html = "".join(f"<td>{html.escape(str(value))}</td>" for value in values)
+        body_rows.append(f"<tr>{row_html}</tr>")
+
+    return (
+        "<section class='table-card summary-table-card'>"
+        "<h3>Scenario summary</h3>"
+        "<p class='chart-note'>Each row is compared against the baseline. ISO 52016 saving uses annual heating and cooling needs; primary energy saving uses annual UNI/TS 11300 total primary energy.</p>"
+        "<div class='table-wrap'>"
+        f"<table><thead><tr>{header_html}</tr></thead><tbody>{''.join(body_rows)}</tbody></table>"
+        "</div></section>"
+    )
+
+
 def _prepare_report_entry(
     *,
     label: str,
@@ -540,42 +676,9 @@ def build_ecm_multi_scenario_report_html(
     )
     scenario_labels = [entry["label"] for entry in prepared_scenarios]
     scenario_list_text = ", ".join(scenario_labels)
-    scenario_breakdown = " | ".join(
-        (
-            f"{entry['label']}: "
-            f"{', '.join(entry['meta'].get('elements') or []) if entry['meta'].get('elements') else 'generation only'}"
-        )
-        for entry in prepared_scenarios
-    )
-    generation_setup = " | ".join(
-        f"{entry['label']}: {_build_mask_text(entry['generation_mask'])}"
-        for entry in prepared_scenarios
-    )
-
-    ep_total_index = annual_chart_payload["labels"].index("Primary energy total UNI/TS 11300")
-    best_scenario_text = "n.a."
-    best_candidates = [
-        (scenario["label"], scenario["savings_pct"][ep_total_index])
-        for scenario in annual_chart_payload["scenarios"]
-        if scenario["savings_pct"][ep_total_index] is not None
-    ]
-    if best_candidates:
-        best_label, best_value = max(best_candidates, key=lambda item: float(item[1]))
-        best_scenario_text = f"{best_label}: {float(best_value):.1f}%"
-
-    cards = [
-        ("Compared scenarios" if len(prepared_scenarios) > 1 else "ECM scenario", scenario_list_text),
-        ("Scenario count", str(len(prepared_scenarios))),
-        ("Applied elements", scenario_breakdown),
-        ("Generation setup", generation_setup),
-        ("Best total primary energy saving", best_scenario_text),
-    ]
-    cards_html = "".join(
-        "<article class='metric-card'>"
-        f"<span class='metric-label'>{html.escape(label)}</span>"
-        f"<strong class='metric-value'>{html.escape(str(value))}</strong>"
-        "</article>"
-        for label, value in cards
+    scenario_summary_table_html = _build_scenario_summary_table_html(
+        baseline_entry=baseline_entry,
+        scenario_entries=prepared_scenarios,
     )
 
     return f"""<!DOCTYPE html>
@@ -678,7 +781,7 @@ def build_ecm_multi_scenario_report_html(
       line-height: 1.6;
       color: var(--muted);
     }}
-    .meta-grid, .metric-grid {{
+    .meta-grid {{
       display: grid;
       gap: 16px;
       margin-top: 24px;
@@ -686,19 +789,16 @@ def build_ecm_multi_scenario_report_html(
     .meta-grid {{
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }}
-    .metric-grid {{
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    }}
-    .meta-card, .metric-card, .chart-card, .table-card {{
+    .meta-card, .chart-card, .table-card {{
       background: var(--panel);
       border: 1px solid rgba(255, 255, 255, 0.6);
       border-radius: 22px;
       box-shadow: var(--shadow);
     }}
-    .meta-card, .metric-card {{
+    .meta-card {{
       padding: 18px 20px;
     }}
-    .meta-label, .metric-label {{
+    .meta-label {{
       display: block;
       font-size: 12px;
       text-transform: uppercase;
@@ -706,7 +806,7 @@ def build_ecm_multi_scenario_report_html(
       color: var(--muted);
       margin-bottom: 8px;
     }}
-    .meta-value, .metric-value {{
+    .meta-value {{
       font-size: 20px;
       line-height: 1.35;
       color: var(--ink);
@@ -751,6 +851,9 @@ def build_ecm_multi_scenario_report_html(
     .table-card {{
       padding: 18px;
     }}
+    .summary-table-card {{
+      margin-top: 24px;
+    }}
     .table-wrap {{
       overflow-x: auto;
     }}
@@ -794,8 +897,8 @@ def build_ecm_multi_scenario_report_html(
       <h1>{html.escape(report_title)}</h1>
       <p class="subtitle">
         Comparison between the baseline and the selected renovation scenarios for <strong>{html.escape(building_title)}</strong>.
-        Included scenarios: <strong>{html.escape(scenario_list_text)}</strong>. The report shows hourly temperatures,
-        ISO 52016 energy needs, UNI/TS 11300 primary energy and savings against the baseline in the same charts.
+        Included scenarios: <strong>{html.escape(scenario_list_text)}</strong>. The summary table below lists the scenario description,
+        selected ECM options, generation setup and annual savings against the baseline.
       </p>
       <div class="meta-grid">
         <article class="meta-card"><span class="meta-label">Building</span><strong class="meta-value">{html.escape(str(building_meta.get("name") or "-"))}</strong></article>
@@ -803,7 +906,7 @@ def build_ecm_multi_scenario_report_html(
         <article class="meta-card"><span class="meta-label">Country</span><strong class="meta-value">{html.escape(str(building_meta.get("country") or "-"))}</strong></article>
         <article class="meta-card"><span class="meta-label">Weather Source</span><strong class="meta-value">{html.escape(str(building_meta.get("weather_source") or "-"))}</strong></article>
       </div>
-      <div class="metric-grid">{cards_html}</div>
+      {scenario_summary_table_html}
     </section>
 
     <h2 class="section-title">Charts</h2>
