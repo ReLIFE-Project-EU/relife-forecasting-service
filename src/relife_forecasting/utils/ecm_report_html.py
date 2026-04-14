@@ -19,6 +19,17 @@ except Exception:
         compute_primary_energy_from_hourly_ideal,
     )
 
+try:
+    from relife_forecasting.routes.forecasting_service_functions import (
+        calculate_emissions,
+        calculate_savings,
+    )
+except Exception:
+    from routes.forecasting_service_functions import (  # type: ignore
+        calculate_emissions,
+        calculate_savings,
+    )
+
 
 def _coerce_datetime_index(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
@@ -117,6 +128,177 @@ def _safe_percent_saving(baseline: float, scenario: float) -> Optional[float]:
     return ((baseline - scenario) / baseline) * 100.0
 
 
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _normalize_emission_country(country: Any) -> str:
+    raw = str(country or "").strip()
+    if not raw:
+        return "IT"
+
+    country_key = raw.upper()
+    aliases = {
+        "ITALY": "IT",
+        "ITALIA": "IT",
+        "ITA": "IT",
+        "GERMANY": "DE",
+        "DEUTSCHLAND": "DE",
+        "DEU": "DE",
+        "GREECE": "EU",
+        "GRECIA": "EU",
+        "GRC": "EU",
+        "GR": "EU",
+        "ELLADA": "EU",
+    }
+    if country_key in {"IT", "EU", "DE"}:
+        return country_key
+    return aliases.get(country_key, "EU")
+
+
+def _build_emission_component(
+    *,
+    label: str,
+    energy_source: str,
+    annual_consumption_kwh: float,
+    country: str,
+) -> Optional[Dict[str, Any]]:
+    consumption = max(_safe_float(annual_consumption_kwh), 0.0)
+    if consumption <= 1e-9:
+        return None
+
+    emissions = calculate_emissions(
+        energy_source=energy_source,
+        annual_consumption_kwh=consumption,
+        country=country,
+    )
+    return {
+        "label": label,
+        "energy_source": energy_source,
+        "annual_consumption_kwh": round(consumption, 2),
+        "emission_factor_kg_per_kwh": round(_safe_float(emissions.get("emission_factor")), 4),
+        "annual_emissions_kg_co2eq": round(_safe_float(emissions.get("annual_emissions_kg")), 2),
+        "annual_emissions_ton_co2eq": round(_safe_float(emissions.get("annual_emissions_ton")), 3),
+    }
+
+
+def _build_co2_summary(
+    *,
+    building_country: Any,
+    uni_summary: Dict[str, Any],
+    pv_summary: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    country = _normalize_emission_country(building_country)
+    summary = dict(uni_summary or {})
+
+    thermal_kwh = max(_safe_float(summary.get("E_delivered_thermal_kWh")), 0.0)
+    electric_total_kwh = max(
+        _safe_float(summary.get("E_delivered_electric_total_kWh")),
+        _safe_float(summary.get("E_delivered_electric_heat_kWh"))
+        + _safe_float(summary.get("E_delivered_electric_cool_kWh")),
+    )
+
+    pv_annual = {}
+    if isinstance(pv_summary, dict):
+        pv_annual = dict(pv_summary.get("annual_kwh") or pv_summary)
+    pv_self_consumption_kwh = max(_safe_float(pv_annual.get("self_consumption")), 0.0)
+    grid_import_kwh = max(_safe_float(pv_annual.get("grid_import")), 0.0)
+
+    if pv_self_consumption_kwh > 0.0 or grid_import_kwh > 0.0:
+        residual_grid_kwh = max(
+            0.0,
+            electric_total_kwh - pv_self_consumption_kwh - grid_import_kwh,
+        )
+        grid_import_kwh += residual_grid_kwh
+    else:
+        grid_import_kwh = electric_total_kwh
+
+    components: List[Dict[str, Any]] = []
+    for component in (
+        _build_emission_component(
+            label="Delivered thermal energy",
+            energy_source="natural_gas",
+            annual_consumption_kwh=thermal_kwh,
+            country=country,
+        ),
+        _build_emission_component(
+            label="Grid electricity",
+            energy_source="grid_electricity",
+            annual_consumption_kwh=grid_import_kwh,
+            country=country,
+        ),
+        _build_emission_component(
+            label="On-site PV self-consumption",
+            energy_source="solar_pv",
+            annual_consumption_kwh=pv_self_consumption_kwh,
+            country=country,
+        ),
+    ):
+        if component is not None:
+            components.append(component)
+
+    total_consumption_kwh = round(
+        sum(_safe_float(component.get("annual_consumption_kwh")) for component in components),
+        2,
+    )
+    total_emissions_kg = round(
+        sum(_safe_float(component.get("annual_emissions_kg_co2eq")) for component in components),
+        2,
+    )
+    total_emissions_ton = round(total_emissions_kg / 1000.0, 3)
+    weighted_factor = round(
+        (total_emissions_kg / total_consumption_kwh) if total_consumption_kwh > 0 else 0.0,
+        4,
+    )
+
+    source_breakdown = {
+        "natural_gas_kWh": round(
+            sum(
+                _safe_float(component.get("annual_consumption_kwh"))
+                for component in components
+                if component.get("energy_source") == "natural_gas"
+            ),
+            2,
+        ),
+        "grid_electricity_kWh": round(
+            sum(
+                _safe_float(component.get("annual_consumption_kwh"))
+                for component in components
+                if component.get("energy_source") == "grid_electricity"
+            ),
+            2,
+        ),
+        "solar_pv_kWh": round(
+            sum(
+                _safe_float(component.get("annual_consumption_kwh"))
+                for component in components
+                if component.get("energy_source") == "solar_pv"
+            ),
+            2,
+        ),
+    }
+
+    return {
+        "country": country,
+        "method": "carrier_split_final_energy",
+        "components": components,
+        "totals": {
+            "annual_consumption_kwh": total_consumption_kwh,
+            "annual_emissions_kg_co2eq": total_emissions_kg,
+            "annual_emissions_ton_co2eq": total_emissions_ton,
+            "weighted_emission_factor_kg_per_kwh": weighted_factor,
+            "equivalent_trees": int(total_emissions_kg / 21.0),
+            "equivalent_km_car": int(total_emissions_kg / 0.120) if total_emissions_kg > 0 else 0,
+            **source_breakdown,
+        },
+    }
+
+
 def _build_ideal_load_frame(hourly_df: pd.DataFrame) -> pd.DataFrame:
     ideal = pd.DataFrame(index=hourly_df.index)
 
@@ -177,7 +359,14 @@ def _apply_heat_pump_mask(results_df: pd.DataFrame, generation_mask: Dict[str, A
     out["E_hp_heating_kWh"] = e_hp_heating
     out["E_delivered_electric_heat_kWh"] = e_electric_heat_total
     out["E_delivered_electric_total_kWh"] = e_electric_heat_total + e_electric_cool
+    # Replace gas-based heating with electric heat pump consumption.
+    if "E_delivered_thermal_kWh" in out.columns:
+        out["E_delivered_thermal_kWh"] = 0.0
+    if "EP_thermal_kWh" in out.columns:
+        out["EP_thermal_kWh"] = 0.0
     out["EP_heat_total_kWh"] = out["E_delivered_electric_heat_kWh"] * fp_electric
+    if "EP_electric_heat_kWh" in out.columns:
+        out["EP_electric_heat_kWh"] = out["EP_heat_total_kWh"]
     out["EP_total_kWh"] = out["EP_heat_total_kWh"] + ep_cool
     return out
 
@@ -372,6 +561,8 @@ def _build_scenario_summary_table_html(
         "Eta / COP",
         "ISO 52016 saving [%]",
         "Primary energy saving [%]",
+        "Annual CO2 [t/y]",
+        "CO2 saving [%]",
     ]
 
     baseline_iso_total = float(baseline_entry["iso_annual"].get("Q_H_kWh", 0.0)) + float(
@@ -390,6 +581,12 @@ def _build_scenario_summary_table_html(
         primary_saving = _safe_percent_saving(baseline_primary_total, scenario_primary_total)
         meta = entry["meta"]
         generation_mask = entry["generation_mask"]
+        co2_totals = entry["co2"].get("totals") or {}
+        co2_baseline = baseline_entry["co2"].get("totals") or {}
+        co2_saving = _safe_percent_saving(
+            _safe_float(co2_baseline.get("annual_emissions_kg_co2eq")),
+            _safe_float(co2_totals.get("annual_emissions_kg_co2eq")),
+        )
 
         values = [
             entry["label"],
@@ -399,6 +596,8 @@ def _build_scenario_summary_table_html(
             _build_eta_values_text(generation_mask),
             _format_saving_text(iso_saving),
             _format_saving_text(primary_saving),
+            _format_metric_value(co2_totals.get("annual_emissions_ton_co2eq")),
+            _format_saving_text(co2_saving),
         ]
         row_html = "".join(f"<td>{html.escape(str(value))}</td>" for value in values)
         body_rows.append(f"<tr>{row_html}</tr>")
@@ -419,6 +618,8 @@ def _prepare_report_entry(
     scenario_meta: Dict[str, Any],
     hourly_df: pd.DataFrame,
     uni_results: Dict[str, Any],
+    building_country: Any,
+    pv_summary: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     hourly_df = _coerce_datetime_index(hourly_df)
     generation_mask = (
@@ -449,6 +650,14 @@ def _prepare_report_entry(
             * 0.001
         ),
     }
+    # Always compute CO2 from the UNI summary used in the report.
+    # This avoids mixing server-side summaries with locally recomputed UNI numbers,
+    # which can lead to inconsistent baselines vs scenarios.
+    co2 = _build_co2_summary(
+        building_country=building_country,
+        uni_summary=uni_summary,
+        pv_summary=pv_summary,
+    )
 
     return {
         "label": label,
@@ -458,6 +667,7 @@ def _prepare_report_entry(
         "uni_hourly": uni_hourly,
         "uni_summary": uni_summary,
         "iso_annual": iso_annual,
+        "co2": co2,
     }
 
 
@@ -504,6 +714,59 @@ def _annual_summary_multi_frame(
     return pd.DataFrame(rows), chart_payload
 
 
+def _co2_summary_multi_frame(
+    *,
+    baseline_entry: Dict[str, Any],
+    scenario_entries: List[Dict[str, Any]],
+) -> tuple[pd.DataFrame, Dict[str, Any]]:
+    baseline_totals = baseline_entry["co2"].get("totals") or {}
+    baseline_emissions_kg = _safe_float(baseline_totals.get("annual_emissions_kg_co2eq"))
+
+    rows: List[Dict[str, Any]] = [
+        {
+            "scenario": baseline_entry["label"],
+            "final_energy_kWh": _safe_float(baseline_totals.get("annual_consumption_kwh")),
+            "annual_emissions_kg_co2eq": baseline_emissions_kg,
+            "annual_emissions_ton_co2eq": _safe_float(baseline_totals.get("annual_emissions_ton_co2eq")),
+            "weighted_factor_kg_per_kWh": _safe_float(baseline_totals.get("weighted_emission_factor_kg_per_kwh")),
+            "natural_gas_kWh": _safe_float(baseline_totals.get("natural_gas_kWh")),
+            "grid_electricity_kWh": _safe_float(baseline_totals.get("grid_electricity_kWh")),
+            "solar_pv_kWh": _safe_float(baseline_totals.get("solar_pv_kWh")),
+            "saving_vs_baseline_kg_co2eq": 0.0,
+            "saving_vs_baseline_pct": 0.0,
+        }
+    ]
+    chart_payload = {
+        "labels": [baseline_entry["label"]],
+        "emissions_ton": [_safe_float(baseline_totals.get("annual_emissions_ton_co2eq"))],
+        "savings_pct": [0.0],
+    }
+
+    for entry in scenario_entries:
+        totals = entry["co2"].get("totals") or {}
+        emissions_kg = _safe_float(totals.get("annual_emissions_kg_co2eq"))
+        savings = calculate_savings(baseline_emissions_kg, emissions_kg)
+        rows.append(
+            {
+                "scenario": entry["label"],
+                "final_energy_kWh": _safe_float(totals.get("annual_consumption_kwh")),
+                "annual_emissions_kg_co2eq": emissions_kg,
+                "annual_emissions_ton_co2eq": _safe_float(totals.get("annual_emissions_ton_co2eq")),
+                "weighted_factor_kg_per_kWh": _safe_float(totals.get("weighted_emission_factor_kg_per_kwh")),
+                "natural_gas_kWh": _safe_float(totals.get("natural_gas_kWh")),
+                "grid_electricity_kWh": _safe_float(totals.get("grid_electricity_kWh")),
+                "solar_pv_kWh": _safe_float(totals.get("solar_pv_kWh")),
+                "saving_vs_baseline_kg_co2eq": _safe_float(savings.get("absolute_kg_co2eq")),
+                "saving_vs_baseline_pct": _safe_float(savings.get("percentage")),
+            }
+        )
+        chart_payload["labels"].append(entry["label"])
+        chart_payload["emissions_ton"].append(_safe_float(totals.get("annual_emissions_ton_co2eq")))
+        chart_payload["savings_pct"].append(_safe_float(savings.get("percentage")))
+
+    return pd.DataFrame(rows), chart_payload
+
+
 def build_ecm_multi_scenario_report_html(
     *,
     report_title: str,
@@ -517,6 +780,7 @@ def build_ecm_multi_scenario_report_html(
         scenario_meta={"label": "Baseline", "elements": [], "generation_mask": baseline_uni_results.get("generation_mask") or {}},
         hourly_df=baseline_hourly,
         uni_results=baseline_uni_results,
+        building_country=building_meta.get("country"),
     )
 
     prepared_scenarios: List[Dict[str, Any]] = []
@@ -530,6 +794,8 @@ def build_ecm_multi_scenario_report_html(
                 scenario_meta=scenario_meta,
                 hourly_df=hourly_payload if isinstance(hourly_payload, pd.DataFrame) else pd.DataFrame(hourly_payload or []),
                 uni_results=context.get("primary_energy_uni11300") or {},
+                building_country=building_meta.get("country"),
+                pv_summary=context.get("pv_hp_summary"),
             )
         )
 
@@ -602,6 +868,10 @@ def build_ecm_multi_scenario_report_html(
         baseline_entry=baseline_entry,
         scenario_entries=prepared_scenarios,
     )
+    co2_summary, co2_chart_payload = _co2_summary_multi_frame(
+        baseline_entry=baseline_entry,
+        scenario_entries=prepared_scenarios,
+    )
 
     months = _month_labels(temp_monthly, iso_monthly, uni_monthly)
     chart_payload = {
@@ -652,6 +922,7 @@ def build_ecm_multi_scenario_report_html(
             ],
         },
         "annual": annual_chart_payload,
+        "co2": co2_chart_payload,
     }
 
     monthly_tables_html = "".join(
@@ -665,6 +936,11 @@ def build_ecm_multi_scenario_report_html(
         annual_summary.set_index("metric"),
         title="Annual baseline vs selected scenarios summary" if len(prepared_scenarios) > 1 else "Annual baseline vs ECM summary",
         index_label="Indicator",
+    )
+    co2_table_html = _table_html(
+        co2_summary.set_index("scenario"),
+        title="Annual CO2 emissions and carrier split",
+        index_label="Scenario",
     )
 
     building_title = " / ".join(
@@ -931,12 +1207,18 @@ def build_ecm_multi_scenario_report_html(
         <p class="chart-note">Grouped bars show the baseline and each selected scenario; dashed lines show savings against the baseline.</p>
         <div id="annualChart" class="chart"></div>
       </article>
+      <article class="chart-card">
+        <h3>Annual CO2 emissions and reduction</h3>
+        <p class="chart-note">Operational CO2 is derived from final-energy carriers: delivered thermal energy is mapped to natural gas, grid imports to grid electricity, and on-site PV self-consumption to solar PV. Country aliases outside IT/DE fall back to EU emission factors.</p>
+        <div id="co2Chart" class="chart"></div>
+      </article>
     </section>
 
     <h2 class="section-title">Tables</h2>
     <section class="table-grid">
       {monthly_tables_html}
       {annual_table_html}
+      {co2_table_html}
     </section>
   </main>
 
@@ -1144,6 +1426,40 @@ def build_ecm_multi_scenario_report_html(
         {{ type: 'value', name: 'Saving %', axisLabel: {{ formatter: '{{value}}%' }} }}
       ],
       series: annualSeries
+    }});
+
+    createChart('co2Chart', {{
+      tooltip: {{ trigger: 'axis', axisPointer: {{ type: 'shadow' }} }},
+      legend: {{ top: 0 }},
+      grid: {{ left: 56, right: 56, top: 52, bottom: 56 }},
+      xAxis: {{ type: 'category', data: reportData.co2.labels }},
+      yAxis: [
+        {{ type: 'value', name: 'tCO2eq/year' }},
+        {{ type: 'value', name: 'Saving %', axisLabel: {{ formatter: '{{value}}%' }} }}
+      ],
+      series: [
+        {{
+          name: 'Annual emissions',
+          type: 'bar',
+          data: reportData.co2.emissions_ton.map((value, idx) => ({{
+            value,
+            itemStyle: {{ color: idx === 0 ? palette.p1 : barColor(idx - 1) }}
+          }}))
+        }},
+        {{
+          name: 'Reduction vs baseline',
+          type: 'line',
+          yAxisIndex: 1,
+          smooth: true,
+          lineStyle: {{ width: 2, type: 'dashed', color: palette.p2 }},
+          itemStyle: {{ color: palette.p2 }},
+          label: {{
+            show: true,
+            formatter: (params) => params.data == null ? 'n.a.' : `${{params.data}}%`
+          }},
+          data: reportData.co2.savings_pct
+        }}
+      ]
     }});
   </script>
 </body>

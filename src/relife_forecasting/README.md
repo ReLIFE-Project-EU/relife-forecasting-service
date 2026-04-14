@@ -31,7 +31,7 @@ This API exposes endpoints to:
 - **Run the uvicorn server (FastAPI)**
 
     ```bash
-    uvicorn main:app --reload --port 9091
+    PYTHONPATH=src uvicorn relife_forecasting.main:app --reload --port 9091
     ```
     ** tested with python 3.11 
 

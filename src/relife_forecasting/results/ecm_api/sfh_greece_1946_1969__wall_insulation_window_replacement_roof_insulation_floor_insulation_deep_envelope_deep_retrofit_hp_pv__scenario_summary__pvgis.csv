@@ -1,0 +1,8 @@
+scenario_name,scenario_label,scenario_description,runner_type,combo_tag,options,generation_mode,iso_total_kwh,primary_total_kwh,final_energy_kwh,annual_co2_kg,annual_co2_ton,co2_saving_kg,co2_saving_pct,natural_gas_kwh,grid_electricity_kwh,solar_pv_kwh,emission_country
+baseline,Baseline (no changes),Baseline reference scenario,ecm_application,baseline,baseline,default,69309.68,176233.77,160741.34,32758.17,32.758,0.0,0.0,155299.47,5441.87,0.0,EU
+wall_insulation,wall_insulation,External wall insulation,ecm_application,wall,wall,default,56459.28,142720.64,129921.91,26488.05,26.488,6270.12,19.1,125321.45,4600.46,0.0,EU
+window_replacement,window_replacement,High-performance window replacement,ecm_application,window,window,default,66425.63,168538.16,153555.31,31300.77,31.301,1457.4,4.4,148223.14,5332.17,0.0,EU
+roof_insulation,roof_insulation,Roof insulation retrofit,ecm_application,roof,roof,default,52395.63,133067.66,121278.72,24719.78,24.72,8038.39,24.5,117099.88,4178.84,0.0,EU
+floor_insulation,floor_insulation,Slab or floor insulation retrofit,ecm_application,slab,slab,default,67829.08,172400.06,156979.01,32002.7,32.003,755.47,2.3,151451.93,5527.08,0.0,EU
+deep_envelope,deep_envelope,Deep envelope retrofit,ecm_application,roof_slab_wall_window,"roof, slab, wall, window",default,29402.49,72729.79,65025.6,13307.44,13.307,19450.73,59.4,61775.3,3250.3,0.0,EU
+deep_retrofit_hp_pv,deep_retrofit_hp_pv + heat pump COP=3.2,Deep envelope retrofit with heat pump and photovoltaics,ecm_application,heat_pump_pv_roof_slab_wall_window,"heat_pump, pv, roof, slab, wall, window",heat_pump,29402.49,44610.52,18434.1,3519.24,3.519,29238.93,89.3,0.0,12938.99,5495.11,EU

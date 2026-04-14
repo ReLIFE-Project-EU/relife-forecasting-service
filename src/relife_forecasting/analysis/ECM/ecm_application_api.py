@@ -69,6 +69,7 @@ def _load_report_builders():
             return (
                 module.build_ecm_comparison_report_html,
                 module.build_ecm_multi_scenario_report_html,
+                module._build_co2_summary,
             )
         except Exception as exc:
             last_exc = exc
@@ -80,7 +81,18 @@ def _load_report_builders():
 (
     build_ecm_comparison_report_html,
     build_ecm_multi_scenario_report_html,
+    build_co2_summary_from_uni_results,
 ) = _load_report_builders()
+
+try:
+    from relife_forecasting.routes.forecasting_service_functions import calculate_savings
+except Exception:
+    from routes.forecasting_service_functions import calculate_savings  # type: ignore
+
+try:
+    from relife_forecasting.utils.ecm_presentation import build_ecm_presentation
+except Exception:
+    from utils.ecm_presentation import build_ecm_presentation  # type: ignore
 
 try:
     from relife_forecasting.building_examples import BUILDING_ARCHETYPES, UNI11300_SIMULATION_EXAMPLE
@@ -173,37 +185,37 @@ DEFAULT_PV_CONFIG: Dict[str, Any] = {
 
 
 RENOVATION_SCENARIOS: List[RenovationScenario] = [
-    # RenovationScenario(
-    #     name="wall_insulation",
-    #     description="External wall insulation",
-    #     ecm_options=["wall"],
-    # ),
-    # RenovationScenario(
-    #     name="window_replacement",
-    #     description="High-performance window replacement",
-    #     ecm_options=["window"],
-    # ),
-    # RenovationScenario(
-    #     name="roof_insulation",
-    #     description="Roof insulation retrofit",
-    #     ecm_options=["roof"],
-    # ),
-    # RenovationScenario(
-    #     name="floor_insulation",
-    #     description="Slab or floor insulation retrofit",
-    #     ecm_options=["slab"],
-    # ),
+    RenovationScenario(
+        name="wall_insulation",
+        description="External wall insulation",
+        ecm_options=["wall"],
+    ),
+    RenovationScenario(
+        name="window_replacement",
+        description="High-performance window replacement",
+        ecm_options=["window"],
+    ),
+    RenovationScenario(
+        name="roof_insulation",
+        description="Roof insulation retrofit",
+        ecm_options=["roof"],
+    ),
+    RenovationScenario(
+        name="floor_insulation",
+        description="Slab or floor insulation retrofit",
+        ecm_options=["slab"],
+    ),
     RenovationScenario(
         name="deep_envelope",
         description="Deep envelope retrofit",
         ecm_options=["wall", "window", "roof", "slab"],
     ),
-    RenovationScenario(
-        name="condensing_boiler",
-        description="Condensing boiler replacement",
-        ecm_options=[],
-        uni_generation_mode="condensing_boiler",
-    ),
+    # RenovationScenario(
+    #     name="condensing_boiler",
+    #     description="Condensing boiler replacement",
+    #     ecm_options=[],
+    #     uni_generation_mode="condensing_boiler",
+    # ),
     # RenovationScenario(
     #     name="deep_envelope_condensing_boiler",
     #     description="Deep envelope retrofit with condensing boiler",
@@ -232,15 +244,15 @@ RENOVATION_SCENARIOS: List[RenovationScenario] = [
     #     pv_config=DEFAULT_PV_CONFIG,
     #     uni_generation_mode="condensing_boiler",
     # ),
-    # RenovationScenario(
-    #     name="deep_retrofit_hp_pv",
-    #     description="Deep envelope retrofit with heat pump and photovoltaics",
-    #     ecm_options=["wall", "window", "roof", "slab", "heat_pump"],
-    #     use_heat_pump=True,
-    #     heat_pump_cop=HEAT_PUMP_COP_DEFAULT,
-    #     use_pv=True,
-    #     pv_config=DEFAULT_PV_CONFIG,
-    # ),
+    RenovationScenario(
+        name="deep_retrofit_hp_pv",
+        description="Deep envelope retrofit with heat pump and photovoltaics",
+        ecm_options=["wall", "window", "roof", "slab", "heat_pump"],
+        use_heat_pump=True,
+        heat_pump_cop=HEAT_PUMP_COP_DEFAULT,
+        use_pv=True,
+        pv_config=DEFAULT_PV_CONFIG,
+    ),
 ]
 
 
@@ -314,11 +326,13 @@ def build_name_file(
     return str(base_dir / filename)
 
 
-def build_report_file(
+def build_artifact_file(
     building_name: str,
     ecm_combo: List[str],
     epw_path: Optional[Union[str, Path]],
     base_dir: Union[str, Path],
+    kind: str,
+    extension: str,
     scenario_name: Optional[str] = None,
 ) -> str:
     base_dir = ensure_dir(base_dir)
@@ -330,8 +344,26 @@ def build_report_file(
         epw = Path(epw_path)
         weather_tag = slugify(epw.stem)
 
-    filename = f"{bld}__{ecm_tag}__report__{weather_tag}.html"
+    filename = f"{bld}__{ecm_tag}__{slugify(kind)}__{weather_tag}.{extension.lstrip('.')}"
     return str(base_dir / filename)
+
+
+def build_report_file(
+    building_name: str,
+    ecm_combo: List[str],
+    epw_path: Optional[Union[str, Path]],
+    base_dir: Union[str, Path],
+    scenario_name: Optional[str] = None,
+) -> str:
+    return build_artifact_file(
+        building_name=building_name,
+        ecm_combo=ecm_combo,
+        epw_path=epw_path,
+        base_dir=base_dir,
+        kind="report",
+        extension="html",
+        scenario_name=scenario_name,
+    )
 
 
 def to_dataframe(payload: Any) -> pd.DataFrame:
@@ -456,6 +488,7 @@ class ApiTask:
     heat_pump_cop: float = 3.2
     uni_generation_mode: str = "default"
     uni_eta_generation: Optional[float] = None
+    use_pv: bool = False
     pv_config: Optional[Dict[str, Any]] = None
     scenario_description: Optional[str] = None
 
@@ -471,6 +504,8 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
     combo = task.combo
     combo_tag = "_".join(sorted(combo)) if combo else "baseline"
     scenario_name = task.scenario_name or combo_tag
+    task_use_pv = bool(getattr(task, "use_pv", False))
+    task_pv_config = copy.deepcopy(getattr(task, "pv_config", None) or DEFAULT_PV_CONFIG)
 
     params: Dict[str, Any] = {
         "archetype": str(task.archetype).lower(),
@@ -483,6 +518,20 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
     if task.use_heat_pump:
         params["use_heat_pump"] = "true"
         params["heat_pump_cop"] = task.heat_pump_cop
+    if task_use_pv:
+        pv_cfg = task_pv_config
+        params["use_pv"] = "true"
+        params["pv_kwp"] = pv_cfg.get("pv_kwp")
+        params["pv_tilt_deg"] = pv_cfg.get("tilt_deg", PV_TILT_DEG)
+        params["pv_azimuth_deg"] = pv_cfg.get("azimuth_deg", PV_AZIMUTH_DEG)
+        params["pv_use_pvgis"] = str(bool(pv_cfg.get("use_pvgis", PV_USE_PVGIS))).lower()
+        params["pv_pvgis_loss_percent"] = pv_cfg.get("pvgis_loss_percent", PV_PVGIS_LOSS_PERCENT)
+        params["annual_pv_yield_kwh_per_kwp"] = pv_cfg.get(
+            "annual_pv_yield_kwh_per_kwp",
+            ANNUAL_PV_YIELD_KWH_PER_KWP,
+        )
+        if pv_cfg.get("pvgis_year") is not None:
+            params["pv_pvgis_year"] = pv_cfg.get("pvgis_year")
     if str(task.uni_generation_mode or "default").strip().lower() != "default":
         params["uni_generation_mode"] = task.uni_generation_mode
     if task.uni_eta_generation is not None:
@@ -509,6 +558,11 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
         if task.bui_json is None:
             raise ValueError("Custom mode requires bui_json")
         data["bui_json"] = json.dumps(task.bui_json)
+    if task_use_pv:
+        pv_cfg = task_pv_config
+        battery_params = pv_cfg.get("battery_params")
+        if battery_params is not None:
+            data["pv_battery_params_json"] = json.dumps(battery_params)
 
     if task.weather_source == "epw":
         if not task.epw_path:
@@ -530,7 +584,10 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
         # Single scenario mode => take last (safe if server returns [baseline, scenario] unexpectedly)
         chosen = scenarios[-1]
         chosen_results = chosen.get("results", {}) if isinstance(chosen, dict) else {}
-        chosen_uni_results = chosen_results.get("primary_energy_uni11300", {}) if isinstance(chosen_results, dict) else {}
+        chosen_uni_results_raw = chosen_results.get("primary_energy_uni11300", {}) if isinstance(chosen_results, dict) else {}
+        chosen_uni_results = chosen_uni_results_raw if isinstance(chosen_uni_results_raw, dict) else {}
+        chosen_pv_results_raw = chosen_results.get("pv_hp", {}) if isinstance(chosen_results, dict) else {}
+        chosen_pv_results = chosen_pv_results_raw if isinstance(chosen_pv_results_raw, dict) else {}
 
         task_building = task.bui_json.get("building", {}) if isinstance(task.bui_json, dict) else {}
         building_name = (
@@ -563,6 +620,8 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
 
         hourly = to_dataframe(chosen_results.get("hourly_building"))
         annual = to_dataframe(chosen_results.get("annual_building"))
+        if annual.empty and chosen_pv_results:
+            annual = _build_integrated_annual_frame(hourly, chosen_uni_results, chosen_pv_results)
 
         name_file = build_name_file(
             building_name=building_name,
@@ -575,6 +634,17 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
 
         annual_file = str(Path(name_file).with_name(Path(name_file).stem + "__annual.csv"))
         annual.to_csv(annual_file, index=False)
+        pv_hourly_file = None
+        pv_hourly = to_dataframe(chosen_pv_results.get("hourly_results"))
+        if not pv_hourly.empty:
+            pv_hourly_file = str(Path(name_file).with_name(Path(name_file).stem + "__pv_hourly.csv"))
+            pv_hourly.to_csv(pv_hourly_file, index=False)
+
+        co2_summary = build_co2_summary_from_uni_results(
+            building_country=building_country,
+            uni_summary=(chosen_uni_results.get("summary") or {}) if isinstance(chosen_uni_results, dict) else {},
+            pv_summary=(chosen_pv_results.get("summary") or {}) if isinstance(chosen_pv_results, dict) else {},
+        )
 
         elapsed = time.time() - start
         size_kb = Path(name_file).stat().st_size / 1024.0 if Path(name_file).exists() else 0.0
@@ -587,11 +657,13 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
             "scenario_id": chosen.get("scenario_id"),
             "file_hourly": name_file,
             "file_annual": annual_file,
+            "file_pv_hourly": pv_hourly_file,
             "elapsed": elapsed,
             "size_kb": size_kb,
             "heat_pump_cop": task.heat_pump_cop if task.use_heat_pump else None,
             "uni_generation_mode": task.uni_generation_mode,
             "runner_type": "ecm_application",
+            "co2_summary": co2_summary,
             "report_context": {
                 "building_meta": {
                     "name": building_name,
@@ -606,9 +678,12 @@ def call_ecm_application(task: ApiTask) -> Dict[str, Any]:
                     "combo": list(combo),
                     "elements": chosen.get("elements") or [],
                     "generation_mask": generation_mask,
+                    "pv_config": copy.deepcopy(task_pv_config) if task_use_pv else None,
                 },
                 "hourly_building": chosen_results.get("hourly_building") or [],
                 "primary_energy_uni11300": chosen_uni_results or {},
+                "pv_hp_summary": (chosen_pv_results.get("summary") or {}) if isinstance(chosen_pv_results, dict) else {},
+                "co2_summary": co2_summary,
             },
         }
 
@@ -765,6 +840,8 @@ def call_iso52016_uni11300_pv(task: ApiTask) -> Dict[str, Any]:
     combo = task.combo
     combo_tag = "_".join(sorted(combo)) if combo else "baseline"
     scenario_name = task.scenario_name or combo_tag
+    task_use_pv = bool(getattr(task, "use_pv", False))
+    task_pv_config = copy.deepcopy(getattr(task, "pv_config", None) or DEFAULT_PV_CONFIG)
 
     try:
         base_inputs = _resolve_local_reference_inputs(
@@ -791,7 +868,7 @@ def call_iso52016_uni11300_pv(task: ApiTask) -> Dict[str, Any]:
             uni_generation_mode=task.uni_generation_mode,
             uni_eta_generation=task.uni_eta_generation,
         )
-        pv_cfg = copy.deepcopy(task.pv_config or DEFAULT_PV_CONFIG)
+        pv_cfg = task_pv_config
         payload: Dict[str, Any] = {
             "bui": bui_variant,
             "pv": pv_cfg,
@@ -816,7 +893,7 @@ def call_iso52016_uni11300_pv(task: ApiTask) -> Dict[str, Any]:
         building_category = base_inputs.get("category") or task.category
         building_country = base_inputs.get("country") or task.country
         scenario_elements = list(envelope_elements)
-        if task.use_pv:
+        if task_use_pv:
             scenario_elements.append("pv")
         name_file = build_name_file(
             building_name=building_name,
@@ -838,6 +915,11 @@ def call_iso52016_uni11300_pv(task: ApiTask) -> Dict[str, Any]:
 
         elapsed = time.time() - start
         size_kb = Path(name_file).stat().st_size / 1024.0 if Path(name_file).exists() else 0.0
+        co2_summary = build_co2_summary_from_uni_results(
+            building_country=building_country,
+            uni_summary=(uni_results.get("summary") or {}) if isinstance(uni_results, dict) else {},
+            pv_summary=(pv_hp_results.get("summary") or {}) if isinstance(pv_hp_results, dict) else {},
+        )
         return {
             "status": "success",
             "scenario_name": scenario_name,
@@ -856,6 +938,7 @@ def call_iso52016_uni11300_pv(task: ApiTask) -> Dict[str, Any]:
                 "uni11300": uni_results,
                 "pv_hp": pv_hp_results,
             },
+            "co2_summary": co2_summary,
             "report_context": {
                 "building_meta": {
                     "name": building_name,
@@ -870,10 +953,12 @@ def call_iso52016_uni11300_pv(task: ApiTask) -> Dict[str, Any]:
                     "combo": list(combo),
                     "elements": scenario_elements,
                     "generation_mask": (uni_results.get("generation_mask") if isinstance(uni_results, dict) else None) or {},
-                    "pv_config": copy.deepcopy(pv_cfg) if task.use_pv else None,
+                    "pv_config": copy.deepcopy(pv_cfg) if task_use_pv else None,
                 },
                 "hourly_building": results_payload.get("hourly_building") or [],
                 "primary_energy_uni11300": uni_results or {},
+                "pv_hp_summary": (pv_hp_results.get("summary") or {}) if isinstance(pv_hp_results, dict) else {},
+                "co2_summary": co2_summary,
             },
         }
     except Exception as e:
@@ -931,7 +1016,120 @@ def _normalize_report_scenario_context(result: Dict[str, Any]) -> Dict[str, Any]
         or "ECM scenario"
     ).strip()
     context["scenario_meta"] = scenario_meta
+    if result.get("co2_summary") and not context.get("co2_summary"):
+        context["co2_summary"] = result.get("co2_summary")
+    if result.get("co2_vs_baseline") and not context.get("co2_vs_baseline"):
+        context["co2_vs_baseline"] = result.get("co2_vs_baseline")
     return context
+
+
+def _result_co2_summary(result: Dict[str, Any]) -> Dict[str, Any]:
+    co2_summary = result.get("co2_summary")
+    if isinstance(co2_summary, dict) and co2_summary:
+        return co2_summary
+
+    context = result.get("report_context") or {}
+    nested_summary = context.get("co2_summary")
+    return nested_summary if isinstance(nested_summary, dict) else {}
+
+
+def enrich_results_with_co2_savings(results: List[Dict[str, Any]]) -> None:
+    successful_results = [result for result in results if result.get("status") == "success"]
+    baseline_result = next(
+        (
+            result
+            for result in successful_results
+            if (result.get("combo_tag") == "baseline") or not result.get("combo")
+        ),
+        None,
+    )
+    if baseline_result is None:
+        return
+
+    baseline_totals = (_result_co2_summary(baseline_result).get("totals") or {})
+    baseline_emissions_kg = float(baseline_totals.get("annual_emissions_kg_co2eq") or 0.0)
+
+    for result in successful_results:
+        co2_summary = _result_co2_summary(result)
+        if not co2_summary:
+            continue
+
+        totals = co2_summary.get("totals") or {}
+        emissions_kg = float(totals.get("annual_emissions_kg_co2eq") or 0.0)
+        if result is baseline_result:
+            savings = {
+                "absolute_kg_co2eq": 0.0,
+                "absolute_ton_co2eq": 0.0,
+                "percentage": 0.0,
+            }
+        else:
+            savings = calculate_savings(baseline_emissions_kg, emissions_kg)
+
+        result["co2_summary"] = co2_summary
+        result["co2_vs_baseline"] = savings
+        context = dict(result.get("report_context") or {})
+        context["co2_summary"] = co2_summary
+        context["co2_vs_baseline"] = savings
+        result["report_context"] = context
+
+
+def _iso_total_from_hourly_payload(payload: Any) -> float:
+    hourly = to_dataframe(payload)
+    if hourly.empty:
+        return 0.0
+
+    q_h = float(pd.to_numeric(hourly.get("Q_H", pd.Series(dtype=float)), errors="coerce").fillna(0.0).sum() * 0.001)
+    q_c = float(pd.to_numeric(hourly.get("Q_C", pd.Series(dtype=float)), errors="coerce").fillna(0.0).sum() * 0.001)
+    return q_h + q_c
+
+
+def build_scenario_performance_table(results: List[Dict[str, Any]]) -> pd.DataFrame:
+    rows: List[Dict[str, Any]] = []
+    for result in results:
+        if result.get("status") != "success":
+            continue
+
+        context = _normalize_report_scenario_context(result) if result.get("report_context") else {}
+        scenario_meta = dict(context.get("scenario_meta") or {})
+        generation_mask = dict(scenario_meta.get("generation_mask") or {})
+        co2_summary = _result_co2_summary(result)
+        co2_totals = dict(co2_summary.get("totals") or {})
+        co2_vs_baseline = dict(result.get("co2_vs_baseline") or context.get("co2_vs_baseline") or {})
+        uni_summary = dict((context.get("primary_energy_uni11300") or {}).get("summary") or {})
+
+        option_tokens = scenario_meta.get("combo") or scenario_meta.get("elements") or result.get("combo") or []
+        option_text = ", ".join(str(token) for token in option_tokens if str(token).strip()) or "baseline"
+        generation_mode = (
+            generation_mask.get("applied_mode")
+            or generation_mask.get("requested_mode")
+            or result.get("uni_generation_mode")
+            or "default"
+        )
+
+        rows.append(
+            {
+                "scenario_name": result.get("scenario_name"),
+                "scenario_label": scenario_meta.get("label") or result.get("scenario_name"),
+                "scenario_description": scenario_meta.get("description") or result.get("scenario_name"),
+                "runner_type": result.get("runner_type"),
+                "combo_tag": result.get("combo_tag") or ("_".join(sorted(result.get("combo", []))) if result.get("combo") else "baseline"),
+                "options": option_text,
+                "generation_mode": generation_mode,
+                "iso_total_kwh": round(_iso_total_from_hourly_payload(context.get("hourly_building")), 2),
+                "primary_total_kwh": round(float(uni_summary.get("EP_total_kWh") or 0.0), 2),
+                "final_energy_kwh": round(float(co2_totals.get("annual_consumption_kwh") or 0.0), 2),
+                "annual_co2_kg": round(float(co2_totals.get("annual_emissions_kg_co2eq") or 0.0), 2),
+                "annual_co2_ton": round(float(co2_totals.get("annual_emissions_ton_co2eq") or 0.0), 3),
+                "co2_saving_kg": round(float(co2_vs_baseline.get("absolute_kg_co2eq") or 0.0), 2),
+                "co2_saving_pct": round(float(co2_vs_baseline.get("percentage") or 0.0), 1),
+                "natural_gas_kwh": round(float(co2_totals.get("natural_gas_kWh") or 0.0), 2),
+                "grid_electricity_kwh": round(float(co2_totals.get("grid_electricity_kWh") or 0.0), 2),
+                "solar_pv_kwh": round(float(co2_totals.get("solar_pv_kWh") or 0.0), 2),
+                "emission_country": co2_summary.get("country"),
+            }
+        )
+
+    return pd.DataFrame(rows)
 
 
 def build_report_html_from_results(
@@ -1144,6 +1342,7 @@ def run_predefined_renovation_scenarios(
                     heat_pump_cop=HEAT_PUMP_COP_DEFAULT,
                     uni_generation_mode="default",
                     uni_eta_generation=None,
+                    use_pv=False,
                     scenario_description="Baseline reference scenario",
                 ),
             )
@@ -1189,10 +1388,11 @@ def run_predefined_renovation_scenarios(
             heat_pump_cop=scenario.heat_pump_cop,
             uni_generation_mode=scenario.uni_generation_mode,
             uni_eta_generation=scenario.uni_eta_generation,
+            use_pv=scenario.use_pv,
+            pv_config=copy.deepcopy(scenario.pv_config) if scenario.pv_config else None,
             scenario_description=scenario.description,
         )
-        task.pv_config = copy.deepcopy(scenario.pv_config) if scenario.pv_config else None
-        runner_type = "iso52016_uni11300_pv" if scenario.use_pv else "ecm_application"
+        runner_type = "ecm_application"
         tasks.append((runner_type, task))
 
     start = time.time()
@@ -1201,15 +1401,13 @@ def run_predefined_renovation_scenarios(
     if tqdm:
         iterator = tqdm(tasks, desc="Renovation scenarios", total=len(tasks))
 
-    for runner_type, task in iterator:
-        if runner_type == "iso52016_uni11300_pv":
-            results.append(call_iso52016_uni11300_pv(task))
-        else:
-            results.append(call_ecm_application(task))
+    for _runner_type, task in iterator:
+        results.append(call_ecm_application(task))
 
     total_time = time.time() - start
     ok = [r for r in results if r["status"] == "success"]
     ko = [r for r in results if r["status"] == "error"]
+    enrich_results_with_co2_savings(results)
 
     return {
         "total": len(results),
@@ -1346,6 +1544,7 @@ def run_ecm_api_sequential(
     total_time = time.time() - start
     ok = [r for r in results if r["status"] == "success"]
     ko = [r for r in results if r["status"] == "error"]
+    enrich_results_with_co2_savings(results)
 
     return {
         "total": len(results),
@@ -1360,6 +1559,8 @@ def run_ecm_api_sequential(
 def build_summary_table(results: List[Dict[str, Any]]) -> pd.DataFrame:
     rows: List[Dict[str, Any]] = []
     for r in results:
+        co2_totals = dict(_result_co2_summary(r).get("totals") or {})
+        co2_vs_baseline = dict(r.get("co2_vs_baseline") or {})
         rows.append(
             {
                 "scenario_name": r.get("scenario_name"),
@@ -1374,6 +1575,8 @@ def build_summary_table(results: List[Dict[str, Any]]) -> pd.DataFrame:
                 "file_hourly": r.get("file_hourly"),
                 "file_annual": r.get("file_annual"),
                 "file_pv_hourly": r.get("file_pv_hourly"),
+                "co2_ton": round(float(co2_totals.get("annual_emissions_ton_co2eq") or 0.0), 3) if co2_totals else None,
+                "co2_saving_pct": round(float(co2_vs_baseline.get("percentage") or 0.0), 1) if co2_vs_baseline else None,
                 "error": r.get("error"),
             }
         )
@@ -1414,8 +1617,14 @@ def main() -> Dict[str, Any]:
             name=ARCHETYPE_NAME,
         )
 
+    enrich_results_with_co2_savings(stats.get("results", []))
+
     report_path = None
     report_error = None
+    scenario_summary_path = None
+    scenario_summary_error = None
+    presentation_path = None
+    presentation_error = None
     scenario_use_heat_pump = ("heat_pump" in ECM_OPTIONS) or USE_HEAT_PUMP
     report_scenario_names: List[str] = []
     if USE_RENOVATION_SCENARIO_LIBRARY:
@@ -1423,6 +1632,9 @@ def main() -> Dict[str, Any]:
             report_scenario_names = [REPORT_SCENARIO_NAME]
         else:
             report_scenario_names = list(stats.get("scenario_names", []))
+    report_tag = None
+    if USE_RENOVATION_SCENARIO_LIBRARY and report_scenario_names:
+        report_tag = "_".join(report_scenario_names)
     should_generate_report = (
         GENERATE_REPORT
         and (
@@ -1440,9 +1652,6 @@ def main() -> Dict[str, Any]:
                 scenario_name=report_scenario_names[0] if len(report_scenario_names) == 1 else None,
                 scenario_names=report_scenario_names if len(report_scenario_names) > 1 else None,
             )
-            report_tag = None
-            if USE_RENOVATION_SCENARIO_LIBRARY and report_scenario_names:
-                report_tag = "_".join(report_scenario_names)
             report_path = build_report_file(
                 building_name=ARCHETYPE_NAME if ARCHETYPE else "custom_building",
                 ecm_combo=stats.get("scenario_combo", []),
@@ -1454,6 +1663,68 @@ def main() -> Dict[str, Any]:
         except ValueError as exc:
             report_error = str(exc)
 
+    summary_df = build_summary_table(stats["results"])
+    scenario_summary_df = build_scenario_performance_table(stats["results"])
+    successful_contexts = [
+        _normalize_report_scenario_context(result)
+        for result in stats.get("results", [])
+        if result.get("status") == "success" and result.get("report_context")
+    ]
+    baseline_context = next(
+        (
+            context
+            for context in successful_contexts
+            if str((context.get("scenario_meta") or {}).get("label") or "").strip().lower() == "baseline"
+        ),
+        None,
+    )
+    building_meta = (
+        (baseline_context or {}).get("building_meta")
+        or (successful_contexts[0].get("building_meta") if successful_contexts else {})
+        or {
+            "name": ARCHETYPE_NAME if ARCHETYPE else "custom_building",
+            "category": CATEGORY if ARCHETYPE else None,
+            "country": COUNTRY,
+            "weather_source": WEATHER_SOURCE,
+        }
+    )
+
+    if not scenario_summary_df.empty:
+        try:
+            scenario_summary_path = build_artifact_file(
+                building_name=ARCHETYPE_NAME if ARCHETYPE else "custom_building",
+                ecm_combo=stats.get("scenario_combo", []),
+                epw_path=EPW_PATH if WEATHER_SOURCE == "epw" else None,
+                base_dir=RESULTS_DIR,
+                kind="scenario_summary",
+                extension="csv",
+                scenario_name=report_tag if USE_RENOVATION_SCENARIO_LIBRARY else None,
+            )
+            scenario_summary_df.to_csv(scenario_summary_path, index=False)
+        except Exception as exc:
+            scenario_summary_error = str(exc)
+
+        try:
+            presentation_path = build_artifact_file(
+                building_name=ARCHETYPE_NAME if ARCHETYPE else "custom_building",
+                ecm_combo=stats.get("scenario_combo", []),
+                epw_path=EPW_PATH if WEATHER_SOURCE == "epw" else None,
+                base_dir=RESULTS_DIR,
+                kind="presentation",
+                extension="pptx",
+                scenario_name=report_tag if USE_RENOVATION_SCENARIO_LIBRARY else None,
+            )
+            build_ecm_presentation(
+                output_path=presentation_path,
+                report_title=REPORT_TITLE,
+                building_meta=building_meta,
+                run_stats=stats,
+                scenario_summary=scenario_summary_df,
+                html_report_path=report_path,
+            )
+        except Exception as exc:
+            presentation_error = str(exc)
+
     print("\n" + "=" * 80)
     print("COMPLETED (ECM API)")
     print("=" * 80)
@@ -1463,14 +1734,24 @@ def main() -> Dict[str, Any]:
     if USE_RENOVATION_SCENARIO_LIBRARY:
         print(f"Scenario library: {', '.join(stats.get('scenario_names', []))}")
 
-    summary_df = build_summary_table(stats["results"])
     if not summary_df.empty:
         print("\nSUMMARY TABLE (per simulation)")
         print(summary_df.to_string(index=False))
+    if not scenario_summary_df.empty:
+        print("\nSCENARIO PERFORMANCE")
+        print(scenario_summary_df.to_string(index=False))
     if report_path:
         print(f"\nHTML REPORT: {report_path}")
     elif report_error:
         print(f"\nHTML REPORT SKIPPED: {report_error}")
+    if scenario_summary_path:
+        print(f"SCENARIO SUMMARY CSV: {scenario_summary_path}")
+    elif scenario_summary_error:
+        print(f"SCENARIO SUMMARY CSV SKIPPED: {scenario_summary_error}")
+    if presentation_path:
+        print(f"PRESENTATION: {presentation_path}")
+    elif presentation_error:
+        print(f"PRESENTATION SKIPPED: {presentation_error}")
 
     if stats["failed"]:
         print("\n[ERRORS]")
@@ -1478,7 +1759,15 @@ def main() -> Dict[str, Any]:
             if r["status"] == "error":
                 print(f"- combo={r.get('combo')}: {r.get('error')}")
 
-    return {"stats": stats, "report_path": report_path, "report_error": report_error}
+    return {
+        "stats": stats,
+        "report_path": report_path,
+        "report_error": report_error,
+        "scenario_summary_path": scenario_summary_path,
+        "scenario_summary_error": scenario_summary_error,
+        "presentation_path": presentation_path,
+        "presentation_error": presentation_error,
+    }
 
 
 if __name__ == "__main__":

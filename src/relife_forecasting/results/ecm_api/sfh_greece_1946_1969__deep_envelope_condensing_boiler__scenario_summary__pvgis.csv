@@ -1,0 +1,4 @@
+scenario_name,scenario_label,scenario_description,runner_type,combo_tag,options,generation_mode,iso_total_kwh,primary_total_kwh,final_energy_kwh,annual_co2_kg,annual_co2_ton,co2_saving_kg,co2_saving_pct,natural_gas_kwh,grid_electricity_kwh,solar_pv_kwh,emission_country
+baseline,Baseline,Baseline reference scenario,reconstructed,baseline,baseline,default,69309.68,84572.06,77229.08,15763.56,15.764,0.0,0.0,74148.08,3081.0,0.0,EU
+deep_envelope,deep_envelope,Deep envelope retrofit,reconstructed,deep_envelope,"roof, slab, wall, window",default,29402.49,34999.8,31107.47,6393.32,6.393,9370.24,59.4,29039.36,2068.11,0.0,EU
+condensing_boiler,condensing_boiler + condensing boiler eta_generation=1.1,Condensing boiler replacement,reconstructed,condensing_boiler,condensing_boiler,default,69309.68,71435.31,64913.76,13266.22,13.266,2497.34,15.8,62014.76,2899.0,0.0,EU
