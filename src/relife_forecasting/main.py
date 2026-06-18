@@ -13,12 +13,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
-import pybuildingenergy as pybui
 from fastapi import Body, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse
 
 from relife_forecasting.config.logging import configure_logging
 from relife_forecasting.routes import health
+from relife_forecasting.routes import archetypes
 try: 
     from relife_forecasting.utils.retry import retry_on_transient_error
 except Exception:
@@ -105,6 +105,7 @@ enhanced and calibrated within the ReLIFE project framework.
 )
 
 app.include_router(health.router)
+app.include_router(archetypes.router)
 
 
 # -----------------------------------------------------------------------------
@@ -112,6 +113,13 @@ app.include_router(health.router)
 # -----------------------------------------------------------------------------
 
 PROJECTS: Dict[str, Any] = {}
+
+
+def _get_pybui():
+    """Import pybuildingenergy only when an endpoint actually needs it."""
+    import pybuildingenergy as pybui  # local import to keep app startup lightweight
+
+    return pybui
 
 
 # =============================================================================
@@ -356,6 +364,7 @@ async def simulate_building(
         raise HTTPException(status_code=400, detail="weather_source must be either 'pvgis' or 'epw'.")
 
     # 4) ISO 15316 heating system simulation
+    pybui = _get_pybui()
     calc = pybui.HeatingSystemCalculator(system_checked)
     calc.load_csv_data(hourly_sim)
     df_system = calc.run_timeseries()
@@ -699,6 +708,7 @@ def generate_report(payload: Dict[str, Any]):
     with tempfile.TemporaryDirectory() as tmpdir:
         name_report = "energy_report"
 
+        pybui = _get_pybui()
         report_obj = pybui.Graphs_and_report(
             df=hourly_sim,
             season="heating_cooling",
