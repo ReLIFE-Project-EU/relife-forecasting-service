@@ -17169,6 +17169,14 @@ _EXTENDED_ARCHETYPE_SPECS: Dict[str, Dict[str, Any]] = {
 
 _EXTENDED_ARCHETYPE_INDEX: List[Dict[str, Any]] = []
 for _arch_name, _spec in _EXTENDED_ARCHETYPE_SPECS.items():
+    # Some specs ship a placeholder net_floor_area of 0.0. A zero area breaks
+    # per-m2 metrics and gets silently coerced to 1.0 m2 by
+    # sanitize_and_validate_BUI(fix=True), which distorts internal gains,
+    # thermal capacity, and occupancy ventilation in the ISO 52016 run.
+    # Derive it from the footprint instead: ground slab area x floors.
+    _net_floor_area = _spec["net_floor_area"]
+    if _net_floor_area <= 0:
+        _net_floor_area = _spec["slab_area"] * _spec["n_floors"]
     _bui = _make_extended_building(
         name=_arch_name,
         latitude=_spec["latitude"],
@@ -17177,7 +17185,7 @@ for _arch_name, _spec in _EXTENDED_ARCHETYPE_SPECS.items():
         wall_thickness=_spec["wall_thickness"],
         n_floors=_spec["n_floors"],
         building_type_class=_spec["building_type_class"],
-        net_floor_area=_spec["net_floor_area"],
+        net_floor_area=_net_floor_area,
         construction_class=_spec["construction_class"],
         roof_area=_spec["roof_area"],
         roof_u=_spec["roof_u"],
@@ -17214,7 +17222,7 @@ for _arch_name, _spec in _EXTENDED_ARCHETYPE_SPECS.items():
         }
     )
 
-del _arch_name, _spec, _bui, _uni
+del _arch_name, _spec, _net_floor_area, _bui, _uni
 
 
 # Backward-compatible alias used by other modules/scripts in this repo.
