@@ -24,7 +24,7 @@ dependencies = [
 [project.scripts]
 run-service = "relife_forecasting:main"
 validate-supabase = "relife_forecasting.scripts.validate_supabase:cli"
-linear-tool-calc = "scripts.linear_tool_calculator:main"
+linear-tool-calc = "relife_forecasting.scripts.linear_tool_calculator:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from relife_forecasting.main import app
-from scripts.linear_tool_calculator import (
+from relife_forecasting.scripts.linear_tool_calculator import (
     calculate,
     calculate_linear_heat_cold_daly,
     load_scenarios,

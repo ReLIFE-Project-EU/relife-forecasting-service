@@ -61,7 +61,7 @@ try:
 except Exception:
     from utils.ecm_report_html import build_ecm_comparison_report_html
 
-from scripts.linear_tool_calculator import calculate_linear_heat_cold_daly
+from relife_forecasting.scripts.linear_tool_calculator import calculate_linear_heat_cold_daly
 
 from relife_forecasting.routes import health
 
