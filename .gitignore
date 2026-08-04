@@ -7,7 +7,6 @@ readme_dev.md
 .vscode
 # src.relife_forecasting.results
 forecast_test_autoglun
-uv.lock 
 
 ## Python
 #########

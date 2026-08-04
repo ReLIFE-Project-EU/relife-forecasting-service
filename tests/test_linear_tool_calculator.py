@@ -20,7 +20,13 @@ from relife_forecasting.scripts.linear_tool_calculator import (
 WORKBOOK_PATH = Path("D_Antolucci_NEI_CoBen_linear_heat_cold_DALY_tool_v2.xlsx")
 client = TestClient(app)
 
+requires_workbook = pytest.mark.skipif(
+    not WORKBOOK_PATH.exists(),
+    reason="Source workbook is not committed to the repository.",
+)
 
+
+@requires_workbook
 def test_linear_tool_calculator_matches_workbook_formula_outputs():
     wb = openpyxl.load_workbook(WORKBOOK_PATH, data_only=True)
     scenarios = load_scenarios(wb["Parameters"])
@@ -38,6 +44,7 @@ def test_linear_tool_calculator_matches_workbook_formula_outputs():
     assert result["rows"][-1]["date"] == datetime(2026, 10, 6)
 
 
+@requires_workbook
 def test_linear_tool_calculator_can_reproduce_saved_excel_summary_divisor():
     wb = openpyxl.load_workbook(WORKBOOK_PATH, data_only=True)
     scenarios = load_scenarios(wb["Parameters"])
@@ -55,6 +62,7 @@ def test_linear_tool_calculator_can_reproduce_saved_excel_summary_divisor():
     assert result["annual_period_total_harm_for_population"] == pytest.approx(0.011222924883173495)
 
 
+@requires_workbook
 def test_linear_tool_calculator_accepts_csv_input(tmp_path):
     csv_path = tmp_path / "temps.csv"
     csv_path.write_text(
