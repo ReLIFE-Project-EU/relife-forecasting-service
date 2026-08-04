@@ -10,6 +10,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import traceback
 from pathlib import Path
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
@@ -418,14 +419,14 @@ def compute_linear_heat_cold_daly(
         description="Optional divisor used instead of the number of provided rows when computing averages.",
     ),
     scenario_label: Optional[str] = Body(None, description="Optional validation value matching the selected scenario."),
-    average_indoor_temperature_c: Optional[float] = Body(
+    average_indoor_temperature_c: Optional[Union[float, str]] = Body(
         None,
         description="Optional validation value matching the average indoor temperature.",
     ),
-    heat_threshold_c: Optional[float] = Body(None, description="Optional validation value matching the scenario heat threshold."),
-    cold_threshold_c: Optional[float] = Body(None, description="Optional validation value matching the scenario cold threshold."),
-    heat_linear_hi: Optional[float] = Body(None, description="Optional validation value matching the scenario heat HI."),
-    cold_linear_hi: Optional[float] = Body(None, description="Optional validation value matching the scenario cold HI."),
+    heat_threshold_c: Optional[Union[float, str]] = Body(None, description="Optional validation value matching the scenario heat threshold."),
+    cold_threshold_c: Optional[Union[float, str]] = Body(None, description="Optional validation value matching the scenario cold threshold."),
+    heat_linear_hi: Optional[Union[float, str]] = Body(None, description="Optional validation value matching the scenario heat HI."),
+    cold_linear_hi: Optional[Union[float, str]] = Body(None, description="Optional validation value matching the scenario cold HI."),
     neutral_zone_note: Optional[str] = Body(None, description="Optional validation value matching the scenario note."),
 ):
     """
@@ -434,8 +435,21 @@ def compute_linear_heat_cold_daly(
     This forwards the same inputs accepted by calculate_linear_heat_cold_daly so callers can
     provide raw temperatures or temperature/date pairs together with the scenario parameters.
     """
+    normalized_temperatures: List[Any] = []
+    for item in temperatures_c:
+        if isinstance(item, list) and len(item) == 2:
+            date_value, temperature_value = item
+            if isinstance(date_value, str):
+                try:
+                    date_value = datetime.fromisoformat(date_value)
+                except ValueError as exc:
+                    raise HTTPException(status_code=422, detail=f"Invalid temperature date: {date_value!r}.") from exc
+            normalized_temperatures.append((date_value, temperature_value))
+        else:
+            normalized_temperatures.append(item)
+
     result = calculate_linear_heat_cold_daly(
-        temperatures_c=temperatures_c,
+        temperatures_c=normalized_temperatures,
         selected_threshold_pair=selected_threshold_pair,
         population_persons=population_persons,
         exposure_days_for_period=exposure_days_for_period,
@@ -450,6 +464,87 @@ def compute_linear_heat_cold_daly(
         neutral_zone_note=neutral_zone_note,
     )
     return clean_and_jsonable(result)
+
+
+def _daily_mean_temperatures_from_iso52016(
+    hourly_records: Any,
+    *,
+    assessment_days: int,
+    temperature_column: str = "T_op",
+) -> List[tuple[datetime, float]]:
+    """Extract the final assessment period and aggregate hourly ISO data by day."""
+    hourly_df = hourly_records.copy() if isinstance(hourly_records, pd.DataFrame) else pd.DataFrame(hourly_records)
+    if hourly_df.empty:
+        raise HTTPException(status_code=422, detail="ISO 52016 hourly temperature data is empty.")
+    if temperature_column not in hourly_df.columns:
+        raise HTTPException(
+            status_code=422,
+            detail=f"ISO 52016 output must include the internal temperature column '{temperature_column}'.",
+        )
+    if assessment_days <= 0:
+        raise HTTPException(status_code=422, detail="assessment_days must be greater than zero.")
+
+    required_hours = assessment_days * 24
+    if len(hourly_df) < required_hours:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Not enough hourly temperatures for {assessment_days} assessment days: "
+                f"expected at least {required_hours}, got {len(hourly_df)}."
+            ),
+        )
+
+    # pybuildingenergy may prepend warm-up hours (9504 rows for 365 assessed
+    # days).  DALYs must use the assessment period, not the warm-up period.
+    temperatures = pd.to_numeric(
+        hourly_df[temperature_column].iloc[-required_hours:],
+        errors="coerce",
+    )
+    if temperatures.isna().any():
+        invalid_count = int(temperatures.isna().sum())
+        raise HTTPException(
+            status_code=422,
+            detail=f"Column '{temperature_column}' contains {invalid_count} invalid temperature values.",
+        )
+
+    daily_means = temperatures.to_numpy(dtype=float).reshape(assessment_days, 24).mean(axis=1)
+    first_day = datetime(2001, 1, 1)
+    return [(first_day + timedelta(days=offset), float(value)) for offset, value in enumerate(daily_means)]
+
+
+def _build_daly_comparison(
+    *,
+    baseline_result: Dict[str, Any],
+    intervention_result: Dict[str, Any],
+) -> Dict[str, Any]:
+    domains = {
+        "heat": "annual_period_heat_harm_for_population",
+        "cold": "annual_period_cold_harm_for_population",
+        "total": "annual_period_total_harm_for_population",
+    }
+    comparison: Dict[str, Any] = {}
+    for domain, field in domains.items():
+        baseline_daly = float(baseline_result.get(field) or 0.0)
+        intervention_daly = float(intervention_result.get(field) or 0.0)
+        avoided_daly = baseline_daly - intervention_daly
+        reduction_percent = (avoided_daly / baseline_daly * 100.0) if baseline_daly != 0.0 else None
+        comparison[domain] = {
+            "baseline_DALY": baseline_daly,
+            "intervention_DALY": intervention_daly,
+            "avoided_DALY": avoided_daly,
+            "avoided_healthy_life_days": avoided_daly * 365.0,
+            "reduction_percent": reduction_percent,
+        }
+
+    avoided_total = comparison["total"]["avoided_DALY"]
+    comparison["interpretation"] = (
+        "health_cobenefit"
+        if avoided_total > 0.0
+        else "health_disbenefit"
+        if avoided_total < 0.0
+        else "no_net_change"
+    )
+    return comparison
 
 UNI11300_INPUT_EXAMPLE = build_uni11300_input_example()
 
@@ -1349,6 +1444,165 @@ async def simulate_uvalues(
         "n_scenarios": len(scenario_results),
         "scenarios": scenario_results,
     }
+
+
+@app.post("/ecm_application/daly", tags=["Health co-benefits"])
+async def compare_ecm_thermal_daly(
+    archetype: bool = Query(True, description="If True, use an archetype; otherwise provide bui_json."),
+    category: Optional[str] = Query(None, description="Building category. Required for an archetype."),
+    country: Optional[str] = Query(None, description="Building country. Required for an archetype."),
+    name: Optional[str] = Query(None, description="Archetype name. Required for an archetype."),
+    weather_source: str = Query("pvgis", description="Weather source: 'pvgis' or 'epw'."),
+    epw_file: Optional[UploadFile] = File(None, description="EPW file when weather_source='epw'."),
+    bui_json: Optional[str] = Form(None, description="Custom BUI JSON when archetype=false."),
+    u_wall: Optional[float] = Query(None, description="ECM wall U-value."),
+    u_roof: Optional[float] = Query(None, description="ECM roof U-value."),
+    u_window: Optional[float] = Query(None, description="ECM window U-value."),
+    u_slab: Optional[float] = Query(None, description="ECM slab U-value."),
+    scenario_elements: Optional[str] = Query(
+        None,
+        description="Optional ECM selection, for example 'wall,window'. If omitted, all generated ECM combinations are assessed.",
+    ),
+    scenario_id: Optional[str] = Query(None, description="Optional ECM scenario id."),
+    selected_threshold_pair: str = Query(
+        "COMFORT_PAIR_26_20",
+        description="Paired DALY thresholds: ITALY_MMT_24_4, COMFORT_PAIR_26_20, or CVD_PAIR_30_21.",
+    ),
+    population_persons: float = Query(1.0, gt=0.0, description="Population represented by each profile."),
+    exposure_days_for_period: float = Query(365.0, gt=0.0, description="Days used for period-level DALY totals."),
+    assessment_days: int = Query(
+        365,
+        gt=0,
+        description="Final simulated days aggregated to daily mean T_op; preceding warm-up hours are excluded.",
+    ),
+) -> Dict[str, Any]:
+    """Simulate baseline and envelope ECMs and compare thermal DALY health burden."""
+    if all(value is None for value in (u_wall, u_roof, u_window, u_slab)):
+        raise HTTPException(status_code=400, detail="At least one envelope ECM U-value is required.")
+
+    simulation = await simulate_uvalues(
+        archetype=archetype,
+        category=category,
+        country=country,
+        name=name,
+        weather_source=weather_source,
+        epw_file=epw_file,
+        bui_json=bui_json,
+        system_json=None,
+        u_wall=u_wall,
+        u_roof=u_roof,
+        u_window=u_window,
+        u_slab=u_slab,
+        use_heat_pump=False,
+        heat_pump_cop=3.2,
+        use_pv=False,
+        pv_kwp=None,
+        pv_tilt_deg=30.0,
+        pv_azimuth_deg=0.0,
+        pv_use_pvgis=True,
+        pv_pvgis_loss_percent=14.0,
+        pv_pvgis_year=None,
+        annual_pv_yield_kwh_per_kwp=1400.0,
+        pv_battery_params_json=None,
+        uni_generation_mode="default",
+        uni_eta_generation=None,
+        scenario_elements=scenario_elements,
+        scenario_id=scenario_id,
+        baseline_only=False,
+        include_baseline=True,
+    )
+
+    scenarios = simulation.get("scenarios") or []
+    baseline = next((item for item in scenarios if item.get("scenario_id") == "baseline"), None)
+    interventions = [item for item in scenarios if item.get("scenario_id") != "baseline"]
+    if baseline is None:
+        raise HTTPException(status_code=500, detail="Baseline simulation is missing from the ECM response.")
+    if not interventions:
+        raise HTTPException(status_code=400, detail="No ECM intervention scenario was generated.")
+
+    baseline_daily = _daily_mean_temperatures_from_iso52016(
+        (baseline.get("results") or {}).get("hourly_building"),
+        assessment_days=assessment_days,
+    )
+    try:
+        baseline_daly = calculate_linear_heat_cold_daly(
+            temperatures_c=baseline_daily,
+            selected_threshold_pair=selected_threshold_pair,
+            population_persons=population_persons,
+            exposure_days_for_period=exposure_days_for_period,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    evaluated_scenarios: List[Dict[str, Any]] = []
+    for intervention in interventions:
+        intervention_daily = _daily_mean_temperatures_from_iso52016(
+            (intervention.get("results") or {}).get("hourly_building"),
+            assessment_days=assessment_days,
+        )
+        intervention_daly = calculate_linear_heat_cold_daly(
+            temperatures_c=intervention_daily,
+            selected_threshold_pair=selected_threshold_pair,
+            population_persons=population_persons,
+            exposure_days_for_period=exposure_days_for_period,
+        )
+        evaluated_scenarios.append(
+            {
+                "scenario_id": intervention.get("scenario_id"),
+                "description": intervention.get("description"),
+                "elements": intervention.get("elements") or [],
+                "u_values": intervention.get("u_values") or {},
+                "daily_mean_internal_temperature_C": [value for _, value in intervention_daily],
+                "daly": intervention_daly,
+                "comparison_vs_baseline": _build_daly_comparison(
+                    baseline_result=baseline_daly,
+                    intervention_result=intervention_daly,
+                ),
+            }
+        )
+
+    ranked = sorted(
+        evaluated_scenarios,
+        key=lambda item: item["comparison_vs_baseline"]["total"]["avoided_DALY"],
+        reverse=True,
+    )
+    return clean_and_jsonable(
+        {
+            "method": {
+                "name": "Linear heat and cold thermal DALY comparison",
+                "temperature_metric": "daily mean T_op from ISO 52016",
+                "temperature_metric_note": "T_op is used as the available proxy for daily mean indoor temperature.",
+                "selected_threshold_pair": selected_threshold_pair,
+                "population_persons": population_persons,
+                "assessment_days": assessment_days,
+                "exposure_days_for_period": exposure_days_for_period,
+                "comparison_equation": "avoided_DALY = baseline_DALY - intervention_DALY",
+            },
+            "building": {
+                "source": simulation.get("source"),
+                "name": simulation.get("name"),
+                "category": simulation.get("category"),
+                "country": simulation.get("country"),
+                "weather_source": simulation.get("weather_source"),
+            },
+            "baseline": {
+                "scenario_id": "baseline",
+                "daily_mean_internal_temperature_C": [value for _, value in baseline_daily],
+                "daly": baseline_daly,
+            },
+            "ecm_scenarios": evaluated_scenarios,
+            "ranking_by_avoided_total_DALY": [
+                {
+                    "rank": rank,
+                    "scenario_id": item["scenario_id"],
+                    "avoided_total_DALY": item["comparison_vs_baseline"]["total"]["avoided_DALY"],
+                    "total_DALY_reduction_percent": item["comparison_vs_baseline"]["total"]["reduction_percent"],
+                    "interpretation": item["comparison_vs_baseline"]["interpretation"],
+                }
+                for rank, item in enumerate(ranked, start=1)
+            ],
+        }
+    )
 
 
 @app.post("/ecm_application/report", response_class=HTMLResponse, tags=["Reports"])
