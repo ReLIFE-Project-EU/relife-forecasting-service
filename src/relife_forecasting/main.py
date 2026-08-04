@@ -60,6 +60,8 @@ try:
 except Exception:
     from utils.ecm_report_html import build_ecm_comparison_report_html
 
+from scripts.linear_tool_calculator import calculate_linear_heat_cold_daly
+
 from relife_forecasting.routes import health
 
 
@@ -396,6 +398,58 @@ async def simulate_building(
 # =============================================================================
 # Primary energy (UNI/TS 11300) endpoints
 # =============================================================================
+
+
+@app.post("/linear-tool/heat-cold-daly", tags=["Co2 Emissions"])
+def compute_linear_heat_cold_daly(
+    temperatures_c: List[Union[float, int, str, List[Any], tuple]] = Body(
+        ...,
+        description=(
+            "Daily indoor temperature values. Each item can be a number, a numeric string, or a pair "
+            "[date, temperature] / (date, temperature)."
+        ),
+    ),
+    selected_threshold_pair: str = Body("COMFORT_PAIR_26_20", description="Scenario id from the Linear_tool sheet."),
+    population_persons: float = Body(1.0, description="Population exposed to the temperatures."),
+    exposure_days_for_period: float = Body(360.0, description="Exposure days used for annualized harm."),
+    conversion_factor_persons: float = Body(100000.0, description="Conversion factor to DALY per 100000 persons."),
+    valid_daily_temperature_rows: Optional[int] = Body(
+        None,
+        description="Optional divisor used instead of the number of provided rows when computing averages.",
+    ),
+    scenario_label: Optional[str] = Body(None, description="Optional validation value matching the selected scenario."),
+    average_indoor_temperature_c: Optional[float] = Body(
+        None,
+        description="Optional validation value matching the average indoor temperature.",
+    ),
+    heat_threshold_c: Optional[float] = Body(None, description="Optional validation value matching the scenario heat threshold."),
+    cold_threshold_c: Optional[float] = Body(None, description="Optional validation value matching the scenario cold threshold."),
+    heat_linear_hi: Optional[float] = Body(None, description="Optional validation value matching the scenario heat HI."),
+    cold_linear_hi: Optional[float] = Body(None, description="Optional validation value matching the scenario cold HI."),
+    neutral_zone_note: Optional[str] = Body(None, description="Optional validation value matching the scenario note."),
+):
+    """
+    Run the Linear_tool heat/cold DALY calculation as an API endpoint.
+
+    This forwards the same inputs accepted by calculate_linear_heat_cold_daly so callers can
+    provide raw temperatures or temperature/date pairs together with the scenario parameters.
+    """
+    result = calculate_linear_heat_cold_daly(
+        temperatures_c=temperatures_c,
+        selected_threshold_pair=selected_threshold_pair,
+        population_persons=population_persons,
+        exposure_days_for_period=exposure_days_for_period,
+        conversion_factor_persons=conversion_factor_persons,
+        valid_daily_temperature_rows=valid_daily_temperature_rows,
+        scenario_label=scenario_label,
+        average_indoor_temperature_c=average_indoor_temperature_c,
+        heat_threshold_c=heat_threshold_c,
+        cold_threshold_c=cold_threshold_c,
+        heat_linear_hi=heat_linear_hi,
+        cold_linear_hi=cold_linear_hi,
+        neutral_zone_note=neutral_zone_note,
+    )
+    return clean_and_jsonable(result)
 
 UNI11300_INPUT_EXAMPLE = build_uni11300_input_example()
 

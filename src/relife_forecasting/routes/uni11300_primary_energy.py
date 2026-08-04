@@ -338,15 +338,32 @@ def compute_primary_energy_from_hourly_ideal(
     if cooling_params is None:
         cooling_params = CoolingSystemParams()
 
-    out = pd.DataFrame(index=df_hourly.index)
+    # Keep the input cardinality and row order exactly as supplied.  In particular,
+    # ISO 52016 outputs can contain repeated index labels (for example warm-up
+    # hours followed by the simulation year).  A DataFrame.join() on those labels
+    # performs a many-to-many merge and multiplies the affected hourly rows.
+    out = pd.DataFrame(index=df_hourly.index.copy())
+
+    def copy_columns_by_position(results: pd.DataFrame, source: str) -> None:
+        if len(results) != len(out):
+            raise ValueError(
+                f"{source} result row count differs from hourly input: "
+                f"expected {len(out)}, got {len(results)}."
+            )
+        for column in results.columns:
+            if column in out.columns:
+                raise ValueError(f"Duplicate UNI/TS 11300 output column: {column!r}.")
+            # Positional assignment is intentional: every result row derives from
+            # the input row at the same position, regardless of duplicate labels.
+            out[column] = results[column].to_numpy(copy=False)
 
     if heat_col in df_hourly.columns:
         heat_results = compute_heating_from_ideal(df_hourly[heat_col], heating_params)
-        out = out.join(heat_results, how="left")
+        copy_columns_by_position(heat_results, "Heating")
 
     if cool_col in df_hourly.columns:
         cool_results = compute_cooling_from_ideal(df_hourly[cool_col], cooling_params)
-        out = out.join(cool_results, how="left")
+        copy_columns_by_position(cool_results, "Cooling")
 
     if "EP_heat_total_kWh" in out.columns and "EP_cool_total_kWh" in out.columns:
         out["EP_total_kWh"] = out["EP_heat_total_kWh"].fillna(0.0) + out["EP_cool_total_kWh"].fillna(0.0)
