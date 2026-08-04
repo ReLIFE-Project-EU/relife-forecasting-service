@@ -201,6 +201,44 @@ def prepare_bui_for_iso52016(bui: Dict[str, Any]) -> Dict[str, Any]:
     return bui_prepared
 
 
+def drop_iso52016_warmup_rows(hourly: pd.DataFrame) -> pd.DataFrame:
+    """
+    Drop the warm-up rows pybuildingenergy prepends to its hourly output.
+
+    The library builds the warm-up period by copying the December rows to the
+    front of the weather data and returns them together with the simulated year,
+    so annual totals count December twice. Warm-up rows are identified as copies
+    of later rows, never by a fixed count: the length and month of the warm-up
+    period belong to the library, not to us.
+
+    The index is deliberately not required to be monotonic. On the leap-year EPW
+    path the library keeps the original year labels from the weather file, and
+    those files often carry a different year per month.
+    """
+    # Taken from the index values rather than Index.duplicated(), which caches
+    # is_unique on the input and leaves the trimmed result reporting it stale.
+    is_copy = hourly.index.to_series().duplicated(keep="last").to_numpy()
+    n_copies = int(is_copy.sum())
+
+    if n_copies:
+        # The copies must be exactly the leading rows. Any other layout is a
+        # shape we do not recognise, and guessing is how this bug happened.
+        if not is_copy[:n_copies].all() or is_copy[n_copies:].any():
+            raise ValueError(
+                f"ISO 52016 returned {n_copies} duplicated timestamps that are not a "
+                "leading block; refusing to guess which rows are warm-up."
+            )
+        hourly = hourly.iloc[n_copies:]
+
+    # Catches a warm-up period the copy check missed, whatever its shape.
+    if len(hourly) not in (8760, 8784):
+        raise ValueError(
+            f"ISO 52016 hourly output has {len(hourly)} rows; expected 8760 or 8784."
+        )
+
+    return hourly
+
+
 def run_iso52016_simulation(
     bui: Dict[str, Any],
     *,
@@ -240,7 +278,7 @@ def run_iso52016_simulation(
         kwargs["path_weather_file"] = path_weather_file
 
     try:
-        return pybui.ISO52016.Temperature_and_Energy_needs_calculation(
+        hourly, annual = pybui.ISO52016.Temperature_and_Energy_needs_calculation(
             bui_prepared,
             **kwargs,
         )
@@ -266,6 +304,23 @@ def run_iso52016_simulation(
                 ),
             ) from exc
         raise
+
+    hourly = drop_iso52016_warmup_rows(hourly)
+
+    # The library sums these over the untrimmed rows, so they carry the same
+    # double count. per_sqm is the total divided by the net floor area, so
+    # scaling the total also scales it.
+    for total_col, per_sqm_col, hourly_col in (
+        ("Q_H_annual", "Q_H_annual_per_sqm", "Q_H"),
+        ("Q_C_annual", "Q_C_annual_per_sqm", "Q_C"),
+    ):
+        old_total = float(annual.at[0, total_col])
+        new_total = float(hourly[hourly_col].sum())
+        annual.at[0, total_col] = new_total
+        if old_total:
+            annual.at[0, per_sqm_col] = float(annual.at[0, per_sqm_col]) * new_total / old_total
+
+    return hourly, annual
 
 
 # =============================================================================
