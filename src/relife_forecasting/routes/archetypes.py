@@ -51,10 +51,12 @@ def _building_summary(archetype: Dict[str, Any]) -> Dict[str, Any]:
             selected_surfaces["roof"] = {"area": surface.get("area")}
         elif "slab to ground" in surface_name and "floor" not in selected_surfaces:
             selected_surfaces["floor"] = {"area": surface.get("area")}
-        elif surface_type == "opaque" and tilt == 90 and "wall" not in selected_surfaces:
-            selected_surfaces["wall"] = {"area": surface.get("area")}
-        elif surface_type == "transparent" and tilt == 90 and "window" not in selected_surfaces:
-            selected_surfaces["window"] = {"area": surface.get("area")}
+        elif surface_type == "opaque" and tilt == 90:
+            selected_surfaces.setdefault("wall", {"area": 0.0})
+            selected_surfaces["wall"]["area"] += surface["area"]
+        elif surface_type == "transparent" and tilt == 90:
+            selected_surfaces.setdefault("window", {"area": 0.0})
+            selected_surfaces["window"]["area"] += surface["area"]
 
     system = archetype.get("system") or {}
     return {

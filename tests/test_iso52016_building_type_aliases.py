@@ -42,9 +42,21 @@ def test_ecm_application_normalizes_building_type_aliases(monkeypatch, original_
 
     def fake_iso52016(bui, weather_source="pvgis", sankey_graph=False, path_weather_file=None):
         captured["building_type_class"] = bui["building"]["building_type_class"]
+        # Shaped like a real ISO 52016 return: one simulated year, and the annual
+        # columns the library derives from it.
+        index = pd.date_range("2009-01-01 00:00:00", periods=8760, freq="h")
         return (
-            pd.DataFrame({"Q_H": [0.0], "Q_C": [0.0]}),
-            pd.DataFrame({"annual": [0.0]}),
+            pd.DataFrame({"Q_H": 0.0, "Q_C": 0.0}, index=index),
+            pd.DataFrame(
+                [
+                    {
+                        "Q_H_annual": 0.0,
+                        "Q_C_annual": 0.0,
+                        "Q_H_annual_per_sqm": 0.0,
+                        "Q_C_annual_per_sqm": 0.0,
+                    }
+                ]
+            ),
         )
 
     monkeypatch.setattr(

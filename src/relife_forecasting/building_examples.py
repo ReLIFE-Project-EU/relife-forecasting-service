@@ -391,6 +391,10 @@ def _make_extended_building(
     cooling_capacity: float = 6_000_000.0,
     occupants_full_load: float = 4.0,
 ) -> Dict[str, Any]:
+    opaque_wall_area_per_side = (wall_area - window_area) / 4
+    window_area_per_side = window_area / 4
+    window_width_per_side = window_width / 4
+
     return {
         "building": {
             "name": name,
@@ -422,7 +426,7 @@ def _make_extended_building(
             {
                 "name": "Opaque north surface",
                 "type": "opaque",
-                "area": wall_area,
+                "area": opaque_wall_area_per_side,
                 "sky_view_factor": 0.5,
                 "u_value": wall_u,
                 "solar_absorptance": 0.4,
@@ -433,7 +437,7 @@ def _make_extended_building(
             {
                 "name": "Opaque east surface",
                 "type": "opaque",
-                "area": wall_area,
+                "area": opaque_wall_area_per_side,
                 "sky_view_factor": 0.5,
                 "u_value": wall_u,
                 "solar_absorptance": 0.6,
@@ -444,7 +448,7 @@ def _make_extended_building(
             {
                 "name": "Opaque south surface",
                 "type": "opaque",
-                "area": wall_area,
+                "area": opaque_wall_area_per_side,
                 "sky_view_factor": 0.5,
                 "u_value": wall_u,
                 "solar_absorptance": 0.4,
@@ -455,7 +459,7 @@ def _make_extended_building(
             {
                 "name": "Opaque west surface",
                 "type": "opaque",
-                "area": wall_area,
+                "area": opaque_wall_area_per_side,
                 "sky_view_factor": 0.5,
                 "u_value": wall_u,
                 "solar_absorptance": 0.6,
@@ -477,12 +481,12 @@ def _make_extended_building(
             {
                 "name": "Transparent north surface",
                 "type": "transparent",
-                "area": window_area,
+                "area": window_area_per_side,
                 "sky_view_factor": 0.5,
                 "u_value": window_u,
                 "g_value": 0.76,
                 "height": window_height,
-                "width": window_width,
+                "width": window_width_per_side,
                 "parapet": 1.0,
                 "orientation": {"azimuth": 0, "tilt": 90},
                 "shading": False,
@@ -494,12 +498,12 @@ def _make_extended_building(
             {
                 "name": "Transparent east surface",
                 "type": "transparent",
-                "area": window_area,
+                "area": window_area_per_side,
                 "sky_view_factor": 0.5,
                 "u_value": window_u,
                 "g_value": 0.76,
                 "height": window_height,
-                "width": window_width,
+                "width": window_width_per_side,
                 "parapet": 1.0,
                 "orientation": {"azimuth": 90, "tilt": 90},
                 "shading": False,
@@ -511,12 +515,12 @@ def _make_extended_building(
             {
                 "name": "Transparent south surface",
                 "type": "transparent",
-                "area": window_area,
+                "area": window_area_per_side,
                 "sky_view_factor": 0.5,
                 "u_value": window_u,
                 "g_value": 0.76,
                 "height": window_height,
-                "width": window_width,
+                "width": window_width_per_side,
                 "parapet": 1.0,
                 "orientation": {"azimuth": 180, "tilt": 90},
                 "shading": False,
@@ -528,12 +532,12 @@ def _make_extended_building(
             {
                 "name": "Transparent west surface",
                 "type": "transparent",
-                "area": window_area,
+                "area": window_area_per_side,
                 "sky_view_factor": 0.5,
                 "u_value": window_u,
                 "g_value": 0.76,
                 "height": window_height,
-                "width": window_width,
+                "width": window_width_per_side,
                 "parapet": 1.0,
                 "orientation": {"azimuth": 270, "tilt": 90},
                 "shading": False,
