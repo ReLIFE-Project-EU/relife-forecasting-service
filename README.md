@@ -1,102 +1,43 @@
-# ReLIFE Forecasting Service API
+# ReLIFE Forecasting Service
 
-API for a simplified building thermal simulation and EPC generation.
+This service estimates how renovation changes a building's heating, cooling, electricity use, emissions, and health impacts from indoor temperatures.
 
-## Required Functionality
+## Understanding the simulation
 
-1. Load a dictionary of geometric/thermal building data
-2. Get (and load) a dictionary for the associated plant
-3. Thermally simulate the building using weather data EPW
-4. Export the results in CSV
-5. Generate an EPC (energy class) with default input
+Start with a building description or an archetype: a predefined example representing a building type and construction period. The baseline is the building before renovation; scenarios apply changes such as insulation, new windows, or a heat pump.
 
-> [!NOTE]
-> This is an example workflow. All content and API names will be different after the integration of the pybuilding library.
+The building envelope means its walls, roof, floor, and windows. Their [U-values](https://greenheattoolkit.energysavingtrust.org.uk/t/insulation-toolkit/why-do-homes-and-commercial-buildings-need-insulation/heat-loss/) describe how readily heat passes through them; lower values mean better insulation. ECM means energy conservation measure, such as insulating a wall.
 
-## Local Run
+Weather comes from [PVGIS](https://joint-research-centre.ec.europa.eu/pvgis-online-tool_en), the European Commission's solar and weather data service, or an uploaded EPW (EnergyPlus Weather) file.
 
-1. Create a virtualenv and install the packages:
+The calculations distinguish three energy quantities:
 
-   ```bash
-   pip install fastapi uvicorn "pydantic>=2" pandas python-multipart
-   ```
+| Quantity              | Meaning                                                                                                                                                                                      |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Heating/cooling needs | Heat added or removed to maintain the chosen indoor temperatures. `pybuildingenergy` uses the [ISO 52016](https://www.iso.org/standard/65696.html) standard to calculate these hour by hour. |
+| Delivered energy      | Fuel or electricity the heating/cooling equipment needs. UNI/TS 11300 methods account for equipment efficiency and losses.                                                                   |
+| Primary energy        | Delivered energy multiplied by factors representing energy used to supply that fuel or electricity.                                                                                          |
 
-2. Run the server:
+## Using the results
 
-   ```bash
-   uvicorn app:app --reload
-   ```
+- `POST /simulate`: simulate a building and its systems.
+- `POST /ecm_application`: compare renovation scenarios.
+- `POST /run/iso52016-uni11300-pv`: combine building, system, and solar-panel calculations. PV means photovoltaic electricity generation.
+- `POST /ecm_application/daly`: estimate heat/cold health benefits of envelope renovations. Avoided disability-adjusted life years (DALYs) measure estimated healthy life saved.
 
-3. Open the interactive OpenAPI documentation:
-   http://127.0.0.1:8000/docs
+Results include hourly values, annual totals, and scenario comparisons, all dependent on building, weather, equipment, and health assumptions. See the [scenario workflow](src/relife_forecasting/analysis/ECM/readme_ecm_application_api.md) for examples and reports.
 
-## Typical Workflow
+## Run locally
 
-- `POST /project` → create a project_id
-- `PUT /project/{id}/building` → load the building dictionary
-- `GET /plant/template` → get the plant template
-- `PUT /project/{id}/plant` → load the plant dictionary
-- `POST /project/{id}/simulate` (multipart with file=EPW) → run the simulation
-- `GET /project/{id}/results.csv` → download the results CSV
-- `GET /project/{id}/epc` → get the EPC based on default input
-
-## Technology Stack
-
-- **Python 3+**: Core programming language
-- **FastAPI**: Web framework for building APIs with automatic OpenAPI documentation
-- **Uvicorn**: ASGI server for running the FastAPI application
-- **Pydantic**: Data validation and settings management using Python type annotations
-- **Supabase**: Backend-as-a-Service providing database operations and storage
-- **Keycloak**: Identity and access management for authentication and authorization
-- **HTTPX**: HTTP client library for making requests
-- **Rich**: Terminal output formatting and styling
-- **Pytest**: Testing framework with async support
-
-## Configuration
-
-All configuration is driven by environment variables:
-
-| Category     | Variable                 | Description                                       | Default Value                                        |
-| ------------ | ------------------------ | ------------------------------------------------- | ---------------------------------------------------- |
-| **Server**   | `API_HOST`               | Host address for the API server                   | `0.0.0.0`                                            |
-|              | `API_PORT`               | Port for the API server                           | `9090`                                               |
-| **Supabase** | `SUPABASE_URL`           | URL of the Supabase instance                      | -                                                    |
-|              | `SUPABASE_KEY`           | Service role key with admin privileges            | -                                                    |
-| **Keycloak** | `KEYCLOAK_CLIENT_ID`     | Client ID for the application in Keycloak         | -                                                    |
-|              | `KEYCLOAK_CLIENT_SECRET` | Client secret for the application in Keycloak     | -                                                    |
-|              | `KEYCLOAK_REALM_URL`     | Base URL of the Keycloak realm for authentication | `https://relife-identity.test.ctic.es/realms/relife` |
-| **Roles**    | `ADMIN_ROLE_NAME`        | Name of the admin role used for permission checks | `relife_admin`                                       |
-| **Storage**  | `BUCKET_NAME`            | Name of the default storage bucket in Supabase    | `default_relife_bucket`                              |
-
-> [!WARNING]
->
-> - The `SUPABASE_KEY` uses the service role key that bypasses Row Level Security (RLS) policies. This should **never** be exposed to clients.
-> - `KEYCLOAK_CLIENT_SECRET` is sensitive and should be properly secured in production environments.
-
-## Authentication Integration Validation
-
-This template includes a validation script to test authentication integration with remote Supabase and Keycloak instances. This tool helps you verify your configuration and troubleshoot authentication issues.
-
-### Usage
+Requires Python 3.11 and `uv`:
 
 ```bash
-uv run validate-supabase --email <your-email> --auth-method <method>
+uv sync --frozen
+uv run --frozen run-service
 ```
 
-### Authentication Methods
+Open [API documentation](http://localhost:9090/docs); `GET /health` checks availability. PVGIS requires internet access.
 
-| Method            | Description                                                    | Use Case                                    |
-| ----------------- | -------------------------------------------------------------- | ------------------------------------------- |
-| `supabase`        | Email/password authentication via Supabase                     | Testing direct Supabase user authentication |
-| `keycloak-user`   | Username/password via Keycloak (Resource Owner Password Grant) | Testing Keycloak user credentials           |
-| `keycloak-client` | Client credentials via Keycloak (Client Credentials Grant)     | Testing service-to-service authentication   |
+`API_HOST`, `API_PORT`, and `API_WORKERS` default to `0.0.0.0`, `9090`, and `1`; see [configuration](src/relife_forecasting/__init__.py). Supabase/Keycloak credentials are not required.
 
-### Validation Process
-
-The script performs an end-to-end authentication validation:
-
-1. **Authentication**: Authenticate using the specified method and credentials
-2. **Server Startup**: Launches a temporary API server instance
-3. **Endpoint Verification**: Tests the `/whoami` endpoint with the obtained token
-4. **User Information**: Displays authenticated user details and associated roles
-5. **Cleanup**: Automatically shuts down the temporary server
+Run tests with `uv run --frozen pytest`. Licensed under [EUPL-1.2](LICENSE).
