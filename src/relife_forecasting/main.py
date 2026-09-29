@@ -1001,6 +1001,7 @@ async def simulate_uvalues(
     epw_file: Optional[UploadFile] = File(None, description="EPW weather file (required when weather_source='epw')."),
     bui_json: Optional[str] = Form(None, description="JSON string with the BUI (required when archetype=False)."),
     system_json: Optional[str] = Form(None, description="JSON string with SYSTEM (required when use_heat_pump=true in custom mode)."),
+    uni11300_json: Optional[str] = Form(None, description="Optional UNI/TS 11300 configuration JSON for custom buildings."),
     u_wall: Optional[float] = Query(None, description="New wall U-value (opaque vertical surfaces)."),
     u_roof: Optional[float] = Query(None, description="New roof U-value (opaque horizontal surface)."),
     u_window: Optional[float] = Query(None, description="New window U-value (transparent vertical surfaces)."),
@@ -1061,7 +1062,10 @@ async def simulate_uvalues(
     # 1) Base BUI
     base_system = None
     base_uni_cfg: Dict[str, Any] = copy.deepcopy(UNI11300_SIMULATION_EXAMPLE)
+    uni11300_config_source = "example"
     if archetype:
+        if uni11300_json is not None:
+            raise HTTPException(status_code=400, detail="'uni11300_json' is only accepted with archetype=false.")
         if not category or not country or not name:
             raise HTTPException(status_code=400, detail="With archetype=true you must provide 'category', 'country' and 'name'.")
         match = next(
@@ -1077,6 +1081,8 @@ async def simulate_uvalues(
             or match.get("systems_archetype")
             or UNI11300_SIMULATION_EXAMPLE
         )
+        if match.get("uni11300") or match.get("systems_archetype"):
+            uni11300_config_source = "archetype"
     else:
         if bui_json is None:
             raise HTTPException(status_code=400, detail="With archetype=false you must send 'bui_json' as a form field.")
@@ -1090,6 +1096,25 @@ async def simulate_uvalues(
             except json.JSONDecodeError:
                 raise HTTPException(status_code=400, detail="'system_json' must be a valid JSON string.")
             base_system = json_to_internal_system(system_raw)
+        if uni11300_json is not None:
+            try:
+                supplied_uni_cfg = json.loads(uni11300_json)
+            except json.JSONDecodeError as exc:
+                raise HTTPException(status_code=400, detail="'uni11300_json' must be valid JSON.") from exc
+            if not isinstance(supplied_uni_cfg, dict):
+                raise HTTPException(status_code=400, detail="'uni11300_json' must be a JSON object.")
+            if str(supplied_uni_cfg.get("input_unit", "Wh")).strip().lower() != "wh":
+                raise HTTPException(status_code=400, detail="'uni11300_json.input_unit' must be 'Wh' for ECM hourly data.")
+            for key in ("heating_params", "cooling_params"):
+                if not isinstance(supplied_uni_cfg.get(key), dict):
+                    raise HTTPException(status_code=400, detail=f"'uni11300_json.{key}' must be a JSON object.")
+            try:
+                HeatingSystemParams(**supplied_uni_cfg["heating_params"])
+                CoolingSystemParams(**supplied_uni_cfg["cooling_params"])
+            except TypeError as exc:
+                raise HTTPException(status_code=400, detail=f"Invalid 'uni11300_json': {exc}") from exc
+            base_uni_cfg = copy.deepcopy(supplied_uni_cfg)
+            uni11300_config_source = "custom"
 
     # 2) Build scenarios (as before)
     scenarios_spec = build_uvalue_scenarios(u_roof=u_roof, u_wall=u_wall, u_window=u_window, u_slab=u_slab)
@@ -1424,6 +1449,7 @@ async def simulate_uvalues(
         "weather_source": weather_source,
         "u_values_requested": {"roof": u_roof, "wall": u_wall, "window": u_window, "slab": u_slab},
         "system_variant": to_jsonable(system_variant) if system_variant is not None else None,
+        "uni11300_config_source": uni11300_config_source,
         "uni11300_generation_mask": to_jsonable(uni11300_generation_mask),
         "pv_requested": {
             "enabled": bool(use_pv),
@@ -1489,6 +1515,7 @@ async def compare_ecm_thermal_daly(
         epw_file=epw_file,
         bui_json=bui_json,
         system_json=None,
+        uni11300_json=None,
         u_wall=u_wall,
         u_roof=u_roof,
         u_window=u_window,

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+
 from fastapi.testclient import TestClient
 import pytest
 
@@ -18,6 +20,7 @@ def _hourly_temperature_profile(value: float, days: int = 2) -> list[dict]:
 
 def test_ecm_daly_compares_baseline_and_intervention(monkeypatch) -> None:
     captured = {}
+    expected_params = set(inspect.signature(main_module.simulate_uvalues).parameters)
 
     async def fake_simulate_uvalues(**kwargs):
         captured.update(kwargs)
@@ -60,6 +63,8 @@ def test_ecm_daly_compares_baseline_and_intervention(monkeypatch) -> None:
 
     assert response.status_code == 200, response.text
     payload = response.json()
+    # Direct calls keep FastAPI Form/Query objects as defaults, so pass every argument.
+    assert set(captured) == expected_params
     assert captured["include_baseline"] is True
     assert captured["u_wall"] == 0.3
     assert payload["method"]["temperature_metric"] == "daily mean T_op from ISO 52016"
