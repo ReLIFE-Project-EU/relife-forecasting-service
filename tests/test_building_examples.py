@@ -1,4 +1,9 @@
-from relife_forecasting.building_examples import BUILDING_ARCHETYPES
+from relife_forecasting.building_examples import (
+    BUILDING_ARCHETYPES,
+    _EXTENDED_ARCHETYPE_INDEX,
+    _EXTENDED_ARCHETYPE_SPECS,
+    _apply_provisional_thermal_mass,
+)
 
 
 def test_all_archetypes_have_positive_net_floor_area():
@@ -29,6 +34,17 @@ def test_spec_provided_net_floor_area_is_preserved():
     )
 
     assert archetype["bui"]["building"]["net_floor_area"] == 125.0
+
+
+def test_unknown_thermal_mass_mode_is_rejected():
+    archetype = _EXTENDED_ARCHETYPE_INDEX[0]
+    spec = _EXTENDED_ARCHETYPE_SPECS[archetype["name"]]
+    try:
+        _apply_provisional_thermal_mass(archetype["bui"], spec, mode="unknown")
+    except ValueError as exc:
+        assert "Unknown extended thermal-mass mode" in str(exc)
+    else:
+        raise AssertionError("unknown mode was accepted")
 
 
 if __name__ == "__main__":
