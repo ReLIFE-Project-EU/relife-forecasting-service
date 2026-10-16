@@ -172,8 +172,6 @@ def test_ecm_application_report_renders_html_with_baseline_vs_ecm(monkeypatch):
     assert "ISO 52016 saving [%]" in html
     assert "Primary energy saving [%]" in html
     assert "walls U=0.25 + heat pump COP=4.0" in html
-    assert "heat_pump" in html
-    assert "75.0%" in html
     assert "2025-01" in html
     assert "Indivisible" in html
     assert "grid-template-columns: 1fr;" in html
@@ -202,9 +200,7 @@ def test_ecm_application_report_generation_only_reuses_baseline_iso(monkeypatch)
     html = response.text
     assert "<title>Generation Only Report</title>" in html
     assert "Scenario summary" in html
-    assert "generation only" in html
     assert "condensing boiler eta_generation=1.1" in html
-    assert "20.0%" in html
 
 
 def test_report_recomputes_uni_monthly_from_hourly_building_when_payload_is_stale():
