@@ -213,9 +213,19 @@ def get_building_config(
 @app.get("/building/available", tags=["Building and systems"])
 def list_available_archetypes():
     """
-    List available archetypes (metadata only, without full BUI/HVAC content).
+    List archetype identities and reference coordinates, without full BUI/HVAC content.
     """
-    return [{"name": b.get("name"), "category": b.get("category"), "country": b.get("country")} for b in BUILDING_ARCHETYPES]
+    available = []
+    for archetype in BUILDING_ARCHETYPES:
+        building = archetype.get("bui", {}).get("building", {})
+        available.append({
+            "name": archetype.get("name"),
+            "category": archetype.get("category"),
+            "country": archetype.get("country"),
+            "latitude": building.get("latitude"),
+            "longitude": building.get("longitude"),
+        })
+    return available
 
 
 # =============================================================================
