@@ -296,6 +296,35 @@ def validate_model(
 # Simulation endpoints
 # =============================================================================
 
+LEAN_HOURLY_COLUMNS = ("Q_H", "Q_C", "Q_HC", "T_op", "T_ext")
+
+
+def _lean_hourly_frame(hourly_df: pd.DataFrame) -> pd.DataFrame:
+    """Keep only the LEAN_HOURLY_COLUMNS present in the frame; the index (timestamps) is kept."""
+    return hourly_df[[col for col in LEAN_HOURLY_COLUMNS if col in hourly_df.columns]]
+
+
+def _ecm_scenario_results(
+    hourly_sim: pd.DataFrame,
+    annual_results_payload: Any,
+    uni11300_results: Dict[str, Any],
+    pv_hp_results: Optional[Dict[str, Any]],
+    lean: bool,
+) -> Dict[str, Any]:
+    """Serialize one /ecm_application scenario; lean drops non-core hourly columns and the UNI/PV hourly tables."""
+    if lean:
+        hourly_sim = _lean_hourly_frame(hourly_sim)
+        uni11300_results = {k: v for k, v in uni11300_results.items() if k != "hourly_results"}
+        if pv_hp_results is not None:
+            pv_hp_results = {k: v for k, v in pv_hp_results.items() if k != "hourly_results"}
+    return {
+        "hourly_building": clean_and_jsonable(hourly_sim),
+        "annual_building": clean_and_jsonable(annual_results_payload),
+        "primary_energy_uni11300": clean_and_jsonable(uni11300_results),
+        "pv_hp": clean_and_jsonable(pv_hp_results) if pv_hp_results is not None else None,
+    }
+
+
 @app.post("/simulate", tags=["Simulation"])
 async def simulate_building(
     archetype: bool = Query(True, description="If True, simulate an archetype; if False, use custom BUI/SYSTEM."),
@@ -307,6 +336,7 @@ async def simulate_building(
     epw_file: Optional[UploadFile] = File(None, description="EPW weather file (required when weather_source='epw')."),
     bui_json: Optional[str] = Form(None, description="JSON string with the BUI data (required when archetype=False)."),
     system_json: Optional[str] = Form(None, description="JSON string with the SYSTEM data (required when archetype=False)."),
+    lean: bool = Query(False, description="Return only the core hourly_building columns (Q_H, Q_C, Q_HC, T_op, T_ext)."),
 ):
     """
     Simulate a single building (ISO 52016 + ISO 15316) using either:
@@ -403,7 +433,7 @@ async def simulate_building(
             "system_messages": validation["system_messages"],
         },
         "results": {
-            "hourly_building": dataframe_to_records_safe(hourly_sim),
+            "hourly_building": dataframe_to_records_safe(_lean_hourly_frame(hourly_sim) if lean else hourly_sim),
             "primary_energy_uni11300": uni11300_results,
             # keep commented if you still want to reduce payload size:
             # "annual_building": dataframe_to_records_safe(annual_results_df),
@@ -1061,6 +1091,10 @@ async def simulate_uvalues(
 
     # (optional) keep your previous flag if you added it
     include_baseline: bool = Query(False, description="If True, also simulate baseline (no changes)."),
+    lean: bool = Query(
+        False,
+        description="Return only the core hourly_building columns (Q_H, Q_C, Q_HC, T_op, T_ext) and leave out the hourly UNI/TS 11300 and PV tables. Summaries are unchanged.",
+    ),
 ):
     """
     Build all non-empty combinations of the requested U-value interventions and simulate each scenario.
@@ -1347,12 +1381,9 @@ async def simulate_uvalues(
                     "description": "Baseline (no changes)",
                     "elements": [],
                     "u_values": {"roof": None, "wall": None, "window": None, "slab": None},
-                    "results": {
-                        "hourly_building": clean_and_jsonable(hourly_sim),
-                        "annual_building": clean_and_jsonable(annual_results_payload),
-                        "primary_energy_uni11300": clean_and_jsonable(uni11300_results),
-                        "pv_hp": clean_and_jsonable(pv_hp_results) if pv_hp_results is not None else None,
-                    },
+                    "results": _ecm_scenario_results(
+                        hourly_sim, annual_results_payload, uni11300_results, pv_hp_results, lean
+                    ),
                 }
             )
 
@@ -1442,12 +1473,9 @@ async def simulate_uvalues(
                         "window": (u_window if "window" in elements else None),
                         "slab": (u_slab if "slab" in elements else None),
                     },
-                    "results": {
-                        "hourly_building": clean_and_jsonable(hourly_sim),
-                        "annual_building": clean_and_jsonable(annual_results_payload),
-                        "primary_energy_uni11300": clean_and_jsonable(uni11300_results),
-                        "pv_hp": clean_and_jsonable(pv_hp_results) if pv_hp_results is not None else None,
-                    },
+                    "results": _ecm_scenario_results(
+                        hourly_sim, annual_results_payload, uni11300_results, pv_hp_results, lean
+                    ),
                 }
             )
 
@@ -1555,6 +1583,7 @@ async def compare_ecm_thermal_daly(
         scenario_id=scenario_id,
         baseline_only=False,
         include_baseline=True,
+        lean=False,
     )
 
     scenarios = simulation.get("scenarios") or []
