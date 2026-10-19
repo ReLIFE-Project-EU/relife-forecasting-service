@@ -63,9 +63,6 @@ Values the workbooks do not provide are assumptions:
   estimated from the country's heating degree days (Eurostat 2014-2023); cooling = 100 W/m2.
 - **Solar absorptance** of roof and walls is 0.6 on every orientation.
 
-The generic archetypes (`SFH_0_1945`, `SFH_1946_1969`, `SFH_1970_1979`, `SFH_Greece_*`, `SFH_Italy_*`)
-use the same period values; their geometry is a simplified placeholder.
-
 ## Archetype floor area (`floor_area`)
 
 The archetype endpoints `POST /building`, `POST /simulate`, `POST /ecm_application` and
@@ -95,7 +92,7 @@ energy needs per m² drop for larger buildings. U-values, orientations, setpoint
 `height` are not changed. Example:
 
 ```
-POST /simulate?archetype=true&category=Single Family House&country=Austria&name=SFH_1946_1969&floor_area=187.5&weather_source=pvgis
+POST /simulate?archetype=true&category=Single Family House&country=Austria&name=AT_SFH_1946-1969&floor_area=187.5&weather_source=pvgis
 ```
 
 Responses of `POST /building` return the rescaled BUI, so it can be inspected before simulating.

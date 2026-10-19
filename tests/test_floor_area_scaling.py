@@ -16,7 +16,7 @@ client = TestClient(app)
 def _sfh():
     return next(
         a for a in BUILDING_ARCHETYPES
-        if a["country"] == "Austria" and a["name"] == "SFH_1946_1969"
+        if a["country"] == "Austria" and a["name"] == "AT_SFH_1946-1969"
     )["bui"]
 
 
@@ -38,9 +38,9 @@ def test_scaling_geometry():
     out = scale_bui_floor_area(bui, bui["building"]["net_floor_area"] * k)
 
     assert bui == original  # input untouched
-    assert out["building"]["net_floor_area"] == pytest.approx(125.0 * k)
-    assert out["building"]["exposed_perimeter"] == pytest.approx(46.0 * s)
-    assert out["building"]["height"] == 2.7
+    assert out["building"]["net_floor_area"] == pytest.approx(bui["building"]["net_floor_area"] * k)
+    assert out["building"]["exposed_perimeter"] == pytest.approx(bui["building"]["exposed_perimeter"] * s)
+    assert out["building"]["height"] == bui["building"]["height"]
     assert _total(out, "roof") == pytest.approx(_total(bui, "roof") * k)
     assert _total(out, "slab") == pytest.approx(_total(bui, "slab") * k)
     assert _total(out, "wall") == pytest.approx(_total(bui, "wall") * s)
@@ -59,10 +59,10 @@ def test_building_endpoint_uses_floor_area():
         "archetype": "true",
         "category": "Single Family House",
         "country": "Austria",
-        "name": "SFH_1946_1969",
+        "name": "AT_SFH_1946-1969",
     }
     base = client.post("/building", params=params).json()
     big = client.post("/building", params={**params, "floor_area": 250}).json()
-    assert base["bui"]["building"]["net_floor_area"] == 125.0
+    assert base["bui"]["building"]["net_floor_area"] == _sfh()["building"]["net_floor_area"]
     assert big["bui"]["building"]["net_floor_area"] == 250.0
     assert client.post("/building", params={**params, "floor_area": 0}).status_code == 422

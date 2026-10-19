@@ -218,7 +218,7 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Test endpoint /ecm_application/run_single_save usando dati archetipi."
     )
     parser.add_argument("--list-archetypes", action="store_true", help="Stampa tutti gli archetipi e termina.")
-    parser.add_argument("--name", default="SFH_1946_1969", help="Nome archetipo.")
+    parser.add_argument("--name", default="AT_SFH_1946-1969", help="Nome archetipo.")
     parser.add_argument("--category", default="Single Family House", help="Categoria archetipo.")
     parser.add_argument("--country", default="Austria", help="Paese archetipo.")
     parser.add_argument("--weather-source", default="pvgis", choices=["pvgis", "epw"], help="Fonte meteo.")

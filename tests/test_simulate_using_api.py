@@ -29,7 +29,7 @@ def test_simulate_using_api():
         "archetype": "true",
         "category": "Single Family House",
         "country": "Greece",
-        "name": "SFH_Greece_1946_1969",
+        "name": "GR_SFH_1946-1969",
         "weather_source": "pvgis",
     }
 

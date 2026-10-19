@@ -124,7 +124,7 @@ DEFAULT_TIMEOUT = 600  # seconds (ECM can be slow)
 ARCHETYPE = True
 CATEGORY = "Single Family House"
 COUNTRY = "Greece"
-ARCHETYPE_NAME = "SFH_Greece_1946_1969"
+ARCHETYPE_NAME = "GR_SFH_1946-1969"
 
 # Weather
 WEATHER_SOURCE = "pvgis"  # "pvgis" or "epw"; keep "pvgis" when using the scenario library with PV

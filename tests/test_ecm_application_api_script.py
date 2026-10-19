@@ -351,7 +351,7 @@ def test_run_predefined_renovation_scenarios_uses_ecm_for_all_scenarios(monkeypa
         archetype=True,
         category="Single Family House",
         country="Greece",
-        name="SFH_Greece_1946_1969",
+        name="GR_SFH_1946-1969",
     )
 
     assert stats["successful"] == 3
