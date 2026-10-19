@@ -126,306 +126,8 @@ def _constant_ach_ventilation(ach: float) -> Dict[str, Any]:
     }
 
 
-def _make_sfh_envelope(
-    *,
-    name: str,
-    construction_class: str,
-    roof_u: float,
-    wall_u: float,
-    slab_u: float,
-    window_u: float,
-    period: str,
-) -> Dict[str, Any]:
-    ach = _ACH_BY_PERIOD[period]
-    bui = {
-        "building": {
-            "name": name,
-            "azimuth_relative_to_true_north": 0.0,
-            "latitude": 47.8095,
-            "longitude": 13.055,
-            "exposed_perimeter": 46.0,
-            "height": 2.7,
-            "wall_thickness": 0.3,
-            "n_floors": 2,
-            "building_type_class": "Residential_detached_house",
-            "adj_zones_present": False,
-            "number_adj_zone": 0,
-            "net_floor_area": 125.0,
-            "volume": 125.0 * 2.7,
-            "construction_class": construction_class,
-        },
-        "building_surface": [
-            {
-                "name": "Roof surface",
-                "type": "opaque",
-                "area": 120.0,
-                "sky_view_factor": 1.0,
-                "u_value": roof_u,
-                "solar_absorptance": _SOLAR_ABSORPTANCE_EXTERNAL,
-                "thermal_capacity": 741500.0,
-                "orientation": {"azimuth": 0, "tilt": 0},
-                "name_adj_zone": None,
-            },
-            {
-                "name": "Opaque north surface",
-                "type": "opaque",
-                "area": 52.2,
-                "sky_view_factor": 0.5,
-                "u_value": wall_u,
-                "solar_absorptance": _SOLAR_ABSORPTANCE_EXTERNAL,
-                "thermal_capacity": 1416240.0,
-                "orientation": {"azimuth": 0, "tilt": 90},
-                "name_adj_zone": None,
-            },
-            {
-                "name": "Opaque east surface",
-                "type": "opaque",
-                "area": 52.2,
-                "sky_view_factor": 0.5,
-                "u_value": wall_u,
-                "solar_absorptance": _SOLAR_ABSORPTANCE_EXTERNAL,
-                "thermal_capacity": 1416240.0,
-                "orientation": {"azimuth": 90, "tilt": 90},
-                "name_adj_zone": None,
-            },
-            {
-                "name": "Opaque south surface",
-                "type": "opaque",
-                "area": 52.2,
-                "sky_view_factor": 0.5,
-                "u_value": wall_u,
-                "solar_absorptance": _SOLAR_ABSORPTANCE_EXTERNAL,
-                "thermal_capacity": 1416240.0,
-                "orientation": {"azimuth": 180, "tilt": 90},
-                "name_adj_zone": None,
-            },
-            {
-                "name": "Opaque west surface",
-                "type": "opaque",
-                "area": 52.2,
-                "sky_view_factor": 0.5,
-                "u_value": wall_u,
-                "solar_absorptance": _SOLAR_ABSORPTANCE_EXTERNAL,
-                "thermal_capacity": 1416240.0,
-                "orientation": {"azimuth": 270, "tilt": 90},
-                "name_adj_zone": None,
-            },
-            {
-                "name": "Slab to ground",
-                "type": "opaque",
-                "area": 120.0,
-                "sky_view_factor": 0.0,
-                "u_value": slab_u,
-                "solar_absorptance": 0.6,
-                "thermal_capacity": 405801.0,
-                "orientation": {"azimuth": 0, "tilt": 0},
-                "name_adj_zone": None,
-            },
-            {
-                "name": "Transparent north surface",
-                "type": "transparent",
-                "area": 9.9,
-                "sky_view_factor": 0.5,
-                "u_value": window_u,
-                "g_value": 0.76,
-                "height": 1.4,
-                "width": 1.4,
-                "parapet": 1.0,
-                "orientation": {"azimuth": 0, "tilt": 90},
-                "shading": False,
-                "shading_type": "horizontal_overhang",
-                "width_or_distance_of_shading_elements": 0.5,
-                "overhang_proprieties": {"width_of_horizontal_overhangs": 0.8},
-                "name_adj_zone": None,
-            },
-            {
-                "name": "Transparent east surface",
-                "type": "transparent",
-                "area": 9.9,
-                "sky_view_factor": 0.5,
-                "u_value": window_u,
-                "g_value": 0.76,
-                "height": 1.4,
-                "width": 1.4,
-                "parapet": 1.0,
-                "orientation": {"azimuth": 90, "tilt": 90},
-                "shading": False,
-                "shading_type": "horizontal_overhang",
-                "width_or_distance_of_shading_elements": 0.5,
-                "overhang_proprieties": {"width_of_horizontal_overhangs": 0.8},
-                "name_adj_zone": None,
-            },
-            {
-                "name": "Transparent south surface",
-                "type": "transparent",
-                "area": 9.9,
-                "sky_view_factor": 0.5,
-                "u_value": window_u,
-                "g_value": 0.76,
-                "height": 1.4,
-                "width": 1.4,
-                "parapet": 1.0,
-                "orientation": {"azimuth": 180, "tilt": 90},
-                "shading": False,
-                "shading_type": "horizontal_overhang",
-                "width_or_distance_of_shading_elements": 0.5,
-                "overhang_proprieties": {"width_of_horizontal_overhangs": 0.8},
-                "name_adj_zone": None,
-            },
-            {
-                "name": "Transparent west surface",
-                "type": "transparent",
-                "area": 9.9,
-                "sky_view_factor": 0.5,
-                "u_value": window_u,
-                "g_value": 0.76,
-                "height": 1.4,
-                "width": 1.4,
-                "parapet": 1.0,
-                "orientation": {"azimuth": 270, "tilt": 90},
-                "shading": False,
-                "shading_type": "horizontal_overhang",
-                "width_or_distance_of_shading_elements": 0.5,
-                "overhang_proprieties": {"width_of_horizontal_overhangs": 0.8},
-                "name_adj_zone": None,
-            },
-        ],
-        "units": {
-            "area": "m²",
-            "u_value": "W/m²K",
-            "thermal_capacity": "J/K (lumped)",
-            "azimuth": "degrees (0=N, 90=E, 180=S, 270=W)",
-            "tilt": "degrees (0=horizontal, 90=vertical)",
-        },
-        "building_parameters": {
-            "temperature_setpoints": {
-                "heating_setpoint": 20.0,
-                "heating_setback": 17.0,
-                "cooling_setpoint": 26.0,
-                "cooling_setback": 30.0,
-                "units": "°C",
-            },
-            "airflow_rates": {"infiltration_rate": ach, "units": "ACH"},
-            "ventilation": _constant_ach_ventilation(ach),
-            "construction": {
-                "wall_thickness": 0.3,
-                "thermal_bridge_heat_W_K": 0.0,  # set below from the envelope area
-                "units": "m (thickness), W/K (thermal bridges)",
-            },
-            "system_capacities": {
-                "heating_capacity": 12500.0,
-                "cooling_capacity": 8750.0,
-                "units": "W",
-            },
-            "internal_gains": [
-                {
-                    "name": "occupants",
-                    "full_load": _OCCUPANT_LOAD_BY_CLASS["Residential_detached_house"],
-                    "weekday": _OCC_WEEKDAY_DEFAULT,
-                    "weekend": _OCC_WEEKEND_DEFAULT,
-                },
-                {
-                    "name": "appliances",
-                    "full_load": _APPLIANCE_LOAD_BY_CLASS["Residential_detached_house"],
-                    "weekday": _APP_WEEKDAY_DEFAULT,
-                    "weekend": _APP_WEEKEND_DEFAULT,
-                },
-                {
-                    "name": "lighting",
-                    "full_load": 3.0,
-                    "weekday": _LIGHT_DEFAULT,
-                    "weekend": _LIGHT_DEFAULT,
-                },
-            ],
-            "climate_parameters": {"coldest_month": 1, "units": "1-12 (January-December)"},
-            "heating_profile": {
-                "weekday": _HEATING_PROFILE_DEFAULT,
-                "weekend": _HEATING_PROFILE_DEFAULT,
-            },
-            "cooling_profile": {
-                "weekday": _COOLING_PROFILE_WEEKDAY,
-                "weekend": _COOLING_PROFILE_WEEKEND,
-            },
-            "ventilation_profile": {
-                "weekday": _VENTILATION_PROFILE_DEFAULT,
-                "weekend": _VENTILATION_PROFILE_DEFAULT,
-            },
-        },
-    }
-    # Thermal bridges: delta-U x gross envelope area (all surfaces).
-    envelope_area = sum(surface["area"] for surface in bui["building_surface"])
-    bui["building_parameters"]["construction"]["thermal_bridge_heat_W_K"] = (
-        _TB_DELTA_U_BY_PERIOD[period] * envelope_area
-    )
-    return bui
-
-
-BUI_SFH_0_1945_ENVELOPE: Dict[str, Any] = _make_sfh_envelope(
-    name="SFH_0_1945",
-    construction_class="class_i",
-    roof_u=0.45,
-    wall_u=1.9,
-    slab_u=0.72,
-    window_u=2.5,
-    period="0-1945",
-)
-
-BUI_SFH_1946_1969_ENVELOPE: Dict[str, Any] = _make_sfh_envelope(
-    name="SFH_1946_1969",
-    construction_class="class_ii",
-    roof_u=1.7,
-    wall_u=1.23,
-    slab_u=1.4,
-    window_u=1.98,
-    period="1946-1969",
-)
-
-BUI_SFH_1970_1979_ENVELOPE: Dict[str, Any] = _make_sfh_envelope(
-    name="SFH_1970_1979",
-    construction_class="class_iii",
-    roof_u=0.2,
-    wall_u=0.9,
-    slab_u=1.3,
-    window_u=2.54,
-    period="1970-1979",
-)
-
-
-# UNI/TS 11300 input archetypes, already shaped for /run/iso52016-uni11300-pv.
-UNI11300_SFH_0_1945: Dict[str, Any] = {
-    "input_unit": "Wh",
-    "heating_params": {
-        "eta_emission": 0.95,
-        "eta_distribution": 0.92,
-        "eta_storage": 0.98,
-        "eta_generation": 0.75,
-        "f_recov_emission": 1.00,
-        "f_recov_distribution": 0.80,
-        "f_recov_storage": 0.90,
-        "aux_emission_fraction": 0.005,
-        "aux_distribution_fraction": 0.010,
-        "aux_storage_fraction": 0.001,
-        "aux_generation_fraction": 0.015,
-        "fp_thermal": 1.05,
-        "fp_electric": 2.42,
-    },
-    "cooling_params": {
-        "eta_emission": 0.97,
-        "eta_distribution": 0.95,
-        "eta_storage": 1.00,
-        "cop_generation": 2.3,
-        "f_recov_emission": 1.00,
-        "f_recov_distribution": 0.80,
-        "f_recov_storage": 0.90,
-        "aux_emission_fraction": 0.005,
-        "aux_distribution_fraction": 0.010,
-        "aux_storage_fraction": 0.001,
-        "aux_generation_fraction": 0.005,
-        "fp_electric": 2.42,
-    },
-}
-
-UNI11300_SFH_1946_1969: Dict[str, Any] = {
+# Default UNI/TS 11300 input for /run/iso52016-uni11300-pv.
+UNI11300_SIMULATION_EXAMPLE: Dict[str, Any] = {
     "input_unit": "Wh",
     "heating_params": {
         "eta_emission": 0.95,
@@ -447,39 +149,6 @@ UNI11300_SFH_1946_1969: Dict[str, Any] = {
         "eta_distribution": 0.95,
         "eta_storage": 1.00,
         "cop_generation": 2.5,
-        "f_recov_emission": 1.00,
-        "f_recov_distribution": 0.80,
-        "f_recov_storage": 0.90,
-        "aux_emission_fraction": 0.005,
-        "aux_distribution_fraction": 0.010,
-        "aux_storage_fraction": 0.001,
-        "aux_generation_fraction": 0.005,
-        "fp_electric": 2.42,
-    },
-}
-
-UNI11300_SFH_1970_1979: Dict[str, Any] = {
-    "input_unit": "Wh",
-    "heating_params": {
-        "eta_emission": 0.95,
-        "eta_distribution": 0.94,
-        "eta_storage": 0.98,
-        "eta_generation": 0.81,
-        "f_recov_emission": 1.00,
-        "f_recov_distribution": 0.80,
-        "f_recov_storage": 0.90,
-        "aux_emission_fraction": 0.005,
-        "aux_distribution_fraction": 0.010,
-        "aux_storage_fraction": 0.001,
-        "aux_generation_fraction": 0.015,
-        "fp_thermal": 1.05,
-        "fp_electric": 2.42,
-    },
-    "cooling_params": {
-        "eta_emission": 0.97,
-        "eta_distribution": 0.95,
-        "eta_storage": 1.00,
-        "cop_generation": 2.6,
         "f_recov_emission": 1.00,
         "f_recov_distribution": 0.80,
         "f_recov_storage": 0.90,
@@ -17359,7 +17028,10 @@ del _arch_name, _spec, _net_floor_area, _period, _bui, _uni
 
 
 # Backward-compatible alias used by other modules/scripts in this repo.
-BUI_SINGLE_FAMILY_1946_1969: Dict[str, Any] = BUI_SFH_1946_1969_ENVELOPE
+BUI_SINGLE_FAMILY_1946_1969: Dict[str, Any] = next(
+    item["bui"] for item in _EXTENDED_ARCHETYPE_INDEX
+    if item["name"] == "AT_SFH_1946-1969"
+)
 
 
 # -----------------------------------------------------------------------------
@@ -17442,70 +17114,16 @@ SYSTEM_CONDENSING_BOILER_RADIATORS: Dict[str, Any] = {
 # -----------------------------------------------------------------------------
 BUILDING_ARCHETYPES: List[Dict[str, Any]] = [
     {
-        "name": "SFH_0_1945",
-        "category": "Single Family House",
-        "country": "Austria",
-        "bui": BUI_SFH_0_1945_ENVELOPE,
+        "name": item["name"],
+        "category": item["category"],
+        "country": item["country"],
+        "bui": item["bui"],
         "system": SYSTEM_CONDENSING_BOILER_RADIATORS,
-        "systems_archetype": UNI11300_SFH_0_1945,
-        "uni11300": UNI11300_SFH_0_1945,
-    },
-    {
-        "name": "SFH_1946_1969",
-        "category": "Single Family House",
-        "country": "Austria",
-        "bui": BUI_SFH_1946_1969_ENVELOPE,
-        "system": SYSTEM_CONDENSING_BOILER_RADIATORS,
-        "systems_archetype": UNI11300_SFH_1946_1969,
-        "uni11300": UNI11300_SFH_1946_1969,
-    },
-    {
-        "name": "SFH_1970_1979",
-        "category": "Single Family House",
-        "country": "Austria",
-        "bui": BUI_SFH_1970_1979_ENVELOPE,
-        "system": SYSTEM_CONDENSING_BOILER_RADIATORS,
-        "systems_archetype": UNI11300_SFH_1970_1979,
-        "uni11300": UNI11300_SFH_1970_1979,
-    },
-    {
-        "name": "SFH_Greece_1946_1969",
-        "category": "Single Family House",
-        "country": "Greece",
-        "bui": BUI_SFH_1946_1969_ENVELOPE,
-        "system": SYSTEM_CONDENSING_BOILER_RADIATORS,
-        "systems_archetype": UNI11300_SFH_1946_1969,
-        "uni11300": UNI11300_SFH_1946_1969,
-    },
-    {
-        "name": "SFH_Italy_1946_1969",
-        "category": "Single Family House",
-        "country": "Italy",
-        "bui": BUI_SFH_1946_1969_ENVELOPE,
-        "system": SYSTEM_CONDENSING_BOILER_RADIATORS,
-        "systems_archetype": UNI11300_SFH_1946_1969,
-        "uni11300": UNI11300_SFH_1946_1969,
-    },
+        "systems_archetype": item["uni11300"],
+        "uni11300": item["uni11300"],
+    }
+    for item in _EXTENDED_ARCHETYPE_INDEX
 ]
-
-BUILDING_ARCHETYPES.extend(
-    [
-        {
-            "name": item["name"],
-            "category": item["category"],
-            "country": item["country"],
-            "bui": item["bui"],
-            "system": SYSTEM_CONDENSING_BOILER_RADIATORS,
-            "systems_archetype": item["uni11300"],
-            "uni11300": item["uni11300"],
-        }
-        for item in _EXTENDED_ARCHETYPE_INDEX
-    ]
-)
-
-
-# Used by /building endpoint (example only)
-UNI11300_SIMULATION_EXAMPLE: Dict[str, Any] = UNI11300_SFH_1946_1969
 
 
 def build_iso52016_uni11300_pv_payload(

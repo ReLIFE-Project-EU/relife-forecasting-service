@@ -27,7 +27,7 @@ DEFAULT_TIMEOUT = int(os.getenv("RELIFE_TIMEOUT", "600"))
 # Optional: pick an archetype via /building, then feed only bui into the pipeline test
 DEFAULT_CATEGORY = os.getenv("RELIFE_CATEGORY", "Single Family House")
 DEFAULT_COUNTRY = os.getenv("RELIFE_COUNTRY", "Greece")
-DEFAULT_ARCHETYPE_NAME = os.getenv("RELIFE_ARCHETYPE_NAME", "SFH_Greece_1946_1969")
+DEFAULT_ARCHETYPE_NAME = os.getenv("RELIFE_ARCHETYPE_NAME", "GR_SFH_1946-1969")
 
 # PV defaults (override via env if you want)
 PV_KWP = float(os.getenv("RELIFE_PV_KWP", "10"))

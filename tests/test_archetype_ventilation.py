@@ -50,8 +50,6 @@ def test_ventilation_actually_enters_the_simulation():
 def test_height_is_total_building_height_and_floor_area_is_per_building():
     for arch in BUILDING_ARCHETYPES:
         bd = arch["bui"]["building"]
-        if "volume" not in bd or arch["name"].startswith("SFH_"):
-            continue  # skip the generic archetypes
         slab = next(s for s in arch["bui"]["building_surface"] if s["name"].startswith("Slab"))
         assert bd["height"] == pytest.approx(bd["n_floors"] * 2.7), arch["name"]
         assert bd["net_floor_area"] == pytest.approx(slab["area"] * bd["n_floors"]), arch["name"]
@@ -90,26 +88,11 @@ def test_internal_gains_and_profiles_follow_building_type():
         assert set(bp["ventilation_profile"]["weekday"]) == {1}
 
 
-def test_legacy_archetypes_use_the_same_period_values():
-    expected = {"SFH_0_1945": (0.9, 0.10), "SFH_1946_1969": (0.8, 0.10), "SFH_1970_1979": (0.75, 0.08)}
-    for name, (ach, delta_u) in expected.items():
-        bui = _arch(name)
-        bp = bui["building_parameters"]
-        assert bp["airflow_rates"]["infiltration_rate"] == ach
-        assert bp["ventilation"]["components"][0]["air_changes_per_hour"] == ach
-        envelope = sum(s["area"] for s in bui["building_surface"])
-        assert bp["construction"]["thermal_bridge_heat_W_K"] == pytest.approx(delta_u * envelope)
-        assert {g["name"] for g in bp["internal_gains"]} == {"occupants", "appliances", "lighting"}
-        assert all(len(bp[k][d]) == 24 for k in ("heating_profile", "cooling_profile") for d in ("weekday", "weekend"))
-
-
 def test_capacities_follow_the_building_and_absorptance_is_uniform():
     for arch in BUILDING_ARCHETYPES:
         bui = arch["bui"]
         area = bui["building"]["net_floor_area"]
         caps = bui["building_parameters"]["system_capacities"]
-        if arch["name"].startswith("SFH_"):
-            continue  # generic archetypes keep their fixed 12.5 / 8.75 kW
         assert 20 <= caps["heating_capacity"] / area <= 250, arch["name"]
         assert caps["cooling_capacity"] == pytest.approx(100.0 * area), arch["name"]
         absorptance = {

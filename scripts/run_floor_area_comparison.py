@@ -21,7 +21,7 @@ ARCHETYPE = {
     "archetype": "true",
     "category": "Single Family House",
     "country": "Austria",
-    "name": "SFH_1946_1969",
+    "name": "AT_SFH_1946-1969",
 }
 
 

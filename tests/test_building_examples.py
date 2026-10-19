@@ -1,3 +1,5 @@
+import pytest
+
 from relife_forecasting.building_examples import BUILDING_ARCHETYPES
 
 
@@ -21,17 +23,28 @@ def test_derived_net_floor_area_matches_footprint_times_floors():
     assert archetype["bui"]["building"]["net_floor_area"] == 74.9 * 2
 
 
-def test_spec_provided_net_floor_area_is_preserved():
-    # Legacy archetypes ship real areas in their specs and must pass through
-    # unchanged (SFH_0_1945 declares 125.0).
-    archetype = next(
-        entry for entry in BUILDING_ARCHETYPES if entry["name"] == "SFH_0_1945"
+@pytest.mark.parametrize(
+    "archetype",
+    [entry for entry in BUILDING_ARCHETYPES if entry["country"] == "Belgium"],
+    ids=lambda entry: entry["name"],
+)
+def test_belgian_floor_area_matches_vertical_envelope(archetype):
+    bui = archetype["bui"]
+    building = bui["building"]
+    vertical_area = sum(
+        surface["area"] for surface in bui["building_surface"]
+        if surface["orientation"]["tilt"] == 90
     )
-
-    assert archetype["bui"]["building"]["net_floor_area"] == 125.0
+    footprint = next(
+        surface["area"] for surface in bui["building_surface"]
+        if surface["name"].startswith("Slab")
+    )
+    inferred_floors = vertical_area / (building["exposed_perimeter"] * 2.7)
+    assert building["net_floor_area"] == pytest.approx(
+        footprint * inferred_floors, rel=0.002
+    )  # source envelope dimensions are rounded
 
 
 if __name__ == "__main__":
     test_all_archetypes_have_positive_net_floor_area()
     test_derived_net_floor_area_matches_footprint_times_floors()
-    test_spec_provided_net_floor_area_is_preserved()
