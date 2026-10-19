@@ -42,6 +42,30 @@ Open [API documentation](http://localhost:9090/docs); `GET /health` checks avail
 
 Run tests with `uv run --frozen pytest`. Licensed under [EUPL-1.2](LICENSE).
 
+## Archetype assumptions
+
+The country archetypes (`<CC>_SFH|MFH|AB_<period>`, e.g. `AT_SFH_1946-1969`) are built in
+`building_examples.py` from the workbooks in `EU_new archetypes/` (geometry, U-values, g-value,
+generation efficiencies). `python scripts/check_archetypes_vs_excel.py` verifies code against workbooks.
+Values the workbooks do not provide are assumptions:
+
+- **Net floor area** is per building: footprint x floors. `building.height` = floors x 2.7 m and
+  `building.volume` = footprint x floors x 2.7 m.
+- **Ventilation**: pybuildingenergy >= 2.1 only applies ventilation if `building_parameters.ventilation`
+  is present, so each archetype declares a `constant_ach` component (rate by period, applied to
+  `building.volume`): 0.90 (0-1945), 0.80, 0.75, 0.70, 0.65, 0.60, 0.55 (2011-now) 1/h.
+- **Thermal bridges**: total `thermal_bridge_heat_W_K` = delta-U x gross envelope area, with delta-U
+  0.10 (to 1969), 0.08 (1970-89), 0.06 (1990s), 0.05 (2000-10), 0.03 (2011-now) W/m2K.
+- **Internal gains and profiles**: EN 16798-1 residential values and schedules. Occupants
+  2.8 W/m2 (houses) / 4.2 (apartments), appliances 2.4 / 3.0, lighting 3.0. Heating 05:00-23:00 with
+  17 C setback; cooling follows occupancy; infiltration is continuous.
+- **Capacities**: heating = 1.25 x design heat loss x (20 C - design outdoor temperature), the latter
+  estimated from the country's heating degree days (Eurostat 2014-2023); cooling = 100 W/m2.
+- **Solar absorptance** of roof and walls is 0.6 on every orientation.
+
+The generic archetypes (`SFH_0_1945`, `SFH_1946_1969`, `SFH_1970_1979`, `SFH_Greece_*`, `SFH_Italy_*`)
+use the same period values; their geometry is a simplified placeholder.
+
 ## Archetype floor area (`floor_area`)
 
 The archetype endpoints `POST /building`, `POST /simulate`, `POST /ecm_application` and

@@ -217,6 +217,12 @@ def drop_iso52016_warmup_rows(hourly: pd.DataFrame) -> pd.DataFrame:
     path the library keeps the original year labels from the weather file, and
     those files often carry a different year per month.
     """
+    # pybuildingenergy >= 2.1 already returns a single year. A full-year frame has no
+    # warm-up to drop, even when the index repeats a label (e.g. the DST fall-back hour
+    # on the PVGIS path), so duplicates must not be read as warm-up copies.
+    if len(hourly) in (8760, 8784):
+        return hourly
+
     # Taken from the index values rather than Index.duplicated(), which caches
     # is_unique on the input and leaves the trimmed result reporting it stale.
     is_copy = hourly.index.to_series().duplicated(keep="last").to_numpy()
@@ -728,8 +734,8 @@ def scale_bui_floor_area(
     The building keeps its footprint shape, height and number of floors, so every
     plan-view length grows by ``s = sqrt(k)`` with ``k = new_area / old_area``:
 
-      - ``net_floor_area``, roof and slab areas, system capacities  -> x k
-      - ``exposed_perimeter``                                       -> x s
+      - ``net_floor_area``, ``volume``, roof and slab areas, capacities -> x k
+      - ``exposed_perimeter``, thermal-bridge length / total (W/K)  -> x s
       - opaque vertical walls and windows (area; window width)      -> x s
 
     The volume (area x height) therefore scales with k. If ``new_floor_area``
@@ -749,6 +755,8 @@ def scale_bui_floor_area(
     s = k ** 0.5
 
     building["net_floor_area"] = float(new_floor_area)
+    if isinstance(building.get("volume"), (int, float)):
+        building["volume"] *= k
     if isinstance(building.get("exposed_perimeter"), (int, float)):
         building["exposed_perimeter"] *= s
 
@@ -764,6 +772,13 @@ def scale_bui_floor_area(
             surface["area"] *= factor
         if kind == "window" and isinstance(surface.get("width"), (int, float)):
             surface["width"] *= s
+
+    # Thermal bridges are linear: their total (W/K) and length follow the plan lengths.
+    construction = (scaled.get("building_parameters") or {}).get("construction")
+    if isinstance(construction, dict):
+        for key in ("thermal_bridge_heat_W_K", "thermal_bridge_length_m"):
+            if isinstance(construction.get(key), (int, float)):
+                construction[key] *= s
 
     capacities = (scaled.get("building_parameters") or {}).get("system_capacities")
     if isinstance(capacities, dict):
