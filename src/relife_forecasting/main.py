@@ -1528,6 +1528,7 @@ async def compare_ecm_thermal_daly(
         category=category,
         country=country,
         name=name,
+        floor_area=None,
         weather_source=weather_source,
         epw_file=epw_file,
         bui_json=bui_json,
