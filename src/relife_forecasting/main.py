@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi import Body, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import HTMLResponse
 
@@ -106,6 +107,9 @@ enhanced and calibrated within the ReLIFE project framework.
 """,
     version=__version__,
 )
+
+# Hourly results are large JSON (8760 rows x up to ~75 columns): compress them.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 app.include_router(health.router)
 app.include_router(archetypes.router)
@@ -899,6 +903,13 @@ def generate_report(payload: Dict[str, Any]):
         raise HTTPException(status_code=400, detail="Request JSON must contain 'hourly_sim' and 'building_area'.")
 
     hourly_sim = pd.DataFrame(hourly_records)
+    # The records come from /simulate with a 'timestamp' column; the report resamples
+    # by time, so it needs it back as a DatetimeIndex.
+    if "timestamp" in hourly_sim.columns:
+        hourly_sim["timestamp"] = pd.to_datetime(hourly_sim["timestamp"], errors="coerce")
+        if hourly_sim["timestamp"].isna().any():
+            raise HTTPException(status_code=400, detail="Invalid timestamps in 'hourly_sim'.")
+        hourly_sim = hourly_sim.set_index("timestamp")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         name_report = "energy_report"

@@ -52,6 +52,22 @@ _SUPPORTED_BUILDING_TYPE_CLASSES = frozenset(_PBE_OCCUPANTS_SCHEDULE_WORKDAYS.ke
 # JSON / Data utilities
 # =============================================================================
 
+def _numeric_array_to_list(values: Any) -> List[Any]:
+    """1-D numeric array -> list of floats where NaN/inf become None (valid JSON)."""
+    arr = np.asarray(values, dtype=float)
+    out = arr.tolist()
+    for i in np.flatnonzero(~np.isfinite(arr)):
+        out[i] = None
+    return out
+
+
+def _finite_or_none(value: Any) -> Any:
+    """Scalar float -> None when NaN/inf (JSON has no representation for them)."""
+    if isinstance(value, float) and not np.isfinite(value):
+        return None
+    return value
+
+
 def to_jsonable(obj: Any) -> Any:
     """
     Convert an arbitrary Python object into a JSON-serializable structure.
@@ -59,8 +75,11 @@ def to_jsonable(obj: Any) -> Any:
     This is a permissive converter intended for returning complex objects
     (numpy/pandas outputs) in API responses.
     """
-    if isinstance(obj, (str, int, float, bool)) or obj is None:
+    if isinstance(obj, (str, int, bool)) or obj is None:
         return obj
+
+    if isinstance(obj, float):
+        return _finite_or_none(obj)
 
     if isinstance(obj, dict):
         return {k: to_jsonable(v) for k, v in obj.items()}
@@ -69,13 +88,15 @@ def to_jsonable(obj: Any) -> Any:
         return [to_jsonable(v) for v in obj]
 
     if isinstance(obj, np.ndarray):
-        return obj.tolist()
+        if obj.ndim == 1 and np.issubdtype(obj.dtype, np.number):
+            return _numeric_array_to_list(obj)
+        return to_jsonable(obj.tolist())
 
     if isinstance(obj, np.generic):
-        return obj.item()
+        return to_jsonable(obj.item())
 
     if isinstance(obj, (pd.Series, pd.Index)):
-        return obj.tolist()
+        return to_jsonable(obj.to_numpy()) if obj.dtype != object else to_jsonable(obj.tolist())
 
     if isinstance(obj, pd.DataFrame):
         return {col: to_jsonable(obj[col].values) for col in obj.columns}
@@ -95,8 +116,11 @@ def clean_and_jsonable(obj: Any) -> Any:
       - recursively sanitize object arrays
       - sanitize DataFrames into column-wise dicts
     """
-    if isinstance(obj, (str, int, float, bool)) or obj is None:
+    if isinstance(obj, (str, int, bool)) or obj is None:
         return obj
+
+    if isinstance(obj, float):
+        return _finite_or_none(obj)
 
     if isinstance(obj, dict):
         return {k: clean_and_jsonable(v) for k, v in obj.items()}
@@ -105,16 +129,18 @@ def clean_and_jsonable(obj: Any) -> Any:
         return [clean_and_jsonable(x) for x in obj]
 
     if isinstance(obj, np.ndarray):
-        if np.issubdtype(obj.dtype, np.number):
-            return obj.astype(float).tolist()
+        if obj.ndim == 1 and np.issubdtype(obj.dtype, np.number):
+            return _numeric_array_to_list(obj)
         return [clean_and_jsonable(x) for x in obj.tolist()]
 
     if isinstance(obj, np.generic):
         if np.issubdtype(type(obj), np.number):
-            return float(obj)
+            return _finite_or_none(float(obj))
         return obj.item()
 
     if isinstance(obj, (pd.Series, pd.Index)):
+        if obj.dtype != object and np.issubdtype(obj.dtype, np.number):
+            return _numeric_array_to_list(obj.to_numpy())
         return [clean_and_jsonable(x) for x in obj.tolist()]
 
     if isinstance(obj, pd.DataFrame):
@@ -646,6 +672,11 @@ def simulate_building_worker(building_name: str, bui: dict, system: dict) -> Dic
       }
     """
     try:
+        # Same normalisation as /simulate: the HVAC input must be turned into the
+        # structure pybuildingenergy expects (dataframes), not used as stored.
+        validation = validate_bui_and_system(bui, system)
+        bui = validation["bui_checked"]
+        system = validation["system_checked"]
 
         @retry_on_transient_error()
         def _run_worker_pvgis():

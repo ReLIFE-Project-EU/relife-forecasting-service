@@ -42,6 +42,26 @@ Open [API documentation](http://localhost:9090/docs); `GET /health` checks avail
 
 Run tests with `uv run --frozen pytest`. Licensed under [EUPL-1.2](LICENSE).
 
+## Response size and execution time
+
+`pybuildingenergy` 2.1 returns about 75 hourly columns (2.0 returned 6), so a full `/simulate`
+response is about 27 MB of JSON (3.4 MB gzipped) and `/ecm_application` adds the hourly
+UNI/TS 11300 series for every scenario (about 14 MB each). Pass `lean=true` to `/simulate` or
+`/ecm_application` to get only `Q_H`, `Q_C`, `Q_HC`, `T_op`, `T_ext` and, for ECM, no hourly
+UNI/TS 11300 or PV tables (summaries are unchanged): about 1 MB per `/simulate` (154 KB gzipped).
+
+Responses above 1 KB are gzip-compressed when the client sends `Accept-Encoding: gzip`.
+`NaN`/`inf` values (e.g. `T_ve_source_eq`) are returned as `null`.
+
+Typical execution times (laptop, one building, one year, hourly): the ISO 52016 calculation in
+pybuildingenergy takes about 18-20 s and dominates every simulation; calling the library directly
+takes 20.5 s (EPW) or 27.6 s (PVGIS, which adds about 7 s to download the weather). `/simulate`
+takes 23-24 s with an EPW file and 27-30 s with PVGIS, so the service itself adds about 3 s
+(ISO 15316 system 1 s, serialisation about 1 s, compression). `/ecm_application` runs one
+simulation per scenario, one after the other (about 19 s each); `/ecm_application/daly` and
+`/ecm_application/report` simulate the baseline and one scenario (about 55 s). Endpoints that do not
+simulate answer in under 0.1 s.
+
 ## Archetype assumptions
 
 The country archetypes (`<CC>_SFH|MFH|AB_<period>`, e.g. `AT_SFH_1946-1969`) are built in
