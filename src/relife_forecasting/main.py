@@ -147,6 +147,11 @@ def get_building_config(
         None,
         description="Specific archetype name. Required when archetype=True.",
     ),
+    floor_area: Optional[float] = Query(
+        None,
+        gt=0,
+        description="Net floor area (m²). If different from the archetype value, the geometry (walls, windows, roof, slab, volume) is rescaled accordingly.",
+    ),
     payload: Optional[Dict[str, Any]] = Body(
         None,
         description="JSON body with 'bui' and 'system' when archetype=False.",
@@ -180,7 +185,7 @@ def get_building_config(
             "name": match["name"],
             "category": match["category"],
             "country": match["country"],
-            "bui": to_jsonable(match["bui"]),
+            "bui": to_jsonable(archetype_bui_with_floor_area(match["bui"], floor_area)),
             "system": to_jsonable(match["system"]),
             "uni11300_input_example": to_jsonable(
                 match.get("uni11300")
@@ -297,6 +302,7 @@ async def simulate_building(
     category: Optional[str] = Query(None, description="Building category. Required when archetype=True."),
     country: Optional[str] = Query(None, description="Country. Required when archetype=True."),
     name: Optional[str] = Query(None, description="Archetype name. Required when archetype=True."),
+    floor_area: Optional[float] = Query(None, gt=0, description="Net floor area (m²) for archetypes. If different from the archetype value, the geometry (walls, windows, roof, slab, volume) is rescaled accordingly."),
     weather_source: str = Query("pvgis", description="Weather source: 'pvgis' or 'epw'."),
     epw_file: Optional[UploadFile] = File(None, description="EPW weather file (required when weather_source='epw')."),
     bui_json: Optional[str] = Form(None, description="JSON string with the BUI data (required when archetype=False)."),
@@ -323,7 +329,7 @@ async def simulate_building(
         if match is None:
             raise HTTPException(status_code=404, detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.")
 
-        bui_internal = match["bui"]
+        bui_internal = archetype_bui_with_floor_area(match["bui"], floor_area)
         system_internal = match["system"]
 
     else:
@@ -1007,6 +1013,7 @@ async def simulate_uvalues(
     category: Optional[str] = Query(None, description="Building category. Required when archetype=True."),
     country: Optional[str] = Query(None, description="Country. Required when archetype=True."),
     name: Optional[str] = Query(None, description="Archetype name. Required when archetype=True."),
+    floor_area: Optional[float] = Query(None, gt=0, description="Net floor area (m²) for archetypes. If different from the archetype value, the geometry (walls, windows, roof, slab, volume) is rescaled accordingly."),
     weather_source: str = Query("pvgis", description="Weather source: 'pvgis' or 'epw'."),
     epw_file: Optional[UploadFile] = File(None, description="EPW weather file (required when weather_source='epw')."),
     bui_json: Optional[str] = Form(None, description="JSON string with the BUI (required when archetype=False)."),
@@ -1084,7 +1091,7 @@ async def simulate_uvalues(
         )
         if match is None:
             raise HTTPException(status_code=404, detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.")
-        base_bui = match["bui"]
+        base_bui = archetype_bui_with_floor_area(match["bui"], floor_area)
         base_system = match.get("system")
         base_uni_cfg = copy.deepcopy(
             match.get("uni11300")
@@ -1648,6 +1655,7 @@ async def generate_ecm_application_report(
     category: Optional[str] = Query(None, description="Building category. Required when archetype=True."),
     country: Optional[str] = Query(None, description="Country. Required when archetype=True."),
     name: Optional[str] = Query(None, description="Archetype name. Required when archetype=True."),
+    floor_area: Optional[float] = Query(None, gt=0, description="Net floor area (m²) for archetypes. If different from the archetype value, the geometry (walls, windows, roof, slab, volume) is rescaled accordingly."),
     weather_source: str = Query("pvgis", description="Weather source: 'pvgis' or 'epw'."),
     epw_file: Optional[UploadFile] = File(None, description="EPW weather file (required when weather_source='epw')."),
     bui_json: Optional[str] = Form(None, description="JSON string with the BUI (required when archetype=False)."),
@@ -1710,7 +1718,7 @@ async def generate_ecm_application_report(
                 status_code=404,
                 detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.",
             )
-        base_bui = match["bui"]
+        base_bui = archetype_bui_with_floor_area(match["bui"], floor_area)
         base_system = match.get("system")
         base_uni_cfg = copy.deepcopy(
             match.get("uni11300")
