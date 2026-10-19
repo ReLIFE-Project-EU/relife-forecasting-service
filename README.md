@@ -63,25 +63,6 @@ Values the workbooks do not provide are assumptions:
   estimated from the country's heating degree days (Eurostat 2014-2023); cooling = 100 W/m2.
 - **Solar absorptance** of roof and walls is 0.6 on every orientation.
 
-### Provisional thermal-mass mode
-
-Archetypes retain their original thermal-mass inputs by default
-(`RELIFE_EXTENDED_THERMAL_MASS_MODE=legacy`). To opt in to an experimental conversion,
-set `RELIFE_EXTENDED_THERMAL_MASS_MODE=provisional` before starting the service.
-The catalogue is prepared once at startup; restart the service after changing the mode.
-Other values are rejected at startup.
-
-pybuildingenergy 2.1.0 does not recognise the source `class_ii` and `class_iii` labels,
-so their envelope heat capacities are ignored. Provisional mode maps both to `class_d`
-(distributed mass), retains `class_i`, and assumes the source roof, slab and wall
-capacities are totals in J/K. It divides them by the corresponding gross areas to
-produce J/(m²·K); the wall divisor is the combined gross wall area before subtracting
-windows or splitting across four sides. Floor-area scaling preserves these areal values.
-
-The class mapping and interpretation of the source capacities remain assumptions
-requiring domain review. The workbook checker does not validate thermal-mass inputs.
-This mode applies to generated archetypes; custom building inputs are used as supplied.
-
 ## Archetype floor area (`floor_area`)
 
 The archetype endpoints `POST /building`, `POST /simulate`, `POST /ecm_application` and

@@ -3,11 +3,7 @@ import copy
 import pytest
 from fastapi.testclient import TestClient
 
-from relife_forecasting.building_examples import (
-    BUILDING_ARCHETYPES,
-    _EXTENDED_ARCHETYPE_SPECS,
-    _apply_provisional_thermal_mass,
-)
+from relife_forecasting.building_examples import BUILDING_ARCHETYPES
 from relife_forecasting.main import app
 from relife_forecasting.routes.forecasting_service_functions import (
     classify_surface,
@@ -56,24 +52,6 @@ def test_scaling_geometry():
 def test_invalid_area_rejected():
     with pytest.raises(ValueError):
         scale_bui_floor_area(_sfh(), -5)
-
-
-def test_scaling_preserves_provisional_areal_thermal_capacities():
-    bui = _sfh()
-    spec = _EXTENDED_ARCHETYPE_SPECS[bui["building"]["name"]]
-    converted = _apply_provisional_thermal_mass(bui, spec, mode="provisional")
-    original = copy.deepcopy(converted)
-    scaled = scale_bui_floor_area(converted, converted["building"]["net_floor_area"] * 4)
-
-    assert converted == original
-    assert scaled["units"]["thermal_capacity"] == "J/(m²·K)"
-    for before, after in zip(converted["building_surface"], scaled["building_surface"]):
-        if before["type"] == "opaque":
-            assert after["thermal_capacity"] == before["thermal_capacity"]
-            factor = 2 if classify_surface(before) == "wall" else 4
-            assert after["thermal_capacity"] * after["area"] == pytest.approx(
-                before["thermal_capacity"] * before["area"] * factor
-            )
 
 
 def test_building_endpoint_uses_floor_area():

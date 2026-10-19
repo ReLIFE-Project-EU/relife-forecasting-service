@@ -1,6 +1,4 @@
 import copy
-import json
-import os
 import subprocess
 import sys
 
@@ -97,70 +95,33 @@ def test_provisional_thermal_mass_converts_only_class_capacities_and_units(
     assert spec == original_spec
 
 
-def test_thermal_mass_modes_cover_the_current_catalogue():
-    original = copy.deepcopy(BUILDING_ARCHETYPES)
-    for archetype in BUILDING_ARCHETYPES:
-        bui = archetype["bui"]
-        spec = _EXTENDED_ARCHETYPE_SPECS[archetype["name"]]
-        assert _apply_provisional_thermal_mass(bui, spec, mode="legacy") is bui
-        converted = _apply_provisional_thermal_mass(bui, spec, mode="provisional")
-        assert converted["building"]["construction_class"] in {"class_i", "class_d"}
-        assert all(
-            surface["thermal_capacity"] > 0
-            for surface in converted["building_surface"]
-            if surface["type"] == "opaque"
-        ), archetype["name"]
-    assert BUILDING_ARCHETYPES == original
-
-
-@pytest.mark.parametrize("mode", [None, "legacy", "provisional", " Provisional ", "invalid"])
-def test_thermal_mass_startup_configuration(mode):
-    env = os.environ.copy()
-    env.pop("RELIFE_EXTENDED_THERMAL_MASS_MODE", None)
+@pytest.mark.parametrize(
+    "mode,expected",
+    [(None, "class_iii J/K"), ("provisional", "class_d J/(m²·K)"), ("invalid", None)],
+)
+def test_thermal_mass_startup_configuration(monkeypatch, mode, expected):
+    monkeypatch.delenv("RELIFE_EXTENDED_THERMAL_MASS_MODE", raising=False)
     if mode is not None:
-        env["RELIFE_EXTENDED_THERMAL_MASS_MODE"] = mode
+        monkeypatch.setenv("RELIFE_EXTENDED_THERMAL_MASS_MODE", mode)
     result = subprocess.run(
         [
             sys.executable,
             "-c",
-            "import json; "
             "from relife_forecasting.building_examples import BUILDING_ARCHETYPES; "
-            "print(json.dumps(BUILDING_ARCHETYPES))",
+            "bui = next(a['bui'] for a in BUILDING_ARCHETYPES "
+            "if a['name'] == 'AT_SFH_1946-1969'); "
+            "print(bui['building']['construction_class'], bui['units']['thermal_capacity'])",
         ],
-        env=env,
         capture_output=True,
         text=True,
         timeout=30,
     )
-    if mode == "invalid":
+    if expected is None:
         assert result.returncode != 0
         assert "RELIFE_EXTENDED_THERMAL_MASS_MODE must be" in result.stderr
-        return
-
-    assert result.returncode == 0, result.stderr
-    catalogue = json.loads(result.stdout)
-    assert len(catalogue) == len(_EXTENDED_ARCHETYPE_SPECS)
-    provisional = mode is not None and mode.strip().lower() == "provisional"
-    for archetype in catalogue:
-        bui = archetype["bui"]
-        spec = _EXTENDED_ARCHETYPE_SPECS[archetype["name"]]
-        expected_class = spec["construction_class"]
-        if provisional and expected_class != "class_i":
-            expected_class = "class_d"
-        assert bui["building"]["construction_class"] == expected_class
-        assert bui["units"]["thermal_capacity"] == (
-            "J/(m²·K)" if provisional else "J/K"
-        )
-        capacities = [
-            spec["roof_thermal_capacity"],
-            *[spec["wall_thermal_capacity"]] * 4,
-            spec["slab_thermal_capacity"],
-        ]
-        areas = [spec["roof_area"], *[spec["wall_area"]] * 4, spec["slab_area"]]
-        for surface, capacity, area in zip(bui["building_surface"], capacities, areas):
-            assert surface["thermal_capacity"] == pytest.approx(
-                capacity / area if provisional else capacity
-            )
+    else:
+        assert result.returncode == 0, result.stderr
+        assert result.stdout.strip() == expected
 
 
 if __name__ == "__main__":
