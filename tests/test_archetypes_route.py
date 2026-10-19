@@ -16,7 +16,7 @@ def test_archetypes_route_filters_by_country_type_and_name():
         params={
             "country": "Austria",
             "building_type": "Single Family House",
-            "name": "SFH_1946_1969",
+            "name": "AT_SFH_1946-1969",
         },
     )
 
@@ -27,14 +27,14 @@ def test_archetypes_route_filters_by_country_type_and_name():
     assert payload["filters"] == {
         "country": "Austria",
         "building_type": "Single Family House",
-        "name": "SFH_1946_1969",
+        "name": "AT_SFH_1946-1969",
     }
     assert len(payload["archetypes"]) == 1
     archetype = payload["archetypes"][0]
-    assert archetype["name"] == "SFH_1946_1969"
+    assert archetype["name"] == "AT_SFH_1946-1969"
     assert archetype["country"] == "Austria"
-    assert archetype["surfaces"]["wall"]["area"] == pytest.approx(208.8)
-    assert archetype["surfaces"]["window"]["area"] == pytest.approx(39.6)
+    assert archetype["surfaces"]["wall"]["area"] == pytest.approx(176.7)
+    assert archetype["surfaces"]["window"]["area"] == pytest.approx(36.2)
 
 
 def test_generated_archetype_splits_surface_areas_across_sides():

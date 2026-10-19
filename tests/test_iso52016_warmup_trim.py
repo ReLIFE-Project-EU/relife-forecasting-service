@@ -60,3 +60,16 @@ def test_rejects_a_warmup_period_the_copy_check_cannot_see() -> None:
 
     with pytest.raises(ValueError, match="expected 8760 or 8784"):
         drop_iso52016_warmup_rows(pd.concat([relabelled, year]))
+
+
+def test_full_year_with_a_repeated_dst_label_is_left_untouched() -> None:
+    """PVGIS path of pybuildingenergy 2.1: 8760 rows, one label repeated at the DST change."""
+    year = _one_year()
+    labels = year.index.to_list()
+    labels[5000] = labels[4999]
+    year.index = pd.DatetimeIndex(labels)
+
+    result = drop_iso52016_warmup_rows(year)
+
+    assert len(result) == 8760
+    assert result["Q_H"].tolist() == list(range(8760))

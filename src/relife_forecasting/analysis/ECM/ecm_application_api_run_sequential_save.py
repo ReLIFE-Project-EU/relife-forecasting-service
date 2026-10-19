@@ -71,7 +71,7 @@ def call_run_sequential_save(
     archetype: bool = True,
     category: str = "Single Family House",
     country: str = "Greece",
-    name: str = "SFH_Greece_1946_1969",
+    name: str = "GR_SFH_1946-1969",
     weather_source: str = "pvgis",
     epw_path: Optional[Path] = None,
     ecm_options: str = "wall,window",
@@ -129,7 +129,7 @@ def call_ecm_report(
     archetype: bool = True,
     category: str = "Single Family House",
     country: str = "Greece",
-    name: str = "SFH_Greece_1946_1969",
+    name: str = "GR_SFH_1946-1969",
     weather_source: str = "pvgis",
     epw_path: Optional[Path] = None,
     scenario_elements: Optional[str] = None,
@@ -188,7 +188,7 @@ def main() -> None:
         archetype=True,
         category="Single Family House",
         country="Greece",
-        name="SFH_Greece_1946_1969",
+        name="GR_SFH_1946-1969",
         weather_source=WEATHER_SOURCE,
         epw_path=EPW_PATH if WEATHER_SOURCE == "epw" else None,
         ecm_options=ecm_options,   # combos: baseline + wall + window + wall+window
@@ -236,7 +236,7 @@ def main() -> None:
                 archetype=True,
                 category="Single Family House",
                 country="Greece",
-                name="SFH_Greece_1946_1969",
+                name="GR_SFH_1946-1969",
                 weather_source=WEATHER_SOURCE,
                 epw_path=EPW_PATH if WEATHER_SOURCE == "epw" else None,
                 scenario_elements=",".join(report_elements),
@@ -246,7 +246,7 @@ def main() -> None:
                 report_title="ECM comparison report",
             )
             report_path = build_report_path(
-                building_name="SFH_Greece_1946_1969",
+                building_name="GR_SFH_1946-1969",
                 output_dir="results/ecm_api",
                 epw_path=EPW_PATH if WEATHER_SOURCE == "epw" else None,
             )

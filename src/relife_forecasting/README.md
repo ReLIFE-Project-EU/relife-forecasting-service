@@ -1229,19 +1229,19 @@ Each scenario includes:
 ### 1) Multi-scenario (all combinations) + baseline, PVGIS
 ```bash
 curl -X POST \
-  "http://127.0.0.1:9091/ecm_application?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=pvgis&u_wall=0.5&u_window=1.0&include_baseline=true"
+  "http://127.0.0.1:9091/ecm_application?archetype=true&category=Single%20Family%20House&country=Greece&name=GR_SFH_1946-1969&weather_source=pvgis&u_wall=0.5&u_window=1.0&include_baseline=true"
 ```
 
 ### 2) Single scenario by elements (wall + window), PVGIS
 ```bash
 curl -X POST \
-  "http://127.0.0.1:9091/ecm_application?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=pvgis&u_wall=0.5&u_window=1.0&scenario_elements=wall,window"
+  "http://127.0.0.1:9091/ecm_application?archetype=true&category=Single%20Family%20House&country=Greece&name=GR_SFH_1946-1969&weather_source=pvgis&u_wall=0.5&u_window=1.0&scenario_elements=wall,window"
 ```
 
 ### 3) Baseline only, EPW
 ```bash
 curl -X POST \
-  "http://127.0.0.1:9091/ecm_application?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=epw&baseline_only=true" \
+  "http://127.0.0.1:9091/ecm_application?archetype=true&category=Single%20Family%20House&country=Greece&name=GR_SFH_1946-1969&weather_source=epw&baseline_only=true" \
   -F "epw_file=@src/relife_forecasting/epw_weather/GRC_Athens.167160_IWEC.epw"
 ```
 
@@ -1505,13 +1505,13 @@ BUI_<building_slug>__<combo_tag>.json
 ### PVGIS mode
 ```bash
 curl -X POST \
-  "http://127.0.0.1:9091/ecm_application/run_sequential_save?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=pvgis&ecm_options=wall,window&u_wall=0.5&u_window=1.0&include_baseline=true&output_dir=results/ecm_api&save_bui=true&bui_dir=building_examples_ecm"
+  "http://127.0.0.1:9091/ecm_application/run_sequential_save?archetype=true&category=Single%20Family%20House&country=Greece&name=GR_SFH_1946-1969&weather_source=pvgis&ecm_options=wall,window&u_wall=0.5&u_window=1.0&include_baseline=true&output_dir=results/ecm_api&save_bui=true&bui_dir=building_examples_ecm"
 ```
 
 ### EPW mode (multipart upload)
 ```bash
 curl -X POST \
-  "http://127.0.0.1:9091/ecm_application/run_sequential_save?archetype=true&category=Single%20Family%20House&country=Greece&name=SFH_Greece_1946_1969&weather_source=epw&ecm_options=wall,window&u_wall=0.5&u_window=1.0&include_baseline=true" \
+  "http://127.0.0.1:9091/ecm_application/run_sequential_save?archetype=true&category=Single%20Family%20House&country=Greece&name=GR_SFH_1946-1969&weather_source=epw&ecm_options=wall,window&u_wall=0.5&u_window=1.0&include_baseline=true" \
   -F "epw_file=@src/relife_forecasting/epw_weather/GRC_Athens.167160_IWEC.epw"
 ```
 

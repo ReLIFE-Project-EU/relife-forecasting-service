@@ -302,25 +302,13 @@ def test_main_library_builds_multi_scenario_report(monkeypatch, tmp_path):
     assert "20.0%" in html
 
 
-def test_renovation_scenario_library_includes_pv_and_condensing_boiler():
-    scenarios = {scenario.name: scenario for scenario in api_module.RENOVATION_SCENARIOS}
-
-    assert "condensing_boiler" in scenarios
-    assert scenarios["condensing_boiler"].uni_generation_mode == "condensing_boiler"
-
-    assert "pv_only" in scenarios
-    assert scenarios["pv_only"].use_pv is True
-
-    assert "deep_retrofit_hp_pv" in scenarios
-    assert scenarios["deep_retrofit_hp_pv"].use_heat_pump is True
-    assert scenarios["deep_retrofit_hp_pv"].use_pv is True
-
-
-def test_run_predefined_renovation_scenarios_routes_pv_and_ecm(monkeypatch, tmp_path):
+def test_run_predefined_renovation_scenarios_uses_ecm_for_all_scenarios(monkeypatch, tmp_path):
     calls = []
+    tasks = []
 
     def _fake_ecm(task):
         calls.append(("ecm", task.scenario_name, list(task.combo)))
+        tasks.append(task)
         return {
             "status": "success",
             "scenario_name": task.scenario_name,
@@ -333,17 +321,7 @@ def test_run_predefined_renovation_scenarios_routes_pv_and_ecm(monkeypatch, tmp_
         }
 
     def _fake_pv(task):
-        calls.append(("pv", task.scenario_name, list(task.combo)))
-        return {
-            "status": "success",
-            "scenario_name": task.scenario_name,
-            "combo": task.combo,
-            "combo_tag": "_".join(task.combo) if task.combo else "baseline",
-            "scenario_id": task.scenario_name,
-            "elapsed": 0.1,
-            "size_kb": 1.0,
-            "runner_type": "iso52016_uni11300_pv",
-        }
+        raise AssertionError("PV scenarios must use the integrated ECM endpoint")
 
     monkeypatch.setattr(api_module, "call_ecm_application", _fake_ecm)
     monkeypatch.setattr(api_module, "call_iso52016_uni11300_pv", _fake_pv)
@@ -373,12 +351,15 @@ def test_run_predefined_renovation_scenarios_routes_pv_and_ecm(monkeypatch, tmp_
         archetype=True,
         category="Single Family House",
         country="Greece",
-        name="SFH_Greece_1946_1969",
+        name="GR_SFH_1946-1969",
     )
 
     assert stats["successful"] == 3
     assert calls == [
         ("ecm", "baseline", []),
         ("ecm", "condensing_boiler", ["condensing_boiler"]),
-        ("pv", "pv_only", ["pv"]),
+        ("ecm", "pv_only", ["pv"]),
     ]
+    assert tasks[1].uni_generation_mode == "condensing_boiler"
+    assert tasks[2].use_pv is True
+    assert tasks[2].pv_config == api_module.DEFAULT_PV_CONFIG
