@@ -42,74 +42,38 @@ Open [API documentation](http://localhost:9090/docs); `GET /health` checks avail
 
 Run tests with `uv run --frozen pytest`. Licensed under [EUPL-1.2](LICENSE).
 
-## Response size and execution time
-
-`pybuildingenergy` 2.1 returns about 75 hourly columns (2.0 returned 6), so a full `/simulate`
-response is about 27 MB of JSON (3.4 MB gzipped) and `/ecm_application` adds the hourly
-UNI/TS 11300 series for every scenario (about 14 MB each). Pass `lean=true` to `/simulate` or
-`/ecm_application` to get only `Q_H`, `Q_C`, `Q_HC`, `T_op`, `T_ext` and, for ECM, no hourly
-UNI/TS 11300 or PV tables (summaries are unchanged): about 1 MB per `/simulate` (154 KB gzipped).
-
-Responses above 1 KB are gzip-compressed when the client sends `Accept-Encoding: gzip`.
-`NaN`/`inf` values (e.g. `T_ve_source_eq`) are returned as `null`.
-
-Typical execution times (laptop, one building, one year, hourly): the ISO 52016 calculation in
-pybuildingenergy takes about 18-20 s and dominates every simulation; calling the library directly
-takes 20.5 s (EPW) or 27.6 s (PVGIS, which adds about 7 s to download the weather). `/simulate`
-takes 23-24 s with an EPW file and 27-30 s with PVGIS, so the service itself adds about 3 s
-(ISO 15316 system 1 s, serialisation about 1 s, compression). `/ecm_application` runs one
-simulation per scenario, one after the other (about 19 s each); `/ecm_application/daly` and
-`/ecm_application/report` simulate the baseline and one scenario (about 55 s). Endpoints that do not
-simulate answer in under 0.1 s.
-
 ## Archetype assumptions
 
-The country archetypes (`<CC>_SFH|MFH|AB_<period>`, e.g. `AT_SFH_1946-1969`) are built in
-`building_examples.py` from the workbooks in `EU_new archetypes/` (geometry, U-values, g-value,
-generation efficiencies). `python scripts/check_archetypes_vs_excel.py` verifies code against workbooks.
-Values the workbooks do not provide are assumptions:
+Country archetypes (like `AT_SFH_1946-1969`) are generated in `building_examples.py` using data from Excel workbooks in `EU_new archetypes/`. The script `python scripts/check_archetypes_vs_excel.py` checks that the code matches these workbooks. When data is missing, the following assumptions are made:
 
-- **Net floor area** is per building: footprint x floors. `building.height` = floors x 2.7 m and
-  `building.volume` = footprint x floors x 2.7 m.
-- **Ventilation**: pybuildingenergy >= 2.1 only applies ventilation if `building_parameters.ventilation`
-  is present, so each archetype declares a `constant_ach` component (rate by period, applied to
-  `building.volume`): 0.90 (0-1945), 0.80, 0.75, 0.70, 0.65, 0.60, 0.55 (2011-now) 1/h.
-- **Thermal bridges**: total `thermal_bridge_heat_W_K` = delta-U x gross envelope area, with delta-U
-  0.10 (to 1969), 0.08 (1970-89), 0.06 (1990s), 0.05 (2000-10), 0.03 (2011-now) W/m2K.
-- **Internal gains and profiles**: EN 16798-1 residential values and schedules. Occupants
-  2.8 W/m2 (houses) / 4.2 (apartments), appliances 2.4 / 3.0, lighting 3.0. Heating 05:00-23:00 with
-  17 C setback; cooling follows occupancy; infiltration is continuous.
-- **Capacities**: heating = 1.25 x design heat loss x (20 C - design outdoor temperature), the latter
-  estimated from the country's heating degree days (Eurostat 2014-2023); cooling = 100 W/m2.
-- **Solar absorptance** of roof and walls is 0.6 on every orientation.
+- **Net floor area**: footprint × number of floors. Height = floors × 2.7 m. Volume = footprint × floors × 2.7 m.
+- **Ventilation**: Each archetype has a constant air change rate per hour (ACH) by construction period: 0.90 (oldest) down to 0.55 (most recent), applied to volume.
+- **Thermal bridges**: Total = delta-U × envelope area, with delta-U decreasing from 0.10 to 0.03 W/m²K over time.
+- **Internal gains**: Based on EN 16798-1 standards. Occupants: 2.8 W/m² (houses), 4.2 (apartments); appliances: 2.4/3.0; lighting: 3.0. Heating: 5:00–23:00 (17°C setback); cooling follows occupancy; infiltration runs continuously.
+- **System capacities**: Heating = 1.25 × design heat loss × (20°C – outdoor design temp, which is estimated from national heating degree days). Cooling: 100 W/m².
+- **Solar absorptance**: 0.6 for both roof and walls, all directions.
 
 ## Archetype floor area (`floor_area`)
 
-The archetype endpoints `POST /building`, `POST /simulate`, `POST /ecm_application` and
-`POST /ecm_application/report` accept an optional `floor_area` query parameter (m², > 0).
+The archetype endpoints `POST /building`, `POST /simulate`, `POST /ecm_application` and `POST /ecm_application/report` accept an optional `floor_area` query parameter (m², > 0).
 
 - Omitted, or equal to the archetype's `building.net_floor_area`: the archetype is used unchanged.
-- Different from the archetype value: the BUI is rescaled with
-  `scale_bui_floor_area()` (`routes/forecasting_service_functions.py`) before use.
-  The archetype stored in `BUILDING_ARCHETYPES` is never modified.
+- Different from the archetype value: the BUI is rescaled with `scale_bui_floor_area()` (`routes/forecasting_service_functions.py`) before use. The archetype stored in `BUILDING_ARCHETYPES` is never modified.
 - Ignored when `archetype=false` (custom BUIs are used as sent).
 
-The building keeps the same footprint shape, `height` and `n_floors`. With
-`k = floor_area / archetype_floor_area` and `s = sqrt(k)`:
+The building keeps the same footprint shape, `height` and `n_floors`. With `k = floor_area / archetype_floor_area` and `s = sqrt(k)`:
 
-| BUI field | Change |
-|---|---|
-| `building.net_floor_area` | set to `floor_area` |
-| roof and slab-to-ground `area` | x k |
-| `building.exposed_perimeter` | x s |
-| opaque vertical walls `area` | x s (perimeter x unchanged height) |
-| windows `area` and `width` | x s (same window-to-wall ratio) |
-| `system_capacities` (heating, cooling) | x k |
-| volume (floor area x height) | x k, follows from the above |
+| BUI field                              | Change                             |
+| -------------------------------------- | ---------------------------------- |
+| `building.net_floor_area`              | set to `floor_area`                |
+| roof and slab-to-ground `area`         | x k                                |
+| `building.exposed_perimeter`           | x s                                |
+| opaque vertical walls `area`           | x s (perimeter x unchanged height) |
+| windows `area` and `width`             | x s (same window-to-wall ratio)    |
+| `system_capacities` (heating, cooling) | x k                                |
+| volume (floor area x height)           | x k, follows from the above        |
 
-Walls and windows grow more slowly than the floor area, so the envelope per m² decreases and
-energy needs per m² drop for larger buildings. U-values, orientations, setpoints and
-`height` are not changed. Example:
+Walls and windows grow more slowly than the floor area, so the envelope per m² decreases and energy needs per m² drop for larger buildings. U-values, orientations, setpoints and `height` are not changed. Example:
 
 ```
 POST /simulate?archetype=true&category=Single Family House&country=Austria&name=AT_SFH_1946-1969&floor_area=187.5&weather_source=pvgis
@@ -127,8 +91,3 @@ python scripts/run_floor_area_comparison.py --floor-area 160 --weather epw \
 ```
 
 See [scripts/run_floor_area_comparison.py](scripts/run_floor_area_comparison.py).
-
-## Simulation library and Sankey
-
-The service uses `pybuildingenergy==2.1.0`. The ISO 52016 Sankey diagram is never generated:
-`run_iso52016_simulation` always calls the library with `sankey_graph=False`.
