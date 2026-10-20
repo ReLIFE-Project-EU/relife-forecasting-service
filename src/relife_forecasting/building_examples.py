@@ -11,11 +11,16 @@
 # - NO pandas.DataFrame objects (FastAPI/JSON can't serialize them)
 # - Keep everything as dict/list/str/float/int/bool/None
 # - Provide BUILDING_ARCHETYPES + UNI11300_SIMULATION_EXAMPLE as expected by main.py
+# - Generated archetypes use the original thermal-mass inputs by default.
+#   RELIFE_EXTENDED_THERMAL_MASS_MODE=provisional applies the class mapping and
+#   capacity conversion described in _apply_provisional_thermal_mass below.
 # -----------------------------------------------------------------------------
 
 from __future__ import annotations
 
-from typing import Optional, Any, Dict, List
+import copy
+import os
+from typing import Any, Dict, List, Optional
 
 
 # -----------------------------------------------------------------------------
@@ -16962,6 +16967,59 @@ _EXTENDED_ARCHETYPE_SPECS: Dict[str, Dict[str, Any]] = {
 }
 
 
+_EXTENDED_THERMAL_MASS_MODE = os.getenv(
+    "RELIFE_EXTENDED_THERMAL_MASS_MODE", "legacy"
+).strip().lower()
+if _EXTENDED_THERMAL_MASS_MODE not in {"legacy", "provisional"}:
+    raise ValueError(
+        "RELIFE_EXTENDED_THERMAL_MASS_MODE must be 'legacy' or 'provisional'."
+    )
+
+
+def _apply_provisional_thermal_mass(
+    bui: Dict[str, Any], spec: Dict[str, Any], *, mode: str
+) -> Dict[str, Any]:
+    """Apply provisional thermal-mass values to generated archetypes.
+
+    pybuildingenergy supports class_i but ignores thermal capacities for
+    class_ii and class_iii. It expects capacities per square metre, while
+    the archetype values appear to describe totals.
+
+    In provisional mode, assume each source capacity covers all walls
+    combined, the roof, or the ground floor, and divide it by the corresponding
+    gross area. Keep class_i and map class_ii and class_iii to class_d, which
+    distributes thermal mass evenly through the construction.
+
+    Default legacy mode leaves the inputs unchanged.
+    """
+    if mode == "legacy":
+        return bui
+    if mode != "provisional":
+        raise ValueError(f"Unknown extended thermal-mass mode: {mode}")
+
+    source_class = spec["construction_class"]
+    if source_class not in {"class_i", "class_ii", "class_iii"}:
+        raise ValueError(f"Unknown extended construction class: {source_class}")
+
+    prepared = copy.deepcopy(bui)
+    if source_class != "class_i":
+        prepared["building"]["construction_class"] = "class_d"
+
+    areal_capacity = {
+        "Roof surface": spec["roof_thermal_capacity"] / spec["roof_area"],
+        "Slab to ground": spec["slab_thermal_capacity"] / spec["slab_area"],
+    }
+    wall_areal_capacity = spec["wall_thermal_capacity"] / spec["wall_area"]
+    for surface in prepared["building_surface"]:
+        if surface["name"].startswith("Opaque ") and surface["name"].endswith(" surface"):
+            surface["thermal_capacity"] = wall_areal_capacity
+        elif surface["name"] in areal_capacity:
+            surface["thermal_capacity"] = areal_capacity[surface["name"]]
+
+    prepared["units"]["thermal_capacity"] = "J/(m²·K)"
+    return prepared
+
+
 _EXTENDED_ARCHETYPE_INDEX: List[Dict[str, Any]] = []
 for _arch_name, _spec in _EXTENDED_ARCHETYPE_SPECS.items():
     # Some specs ship a placeholder net_floor_area of 0.0. A zero area breaks
@@ -17004,6 +17062,9 @@ for _arch_name, _spec in _EXTENDED_ARCHETYPE_SPECS.items():
         infiltration_rate=_spec.get("infiltration_rate", _ACH_BY_PERIOD[_period]),
         occupants_full_load=_spec.get("occupants_full_load", _OCCUPANT_LOAD_BY_CLASS[_spec["building_type_class"]]),
         appliances_full_load=_spec.get("appliances_full_load", _APPLIANCE_LOAD_BY_CLASS[_spec["building_type_class"]]),
+    )
+    _bui = _apply_provisional_thermal_mass(
+        _bui, _spec, mode=_EXTENDED_THERMAL_MASS_MODE
     )
     _uni = _make_extended_uni11300(
         heating_eta_generation=_spec["heating_eta_generation"],
