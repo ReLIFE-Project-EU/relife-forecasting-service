@@ -5,7 +5,7 @@ import inspect
 import logging
 import time
 from functools import wraps
-from typing import TypeVar, Callable
+from typing import Callable, TypeVar
 
 try:
     # `requests` is used by the calling code; include its base exception when available.
@@ -52,7 +52,7 @@ def retry_on_transient_error(
     Uses exponential backoff between attempts.  Only retries on exceptions
     that are subclasses of ``TRANSIENT_EXCEPTIONS``; all other exceptions
     propagate immediately.
-    
+
     Supports both sync and async functions; will automatically detect coroutines
     and use asyncio.sleep instead of time.sleep to avoid blocking the event loop.
     """
@@ -65,7 +65,7 @@ def retry_on_transient_error(
 
     def decorator(fn: Callable[..., T]) -> Callable[..., T]:
         is_coroutine = inspect.iscoroutinefunction(fn)
-        
+
         @wraps(fn)
         async def async_wrapper(*args, **kwargs) -> T:
             delay = initial_delay

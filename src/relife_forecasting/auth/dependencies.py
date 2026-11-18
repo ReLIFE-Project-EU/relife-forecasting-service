@@ -22,9 +22,7 @@ security_optional = HTTPBearer(auto_error=False)
 logger = get_logger(__name__)
 
 
-async def _authenticate_with_supabase(
-    token: str, settings: SettingsDep
-) -> AuthenticatedUser:
+async def _authenticate_with_supabase(token: str, settings: SettingsDep) -> AuthenticatedUser:
     """Authenticate user via Supabase."""
 
     client = await get_service_client(settings)
@@ -38,9 +36,7 @@ async def _authenticate_with_supabase(
     )
 
 
-async def _authenticate_with_keycloak(
-    token: str, settings: SettingsDep
-) -> AuthenticatedUser:
+async def _authenticate_with_keycloak(token: str, settings: SettingsDep) -> AuthenticatedUser:
     """Authenticate user via Keycloak JWT validation."""
 
     return await validate_keycloak_jwt(
@@ -164,9 +160,7 @@ async def get_authenticated_user_with_roles(
     )
 
 
-AuthenticatedUserDep = Annotated[
-    AuthenticatedUser, Depends(get_authenticated_user_without_roles)
-]
+AuthenticatedUserDep = Annotated[AuthenticatedUser, Depends(get_authenticated_user_without_roles)]
 """Dependency that provides an authenticated user without Keycloak roles.
 Use this dependency when basic user authentication is needed but role information is not required.
 """
@@ -207,9 +201,7 @@ Use this for public endpoints that can optionally track user information for log
 """
 
 
-async def get_user_client(
-    current_user: AuthenticatedUserDep, settings: SettingsDep
-) -> AsyncClient:
+async def get_user_client(current_user: AuthenticatedUserDep, settings: SettingsDep) -> AsyncClient:
     """Create a Supabase client with user context.
     This client respects Row Level Security policies based on the user's token.
 
@@ -241,9 +233,7 @@ async def get_user_client(
     client = await create_async_client(
         settings.supabase_url,
         settings.supabase_key,
-        options=ClientOptions(
-            headers={"Authorization": f"Bearer {current_user.token}"}
-        ),
+        options=ClientOptions(headers={"Authorization": f"Bearer {current_user.token}"}),
     )
 
     return client

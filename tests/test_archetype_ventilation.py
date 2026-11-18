@@ -9,7 +9,10 @@ from relife_forecasting.routes.forecasting_service_functions import (
     scale_bui_floor_area,
 )
 
-EPW = Path(__file__).resolve().parents[1] / "src/relife_forecasting/epw_weather/GRC_Athens.167160_IWEC.epw"
+EPW = (
+    Path(__file__).resolve().parents[1]
+    / "src/relife_forecasting/epw_weather/GRC_Athens.167160_IWEC.epw"
+)
 
 
 def _arch(name):
@@ -23,7 +26,10 @@ def test_every_archetype_declares_ventilation_and_volume():
         comps = bui["building_parameters"]["ventilation"]["components"]
         assert len(comps) == 1, arch["name"]
         assert comps[0]["ventilation_type"] == "constant_ach", arch["name"]
-        assert comps[0]["air_changes_per_hour"] == bui["building_parameters"]["airflow_rates"]["infiltration_rate"]
+        assert (
+            comps[0]["air_changes_per_hour"]
+            == bui["building_parameters"]["airflow_rates"]["infiltration_rate"]
+        )
         assert bui["building"]["volume"] > 0, arch["name"]
 
 
@@ -57,13 +63,22 @@ def test_height_is_total_building_height_and_floor_area_is_per_building():
 
 
 def test_air_change_and_thermal_bridges_follow_the_construction_period():
-    periods = ["0-1945", "1946-1969", "1970-1979", "1980-1989", "1990-1999", "2000-2010", "2011-now"]
+    periods = [
+        "0-1945",
+        "1946-1969",
+        "1970-1979",
+        "1980-1989",
+        "1990-1999",
+        "2000-2010",
+        "2011-now",
+    ]
     ach, tb = [], []
     for p in periods:
         bui = _arch(f"AT_SFH_{p}")
         ach.append(bui["building_parameters"]["airflow_rates"]["infiltration_rate"])
         env = sum(
-            s["area"] for s in bui["building_surface"]
+            s["area"]
+            for s in bui["building_surface"]
             if s["name"].startswith(("Roof", "Slab", "Opaque")) or s["type"] == "transparent"
         )
         tb.append(bui["building_parameters"]["construction"]["thermal_bridge_heat_W_K"] / env)
@@ -79,7 +94,11 @@ def test_internal_gains_and_profiles_follow_building_type():
     assert loads(sfh)["occupants"] == 2.8 and loads(apt)["occupants"] == 4.2
     assert loads(sfh)["appliances"] == 2.4 and loads(apt)["appliances"] == 3.0
     for bp in (sfh, apt):
-        assert all(len(bp[k][d]) == 24 for k in ("heating_profile", "cooling_profile", "ventilation_profile") for d in ("weekday", "weekend"))
+        assert all(
+            len(bp[k][d]) == 24
+            for k in ("heating_profile", "cooling_profile", "ventilation_profile")
+            for d in ("weekday", "weekend")
+        )
         occ = next(g for g in bp["internal_gains"] if g["name"] == "occupants")
         # Cooling only when people are at home: weekday daytime (low occupancy) is off.
         for hour, on in enumerate(bp["cooling_profile"]["weekday"]):
@@ -106,7 +125,10 @@ def test_capacities_follow_the_building_and_absorptance_is_uniform():
 def test_heating_capacity_is_larger_in_colder_countries():
     cold = _arch("FI_SFH_2011-now")["building_parameters"]["system_capacities"]["heating_capacity"]
     mild = _arch("CY_SFH_2011-now")["building_parameters"]["system_capacities"]["heating_capacity"]
-    assert cold / _arch("FI_SFH_2011-now")["building"]["net_floor_area"] > mild / _arch("CY_SFH_2011-now")["building"]["net_floor_area"]
+    assert (
+        cold / _arch("FI_SFH_2011-now")["building"]["net_floor_area"]
+        > mild / _arch("CY_SFH_2011-now")["building"]["net_floor_area"]
+    )
 
 
 def test_every_country_has_degree_days():

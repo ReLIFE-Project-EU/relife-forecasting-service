@@ -19,17 +19,16 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 import requests
-
 
 BASE_URL = "http://127.0.0.1:9091"
 ENDPOINT = "/ecm_application/run_sequential_save"
 REPORT_ENDPOINT = "/ecm_application/report"
 
 # --- choose one ---
-WEATHER_SOURCE = "epw"   # "pvgis" or "epw"
+WEATHER_SOURCE = "epw"  # "pvgis" or "epw"
 EPW_PATH = Path("epw_weather/GRC_Athens.167160_IWEC.epw")  # required if WEATHER_SOURCE="epw"
 
 DEFAULT_TIMEOUT = 600
@@ -38,7 +37,8 @@ GENERATE_REPORT = True
 
 def slugify(text: str) -> str:
     return (
-        str(text).lower()
+        str(text)
+        .lower()
         .replace(" ", "_")
         .replace("/", "_")
         .replace("\\", "_")
@@ -108,9 +108,7 @@ def call_run_sequential_save(
             raise ValueError("epw_path is required when weather_source='epw'")
         if not epw_path.exists():
             raise FileNotFoundError(f"EPW file not found: {epw_path}")
-        files = {
-            "epw_file": (epw_path.name, epw_path.read_bytes(), "application/octet-stream")
-        }
+        files = {"epw_file": (epw_path.name, epw_path.read_bytes(), "application/octet-stream")}
 
     r = requests.post(url, params=params, files=files, timeout=DEFAULT_TIMEOUT)
     if not r.ok:
@@ -167,9 +165,7 @@ def call_ecm_report(
             raise ValueError("epw_path is required when weather_source='epw'")
         if not epw_path.exists():
             raise FileNotFoundError(f"EPW file not found: {epw_path}")
-        files = {
-            "epw_file": (epw_path.name, epw_path.read_bytes(), "application/octet-stream")
-        }
+        files = {"epw_file": (epw_path.name, epw_path.read_bytes(), "application/octet-stream")}
 
     r = requests.post(url, params=params, files=files, timeout=DEFAULT_TIMEOUT)
     if not r.ok:
@@ -191,7 +187,7 @@ def main() -> None:
         name="GR_SFH_1946-1969",
         weather_source=WEATHER_SOURCE,
         epw_path=EPW_PATH if WEATHER_SOURCE == "epw" else None,
-        ecm_options=ecm_options,   # combos: baseline + wall + window + wall+window
+        ecm_options=ecm_options,  # combos: baseline + wall + window + wall+window
         u_wall=0.5,
         u_window=1.0,
         u_roof=None,

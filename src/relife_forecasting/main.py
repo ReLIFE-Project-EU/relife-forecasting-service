@@ -1,34 +1,38 @@
 # main.py
 from __future__ import annotations
 
-from importlib.metadata import version
 import copy
 import json
 import os
 import tempfile
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
 import traceback
-from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timedelta
+from importlib.metadata import version
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+
 import numpy as np
 import pandas as pd
-from fastapi.middleware.gzip import GZipMiddleware
 from fastapi import Body, FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 
 from relife_forecasting.config.logging import configure_logging
-from relife_forecasting.routes import health
-from relife_forecasting.routes import archetypes
-try: 
+from relife_forecasting.routes import archetypes, health
+
+try:
     from relife_forecasting.utils.retry import retry_on_transient_error
 except Exception:
     from utils.retry import retry_on_transient_error
 
 # Prefer your package imports; keep a small fallback to reduce friction during refactors.
 try:
-    from relife_forecasting.building_examples import BUILDING_ARCHETYPES, UNI11300_SIMULATION_EXAMPLE
+    from relife_forecasting.building_examples import (
+        BUILDING_ARCHETYPES,
+        UNI11300_SIMULATION_EXAMPLE,
+    )
 except Exception:
     from building_examples import BUILDING_ARCHETYPES, UNI11300_SIMULATION_EXAMPLE  # type: ignore
 
@@ -44,17 +48,17 @@ except Exception:
 
 try:
     from relife_forecasting.routes.uni11300_primary_energy import (
-        HeatingSystemParams,
         CoolingSystemParams,
-        compute_primary_energy_from_hourly_ideal,
+        HeatingSystemParams,
         build_uni11300_input_example,
+        compute_primary_energy_from_hourly_ideal,
     )
 except Exception:
     from routes.uni11300_primary_energy import (
-        HeatingSystemParams,
         CoolingSystemParams,
-        compute_primary_energy_from_hourly_ideal,
+        HeatingSystemParams,
         build_uni11300_input_example,
+        compute_primary_energy_from_hourly_ideal,
     )
 
 try:
@@ -62,11 +66,8 @@ try:
 except Exception:
     from utils.ecm_report_html import build_ecm_comparison_report_html
 
-from relife_forecasting.scripts.linear_tool_calculator import calculate_linear_heat_cold_daly
-
 from relife_forecasting.routes import health
-
-
+from relife_forecasting.scripts.linear_tool_calculator import calculate_linear_heat_cold_daly
 
 # -----------------------------------------------------------------------------
 # Version + logging
@@ -133,6 +134,7 @@ def _get_pybui():
 # Building & archetypes endpoints
 # =============================================================================
 
+
 @app.post("/building", tags=["Building and systems"])
 def get_building_config(
     archetype: bool = Query(
@@ -175,7 +177,13 @@ def get_building_config(
             )
 
         match = next(
-            (b for b in BUILDING_ARCHETYPES if b.get("category") == category and b.get("country") == country and b.get("name") == name),
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b.get("category") == category
+                and b.get("country") == country
+                and b.get("name") == name
+            ),
             None,
         )
         if match is None:
@@ -207,7 +215,9 @@ def get_building_config(
     bui_json = payload.get("bui")
     system_json = payload.get("system")
     if bui_json is None or system_json is None:
-        raise HTTPException(status_code=400, detail="Incomplete JSON body: both 'bui' and 'system' are required.")
+        raise HTTPException(
+            status_code=400, detail="Incomplete JSON body: both 'bui' and 'system' are required."
+        )
 
     return {
         "source": "custom",
@@ -227,13 +237,15 @@ def list_available_archetypes():
     available = []
     for archetype in BUILDING_ARCHETYPES:
         building = archetype.get("bui", {}).get("building", {})
-        available.append({
-            "name": archetype.get("name"),
-            "category": archetype.get("category"),
-            "country": archetype.get("country"),
-            "latitude": building.get("latitude"),
-            "longitude": building.get("longitude"),
-        })
+        available.append(
+            {
+                "name": archetype.get("name"),
+                "category": archetype.get("category"),
+                "country": archetype.get("country"),
+                "latitude": building.get("latitude"),
+                "longitude": building.get("longitude"),
+            }
+        )
     return available
 
 
@@ -241,13 +253,21 @@ def list_available_archetypes():
 # Validation endpoint
 # =============================================================================
 
+
 @app.post("/validate", tags=["Validation"])
 def validate_model(
-    archetype: bool = Query(True, description="If True, validate an archetype; if False, validate a custom model from the body."),
-    category: Optional[str] = Query(None, description="Building category. Required when archetype=True."),
+    archetype: bool = Query(
+        True,
+        description="If True, validate an archetype; if False, validate a custom model from the body.",
+    ),
+    category: Optional[str] = Query(
+        None, description="Building category. Required when archetype=True."
+    ),
     country: Optional[str] = Query(None, description="Country. Required when archetype=True."),
     name: Optional[str] = Query(None, description="Archetype name. Required when archetype=True."),
-    payload: Optional[Dict[str, Any]] = Body(None, description="JSON body with 'bui' and 'system' when archetype=False."),
+    payload: Optional[Dict[str, Any]] = Body(
+        None, description="JSON body with 'bui' and 'system' when archetype=False."
+    ),
 ):
     """
     Validate BUI and HVAC system for either:
@@ -256,26 +276,44 @@ def validate_model(
     """
     if archetype:
         if not category or not country or not name:
-            raise HTTPException(status_code=400, detail="With archetype=true you must provide 'category', 'country' and 'name'.")
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=true you must provide 'category', 'country' and 'name'.",
+            )
 
         match = next(
-            (b for b in BUILDING_ARCHETYPES if b.get("category") == category and b.get("country") == country and b.get("name") == name),
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b.get("category") == category
+                and b.get("country") == country
+                and b.get("name") == name
+            ),
             None,
         )
         if match is None:
-            raise HTTPException(status_code=404, detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.")
+            raise HTTPException(
+                status_code=404,
+                detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.",
+            )
 
         bui_internal = match["bui"]
         system_internal = match["system"]
 
     else:
         if payload is None:
-            raise HTTPException(status_code=400, detail="With archetype=false you must send a JSON body containing 'bui' and 'system'.")
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=false you must send a JSON body containing 'bui' and 'system'.",
+            )
 
         bui_json = payload.get("bui")
         system_json = payload.get("system")
         if bui_json is None or system_json is None:
-            raise HTTPException(status_code=400, detail="Incomplete JSON body: both 'bui' and 'system' are required.")
+            raise HTTPException(
+                status_code=400,
+                detail="Incomplete JSON body: both 'bui' and 'system' are required.",
+            )
 
         bui_internal = json_to_internal_bui(bui_json)
         system_internal = json_to_internal_system(system_json)
@@ -331,16 +369,33 @@ def _ecm_scenario_results(
 
 @app.post("/simulate", tags=["Simulation"])
 async def simulate_building(
-    archetype: bool = Query(True, description="If True, simulate an archetype; if False, use custom BUI/SYSTEM."),
-    category: Optional[str] = Query(None, description="Building category. Required when archetype=True."),
+    archetype: bool = Query(
+        True, description="If True, simulate an archetype; if False, use custom BUI/SYSTEM."
+    ),
+    category: Optional[str] = Query(
+        None, description="Building category. Required when archetype=True."
+    ),
     country: Optional[str] = Query(None, description="Country. Required when archetype=True."),
     name: Optional[str] = Query(None, description="Archetype name. Required when archetype=True."),
-    floor_area: Optional[float] = Query(None, gt=0, description="Net floor area (m²) for archetypes. If different from the archetype value, the geometry (walls, windows, roof, slab, volume) is rescaled accordingly."),
+    floor_area: Optional[float] = Query(
+        None,
+        gt=0,
+        description="Net floor area (m²) for archetypes. If different from the archetype value, the geometry (walls, windows, roof, slab, volume) is rescaled accordingly.",
+    ),
     weather_source: str = Query("pvgis", description="Weather source: 'pvgis' or 'epw'."),
-    epw_file: Optional[UploadFile] = File(None, description="EPW weather file (required when weather_source='epw')."),
-    bui_json: Optional[str] = Form(None, description="JSON string with the BUI data (required when archetype=False)."),
-    system_json: Optional[str] = Form(None, description="JSON string with the SYSTEM data (required when archetype=False)."),
-    lean: bool = Query(False, description="Return only the core hourly_building columns (Q_H, Q_C, Q_HC, T_op, T_ext)."),
+    epw_file: Optional[UploadFile] = File(
+        None, description="EPW weather file (required when weather_source='epw')."
+    ),
+    bui_json: Optional[str] = Form(
+        None, description="JSON string with the BUI data (required when archetype=False)."
+    ),
+    system_json: Optional[str] = Form(
+        None, description="JSON string with the SYSTEM data (required when archetype=False)."
+    ),
+    lean: bool = Query(
+        False,
+        description="Return only the core hourly_building columns (Q_H, Q_C, Q_HC, T_op, T_ext).",
+    ),
 ):
     """
     Simulate a single building (ISO 52016 + ISO 15316) using either:
@@ -354,27 +409,44 @@ async def simulate_building(
     # 1) Select inputs
     if archetype:
         if not category or not country or not name:
-            raise HTTPException(status_code=400, detail="With archetype=true you must provide 'category', 'country' and 'name'.")
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=true you must provide 'category', 'country' and 'name'.",
+            )
 
         match = next(
-            (b for b in BUILDING_ARCHETYPES if b.get("category") == category and b.get("country") == country and b.get("name") == name),
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b.get("category") == category
+                and b.get("country") == country
+                and b.get("name") == name
+            ),
             None,
         )
         if match is None:
-            raise HTTPException(status_code=404, detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.")
+            raise HTTPException(
+                status_code=404,
+                detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.",
+            )
 
         bui_internal = archetype_bui_with_floor_area(match["bui"], floor_area)
         system_internal = match["system"]
 
     else:
         if bui_json is None or system_json is None:
-            raise HTTPException(status_code=400, detail="With archetype=false you must send 'bui_json' and 'system_json' as form fields.")
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=false you must send 'bui_json' and 'system_json' as form fields.",
+            )
 
         try:
             bui_raw = json.loads(bui_json)
             system_raw = json.loads(system_json)
         except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="bui_json and system_json must be valid JSON strings.")
+            raise HTTPException(
+                status_code=400, detail="bui_json and system_json must be valid JSON strings."
+            )
 
         bui_internal = json_to_internal_bui(bui_raw)
         system_internal = json_to_internal_system(system_raw)
@@ -399,7 +471,9 @@ async def simulate_building(
 
     elif weather_source == "epw":
         if epw_file is None:
-            raise HTTPException(status_code=400, detail="With weather_source='epw' you must upload 'epw_file'.")
+            raise HTTPException(
+                status_code=400, detail="With weather_source='epw' you must upload 'epw_file'."
+            )
 
         with tempfile.TemporaryDirectory() as tmpdir:
             epw_path = os.path.join(tmpdir, epw_file.filename)
@@ -414,7 +488,9 @@ async def simulate_building(
                 sankey_graph=False,
             )
     else:
-        raise HTTPException(status_code=400, detail="weather_source must be either 'pvgis' or 'epw'.")
+        raise HTTPException(
+            status_code=400, detail="weather_source must be either 'pvgis' or 'epw'."
+        )
 
     # 4) ISO 15316 heating system simulation
     pybui = _get_pybui()
@@ -437,7 +513,9 @@ async def simulate_building(
             "system_messages": validation["system_messages"],
         },
         "results": {
-            "hourly_building": dataframe_to_records_safe(_lean_hourly_frame(hourly_sim) if lean else hourly_sim),
+            "hourly_building": dataframe_to_records_safe(
+                _lean_hourly_frame(hourly_sim) if lean else hourly_sim
+            ),
             "primary_energy_uni11300": uni11300_results,
             # keep commented if you still want to reduce payload size:
             # "annual_building": dataframe_to_records_safe(annual_results_df),
@@ -460,24 +538,42 @@ def compute_linear_heat_cold_daly(
             "[date, temperature] / (date, temperature)."
         ),
     ),
-    selected_threshold_pair: str = Body("COMFORT_PAIR_26_20", description="Scenario id from the Linear_tool sheet."),
+    selected_threshold_pair: str = Body(
+        "COMFORT_PAIR_26_20", description="Scenario id from the Linear_tool sheet."
+    ),
     population_persons: float = Body(1.0, description="Population exposed to the temperatures."),
-    exposure_days_for_period: float = Body(360.0, description="Exposure days used for annualized harm."),
-    conversion_factor_persons: float = Body(100000.0, description="Conversion factor to DALY per 100000 persons."),
+    exposure_days_for_period: float = Body(
+        360.0, description="Exposure days used for annualized harm."
+    ),
+    conversion_factor_persons: float = Body(
+        100000.0, description="Conversion factor to DALY per 100000 persons."
+    ),
     valid_daily_temperature_rows: Optional[int] = Body(
         None,
         description="Optional divisor used instead of the number of provided rows when computing averages.",
     ),
-    scenario_label: Optional[str] = Body(None, description="Optional validation value matching the selected scenario."),
+    scenario_label: Optional[str] = Body(
+        None, description="Optional validation value matching the selected scenario."
+    ),
     average_indoor_temperature_c: Optional[Union[float, str]] = Body(
         None,
         description="Optional validation value matching the average indoor temperature.",
     ),
-    heat_threshold_c: Optional[Union[float, str]] = Body(None, description="Optional validation value matching the scenario heat threshold."),
-    cold_threshold_c: Optional[Union[float, str]] = Body(None, description="Optional validation value matching the scenario cold threshold."),
-    heat_linear_hi: Optional[Union[float, str]] = Body(None, description="Optional validation value matching the scenario heat HI."),
-    cold_linear_hi: Optional[Union[float, str]] = Body(None, description="Optional validation value matching the scenario cold HI."),
-    neutral_zone_note: Optional[str] = Body(None, description="Optional validation value matching the scenario note."),
+    heat_threshold_c: Optional[Union[float, str]] = Body(
+        None, description="Optional validation value matching the scenario heat threshold."
+    ),
+    cold_threshold_c: Optional[Union[float, str]] = Body(
+        None, description="Optional validation value matching the scenario cold threshold."
+    ),
+    heat_linear_hi: Optional[Union[float, str]] = Body(
+        None, description="Optional validation value matching the scenario heat HI."
+    ),
+    cold_linear_hi: Optional[Union[float, str]] = Body(
+        None, description="Optional validation value matching the scenario cold HI."
+    ),
+    neutral_zone_note: Optional[str] = Body(
+        None, description="Optional validation value matching the scenario note."
+    ),
 ):
     """
     Run the Linear_tool heat/cold DALY calculation as an API endpoint.
@@ -493,7 +589,9 @@ def compute_linear_heat_cold_daly(
                 try:
                     date_value = datetime.fromisoformat(date_value)
                 except ValueError as exc:
-                    raise HTTPException(status_code=422, detail=f"Invalid temperature date: {date_value!r}.") from exc
+                    raise HTTPException(
+                        status_code=422, detail=f"Invalid temperature date: {date_value!r}."
+                    ) from exc
             normalized_temperatures.append((date_value, temperature_value))
         else:
             normalized_temperatures.append(item)
@@ -523,7 +621,11 @@ def _daily_mean_temperatures_from_iso52016(
     temperature_column: str = "T_op",
 ) -> List[tuple[datetime, float]]:
     """Extract the final assessment period and aggregate hourly ISO data by day."""
-    hourly_df = hourly_records.copy() if isinstance(hourly_records, pd.DataFrame) else pd.DataFrame(hourly_records)
+    hourly_df = (
+        hourly_records.copy()
+        if isinstance(hourly_records, pd.DataFrame)
+        else pd.DataFrame(hourly_records)
+    )
     if hourly_df.empty:
         raise HTTPException(status_code=422, detail="ISO 52016 hourly temperature data is empty.")
     if temperature_column not in hourly_df.columns:
@@ -559,7 +661,10 @@ def _daily_mean_temperatures_from_iso52016(
 
     daily_means = temperatures.to_numpy(dtype=float).reshape(assessment_days, 24).mean(axis=1)
     first_day = datetime(2001, 1, 1)
-    return [(first_day + timedelta(days=offset), float(value)) for offset, value in enumerate(daily_means)]
+    return [
+        (first_day + timedelta(days=offset), float(value))
+        for offset, value in enumerate(daily_means)
+    ]
 
 
 def _build_daly_comparison(
@@ -595,6 +700,7 @@ def _build_daly_comparison(
         else "no_net_change"
     )
     return comparison
+
 
 UNI11300_INPUT_EXAMPLE = build_uni11300_input_example()
 
@@ -649,7 +755,9 @@ def _compute_uni11300_from_hourly_df(hourly_df: pd.DataFrame) -> Dict[str, Any]:
         "EP_cool_total_kWh",
         "EP_total_kWh",
     ]
-    summary = {col: float(results_df[col].sum()) for col in summary_fields if col in results_df.columns}
+    summary = {
+        col: float(results_df[col].sum()) for col in summary_fields if col in results_df.columns
+    }
 
     return {
         "input_unit": "Wh",
@@ -747,7 +855,9 @@ def compute_primary_energy_uni11300(payload: Dict[str, Any]):
         cool_series = (-hourly_df["Q_HC"]).clip(lower=0.0).astype(float)
 
     if heat_series is None and cool_series is None:
-        raise HTTPException(status_code=400, detail="No Q_H/Q_C (or Q_HC) columns found in hourly data.")
+        raise HTTPException(
+            status_code=400, detail="No Q_H/Q_C (or Q_HC) columns found in hourly data."
+        )
 
     df_ideal = pd.DataFrame(index=hourly_df.index)
     if heat_series is not None:
@@ -792,7 +902,9 @@ def compute_primary_energy_uni11300(payload: Dict[str, Any]):
         "EP_cool_total_kWh",
         "EP_total_kWh",
     ]
-    summary = {col: float(results_df[col].sum()) for col in summary_fields if col in results_df.columns}
+    summary = {
+        col: float(results_df[col].sum()) for col in summary_fields if col in results_df.columns
+    }
 
     return {
         "input_unit": input_unit,
@@ -821,21 +933,39 @@ def simulate_batch(payload: Dict[str, Any]):
         names = payload.get("names") or []
 
         if not category or not countries or not names:
-            raise HTTPException(status_code=400, detail="For mode='archetype' provide 'category', 'countries' (list) and 'names' (list).")
+            raise HTTPException(
+                status_code=400,
+                detail="For mode='archetype' provide 'category', 'countries' (list) and 'names' (list).",
+            )
 
         for arch in BUILDING_ARCHETYPES:
-            if arch.get("category") == category and arch.get("country") in countries and arch.get("name") in names:
+            if (
+                arch.get("category") == category
+                and arch.get("country") in countries
+                and arch.get("name") in names
+            ):
                 buildings_to_simulate.append(
-                    {"name": arch["name"], "bui": arch["bui"], "system": arch["system"], "category": arch.get("category"), "country": arch.get("country")}
+                    {
+                        "name": arch["name"],
+                        "bui": arch["bui"],
+                        "system": arch["system"],
+                        "category": arch.get("category"),
+                        "country": arch.get("country"),
+                    }
                 )
 
         if not buildings_to_simulate:
-            raise HTTPException(status_code=404, detail="No archetypes found for the given parameters.")
+            raise HTTPException(
+                status_code=404, detail="No archetypes found for the given parameters."
+            )
 
     elif mode == "custom":
         buildings = payload.get("buildings")
         if not buildings:
-            raise HTTPException(status_code=400, detail="For mode='custom' provide 'buildings': [ {name,bui,system} ].")
+            raise HTTPException(
+                status_code=400,
+                detail="For mode='custom' provide 'buildings': [ {name,bui,system} ].",
+            )
 
         for b in buildings:
             bname = b.get("name")
@@ -843,7 +973,10 @@ def simulate_batch(payload: Dict[str, Any]):
             system_json = b.get("system")
 
             if not bname or bui_json is None or system_json is None:
-                raise HTTPException(status_code=400, detail="Each custom building must have 'name', 'bui' and 'system'.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Each custom building must have 'name', 'bui' and 'system'.",
+                )
 
             buildings_to_simulate.append(
                 {
@@ -855,7 +988,9 @@ def simulate_batch(payload: Dict[str, Any]):
                 }
             )
     else:
-        raise HTTPException(status_code=400, detail="Field 'mode' must be either 'archetype' or 'custom'.")
+        raise HTTPException(
+            status_code=400, detail="Field 'mode' must be either 'archetype' or 'custom'."
+        )
 
     results: List[Dict[str, Any]] = []
     summaries: List[Dict[str, Any]] = []
@@ -887,6 +1022,7 @@ def simulate_batch(payload: Dict[str, Any]):
 # Report endpoint
 # =============================================================================
 
+
 @app.post("/report", response_class=HTMLResponse, tags=["Reports"])
 def generate_report(payload: Dict[str, Any]):
     """
@@ -900,7 +1036,9 @@ def generate_report(payload: Dict[str, Any]):
     building_area = payload.get("building_area")
 
     if hourly_records is None or building_area is None:
-        raise HTTPException(status_code=400, detail="Request JSON must contain 'hourly_sim' and 'building_area'.")
+        raise HTTPException(
+            status_code=400, detail="Request JSON must contain 'hourly_sim' and 'building_area'."
+        )
 
     hourly_sim = pd.DataFrame(hourly_records)
     # The records come from /simulate with a 'timestamp' column; the report resamples
@@ -924,7 +1062,9 @@ def generate_report(payload: Dict[str, Any]):
 
         html_path = os.path.join(tmpdir, f"{name_report}.html")
         if not os.path.exists(html_path):
-            raise HTTPException(status_code=500, detail="HTML report not found. Check 'bui_analysis_page' output.")
+            raise HTTPException(
+                status_code=500, detail="HTML report not found. Check 'bui_analysis_page' output."
+            )
 
         with open(html_path, "r", encoding="utf-8") as f:
             html_content = f.read()
@@ -936,18 +1076,38 @@ def generate_report(payload: Dict[str, Any]):
 # Greek EPC endpoint
 # =============================================================================
 
+
 @app.post("/bui/epc_update_u_values", tags=["Greek EPC"])
 def update_u_values(
-    energy_class: str = Query(..., description="Energy class (A, B, C, D) for greek buildings", regex="^[ABCD]$"),
-    archetype: bool = Query(True, description="If True, load from archetype and create a NEW modified archetype. If False, modify a custom BUI (not stored)."),
-    category: Optional[str] = Query(None, description="Building category. Required when archetype=True."),
+    energy_class: str = Query(
+        ..., description="Energy class (A, B, C, D) for greek buildings", regex="^[ABCD]$"
+    ),
+    archetype: bool = Query(
+        True,
+        description="If True, load from archetype and create a NEW modified archetype. If False, modify a custom BUI (not stored).",
+    ),
+    category: Optional[str] = Query(
+        None, description="Building category. Required when archetype=True."
+    ),
     country: Optional[str] = Query(None, description="Country. Required when archetype=True."),
-    name: Optional[str] = Query(None, description="Name of the source archetype. Required when archetype=True."),
-    new_name: Optional[str] = Query(None, description="Name of the NEW archetype to be created (optional)."),
-    u_slab: Optional[float] = Query(None, description="Override U-value for slab to ground (optional)."),
-    use_heat_pump: bool = Query(False, description="If True, switch generation to heat pump (system update)."),
-    heat_pump_cop: float = Query(3.2, description="Heat pump COP used for system update (if enabled)."),
-    payload: Optional[Dict[str, Any]] = Body(None, description="JSON body with 'bui' (and optionally 'system') when archetype=False."),
+    name: Optional[str] = Query(
+        None, description="Name of the source archetype. Required when archetype=True."
+    ),
+    new_name: Optional[str] = Query(
+        None, description="Name of the NEW archetype to be created (optional)."
+    ),
+    u_slab: Optional[float] = Query(
+        None, description="Override U-value for slab to ground (optional)."
+    ),
+    use_heat_pump: bool = Query(
+        False, description="If True, switch generation to heat pump (system update)."
+    ),
+    heat_pump_cop: float = Query(
+        3.2, description="Heat pump COP used for system update (if enabled)."
+    ),
+    payload: Optional[Dict[str, Any]] = Body(
+        None, description="JSON body with 'bui' (and optionally 'system') when archetype=False."
+    ),
 ):
     """
     Update envelope U-values in the BUI according to an energy class (A/B/C/D).
@@ -965,21 +1125,36 @@ def update_u_values(
 
     if archetype:
         if not category or not country or not name:
-            raise HTTPException(status_code=400, detail="With archetype=true you must provide 'category', 'country' and 'name'.")
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=true you must provide 'category', 'country' and 'name'.",
+            )
 
         match = next(
-            (b for b in BUILDING_ARCHETYPES if b.get("category") == category and b.get("country") == country and b.get("name") == name),
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b.get("category") == category
+                and b.get("country") == country
+                and b.get("name") == name
+            ),
             None,
         )
         if match is None:
-            raise HTTPException(status_code=404, detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.")
+            raise HTTPException(
+                status_code=404,
+                detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.",
+            )
 
         bui_internal = copy.deepcopy(match["bui"])
         base_system = copy.deepcopy(match["system"])
 
     else:
         if payload is None:
-            raise HTTPException(status_code=400, detail="With archetype=false you must send a JSON body with at least 'bui'.")
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=false you must send a JSON body with at least 'bui'.",
+            )
 
         bui_json = payload.get("bui")
         system_json = payload.get("system")
@@ -992,7 +1167,9 @@ def update_u_values(
 
     class_map = U_VALUES_BY_CLASS.get(energy_class)
     if class_map is None:
-        raise HTTPException(status_code=400, detail=f"Invalid energy class '{energy_class}'. Use A, B, C or D.")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid energy class '{energy_class}'. Use A, B, C or D."
+        )
 
     for surf in bui_internal.get("building_surface", []):
         name_surf = surf.get("name")
@@ -1048,33 +1225,74 @@ def update_u_values(
 # =============================================================================
 from typing import Set
 
+
 @app.post("/ecm_application", tags=["Simulation"])
 async def simulate_uvalues(
-    archetype: bool = Query(True, description="If True, use an archetype; if False, use a custom BUI from JSON."),
-    category: Optional[str] = Query(None, description="Building category. Required when archetype=True."),
+    archetype: bool = Query(
+        True, description="If True, use an archetype; if False, use a custom BUI from JSON."
+    ),
+    category: Optional[str] = Query(
+        None, description="Building category. Required when archetype=True."
+    ),
     country: Optional[str] = Query(None, description="Country. Required when archetype=True."),
     name: Optional[str] = Query(None, description="Archetype name. Required when archetype=True."),
-    floor_area: Optional[float] = Query(None, gt=0, description="Net floor area (m²) for archetypes. If different from the archetype value, the geometry (walls, windows, roof, slab, volume) is rescaled accordingly."),
+    floor_area: Optional[float] = Query(
+        None,
+        gt=0,
+        description="Net floor area (m²) for archetypes. If different from the archetype value, the geometry (walls, windows, roof, slab, volume) is rescaled accordingly.",
+    ),
     weather_source: str = Query("pvgis", description="Weather source: 'pvgis' or 'epw'."),
-    epw_file: Optional[UploadFile] = File(None, description="EPW weather file (required when weather_source='epw')."),
-    bui_json: Optional[str] = Form(None, description="JSON string with the BUI (required when archetype=False)."),
-    system_json: Optional[str] = Form(None, description="JSON string with SYSTEM (required when use_heat_pump=true in custom mode)."),
-    uni11300_json: Optional[str] = Form(None, description="Optional UNI/TS 11300 configuration JSON for custom buildings."),
-    u_wall: Optional[float] = Query(None, description="New wall U-value (opaque vertical surfaces)."),
-    u_roof: Optional[float] = Query(None, description="New roof U-value (opaque horizontal surface)."),
-    u_window: Optional[float] = Query(None, description="New window U-value (transparent vertical surfaces)."),
-    u_slab: Optional[float] = Query(None, description="New slab-to-ground U-value (opaque ground surface)."),
-    use_heat_pump: bool = Query(False, description="If True, switch generation to heat pump (system update)."),
-    heat_pump_cop: float = Query(3.2, description="Heat pump COP used for system update (if enabled)."),
-    use_pv: bool = Query(False, description="If True, run integrated UNI/TS 11300 + PV analysis within the ECM scenario."),
-    pv_kwp: Optional[float] = Query(None, description="Installed PV power [kWp]. Required when use_pv=true."),
+    epw_file: Optional[UploadFile] = File(
+        None, description="EPW weather file (required when weather_source='epw')."
+    ),
+    bui_json: Optional[str] = Form(
+        None, description="JSON string with the BUI (required when archetype=False)."
+    ),
+    system_json: Optional[str] = Form(
+        None,
+        description="JSON string with SYSTEM (required when use_heat_pump=true in custom mode).",
+    ),
+    uni11300_json: Optional[str] = Form(
+        None, description="Optional UNI/TS 11300 configuration JSON for custom buildings."
+    ),
+    u_wall: Optional[float] = Query(
+        None, description="New wall U-value (opaque vertical surfaces)."
+    ),
+    u_roof: Optional[float] = Query(
+        None, description="New roof U-value (opaque horizontal surface)."
+    ),
+    u_window: Optional[float] = Query(
+        None, description="New window U-value (transparent vertical surfaces)."
+    ),
+    u_slab: Optional[float] = Query(
+        None, description="New slab-to-ground U-value (opaque ground surface)."
+    ),
+    use_heat_pump: bool = Query(
+        False, description="If True, switch generation to heat pump (system update)."
+    ),
+    heat_pump_cop: float = Query(
+        3.2, description="Heat pump COP used for system update (if enabled)."
+    ),
+    use_pv: bool = Query(
+        False,
+        description="If True, run integrated UNI/TS 11300 + PV analysis within the ECM scenario.",
+    ),
+    pv_kwp: Optional[float] = Query(
+        None, description="Installed PV power [kWp]. Required when use_pv=true."
+    ),
     pv_tilt_deg: float = Query(30.0, description="PV tilt [deg]."),
-    pv_azimuth_deg: float = Query(0.0, description="PV azimuth [deg] (0=south in the PVGIS convention used here)."),
+    pv_azimuth_deg: float = Query(
+        0.0, description="PV azimuth [deg] (0=south in the PVGIS convention used here)."
+    ),
     pv_use_pvgis: bool = Query(True, description="If True, use PVGIS hourly PV generation."),
     pv_pvgis_loss_percent: float = Query(14.0, description="PVGIS loss percentage."),
     pv_pvgis_year: Optional[int] = Query(None, description="Optional fixed PVGIS year."),
-    annual_pv_yield_kwh_per_kwp: float = Query(1400.0, description="Fallback annual PV yield [kWh/kWp]."),
-    pv_battery_params_json: Optional[str] = Form(None, description="Optional JSON object for PV battery parameters."),
+    annual_pv_yield_kwh_per_kwp: float = Query(
+        1400.0, description="Fallback annual PV yield [kWh/kWp]."
+    ),
+    pv_battery_params_json: Optional[str] = Form(
+        None, description="Optional JSON object for PV battery parameters."
+    ),
     uni_generation_mode: str = Query(
         "default",
         description="UNI/TS 11300 heating generation mask: 'default' or 'condensing_boiler'. If use_heat_pump=true, the heat pump COP from ECM takes precedence.",
@@ -1083,7 +1301,6 @@ async def simulate_uvalues(
         None,
         description="Optional UNI/TS 11300 eta_generation override. If uni_generation_mode='condensing_boiler' and omitted, 1.1 is used. Ignored when use_heat_pump=true.",
     ),
-
     # ---------------------------
     # NEW: single scenario mode
     # ---------------------------
@@ -1099,9 +1316,10 @@ async def simulate_uvalues(
         False,
         description="If True, simulate only baseline (no envelope changes), ignoring scenario_elements/scenario_id.",
     ),
-
     # (optional) keep your previous flag if you added it
-    include_baseline: bool = Query(False, description="If True, also simulate baseline (no changes)."),
+    include_baseline: bool = Query(
+        False, description="If True, also simulate baseline (no changes)."
+    ),
     lean: bool = Query(
         False,
         description="Return only the core hourly_building columns (Q_H, Q_C, Q_HC, T_op, T_ext) and leave out the hourly UNI/TS 11300 and PV tables. Summaries are unchanged.",
@@ -1127,27 +1345,42 @@ async def simulate_uvalues(
     uni11300_config_source = "example"
     if archetype:
         if uni11300_json is not None:
-            raise HTTPException(status_code=400, detail="'uni11300_json' is only accepted with archetype=false.")
+            raise HTTPException(
+                status_code=400, detail="'uni11300_json' is only accepted with archetype=false."
+            )
         if not category or not country or not name:
-            raise HTTPException(status_code=400, detail="With archetype=true you must provide 'category', 'country' and 'name'.")
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=true you must provide 'category', 'country' and 'name'.",
+            )
         match = next(
-            (b for b in BUILDING_ARCHETYPES if b.get("category") == category and b.get("country") == country and b.get("name") == name),
+            (
+                b
+                for b in BUILDING_ARCHETYPES
+                if b.get("category") == category
+                and b.get("country") == country
+                and b.get("name") == name
+            ),
             None,
         )
         if match is None:
-            raise HTTPException(status_code=404, detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.")
+            raise HTTPException(
+                status_code=404,
+                detail=f"No archetype found for category='{category}', country='{country}', name='{name}'.",
+            )
         base_bui = archetype_bui_with_floor_area(match["bui"], floor_area)
         base_system = match.get("system")
         base_uni_cfg = copy.deepcopy(
-            match.get("uni11300")
-            or match.get("systems_archetype")
-            or UNI11300_SIMULATION_EXAMPLE
+            match.get("uni11300") or match.get("systems_archetype") or UNI11300_SIMULATION_EXAMPLE
         )
         if match.get("uni11300") or match.get("systems_archetype"):
             uni11300_config_source = "archetype"
     else:
         if bui_json is None:
-            raise HTTPException(status_code=400, detail="With archetype=false you must send 'bui_json' as a form field.")
+            raise HTTPException(
+                status_code=400,
+                detail="With archetype=false you must send 'bui_json' as a form field.",
+            )
         try:
             base_bui = json.loads(bui_json)
         except json.JSONDecodeError:
@@ -1156,30 +1389,45 @@ async def simulate_uvalues(
             try:
                 system_raw = json.loads(system_json)
             except json.JSONDecodeError:
-                raise HTTPException(status_code=400, detail="'system_json' must be a valid JSON string.")
+                raise HTTPException(
+                    status_code=400, detail="'system_json' must be a valid JSON string."
+                )
             base_system = json_to_internal_system(system_raw)
         if uni11300_json is not None:
             try:
                 supplied_uni_cfg = json.loads(uni11300_json)
             except json.JSONDecodeError as exc:
-                raise HTTPException(status_code=400, detail="'uni11300_json' must be valid JSON.") from exc
+                raise HTTPException(
+                    status_code=400, detail="'uni11300_json' must be valid JSON."
+                ) from exc
             if not isinstance(supplied_uni_cfg, dict):
-                raise HTTPException(status_code=400, detail="'uni11300_json' must be a JSON object.")
+                raise HTTPException(
+                    status_code=400, detail="'uni11300_json' must be a JSON object."
+                )
             if str(supplied_uni_cfg.get("input_unit", "Wh")).strip().lower() != "wh":
-                raise HTTPException(status_code=400, detail="'uni11300_json.input_unit' must be 'Wh' for ECM hourly data.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="'uni11300_json.input_unit' must be 'Wh' for ECM hourly data.",
+                )
             for key in ("heating_params", "cooling_params"):
                 if not isinstance(supplied_uni_cfg.get(key), dict):
-                    raise HTTPException(status_code=400, detail=f"'uni11300_json.{key}' must be a JSON object.")
+                    raise HTTPException(
+                        status_code=400, detail=f"'uni11300_json.{key}' must be a JSON object."
+                    )
             try:
                 HeatingSystemParams(**supplied_uni_cfg["heating_params"])
                 CoolingSystemParams(**supplied_uni_cfg["cooling_params"])
             except TypeError as exc:
-                raise HTTPException(status_code=400, detail=f"Invalid 'uni11300_json': {exc}") from exc
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid 'uni11300_json': {exc}"
+                ) from exc
             base_uni_cfg = copy.deepcopy(supplied_uni_cfg)
             uni11300_config_source = "custom"
 
     # 2) Build scenarios (as before)
-    scenarios_spec = build_uvalue_scenarios(u_roof=u_roof, u_wall=u_wall, u_window=u_window, u_slab=u_slab)
+    scenarios_spec = build_uvalue_scenarios(
+        u_roof=u_roof, u_wall=u_wall, u_window=u_window, u_slab=u_slab
+    )
 
     # --- NEW: parse scenario_elements helper
     def _parse_elements(s: str) -> Set[str]:
@@ -1191,7 +1439,10 @@ async def simulate_uvalues(
         allowed = {"roof", "wall", "window", "slab"}
         bad = [p for p in normalized if p not in allowed]
         if bad:
-            raise HTTPException(status_code=400, detail=f"Invalid scenario_elements: {bad}. Allowed: roof, wall, window, slab.")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid scenario_elements: {bad}. Allowed: roof, wall, window, slab.",
+            )
         return set(normalized)
 
     # --- NEW: "single scenario mode" filter
@@ -1292,7 +1543,9 @@ async def simulate_uvalues(
         try:
             parsed = json.loads(raw)
         except json.JSONDecodeError as exc:
-            raise HTTPException(status_code=400, detail=f"'{field_name}' must be a valid JSON string.") from exc
+            raise HTTPException(
+                status_code=400, detail=f"'{field_name}' must be a valid JSON string."
+            ) from exc
         if not isinstance(parsed, dict):
             raise HTTPException(status_code=400, detail=f"'{field_name}' must be a JSON object.")
         return parsed
@@ -1324,7 +1577,9 @@ async def simulate_uvalues(
     epw_path: Optional[str] = None
     if weather_source == "epw":
         if epw_file is None:
-            raise HTTPException(status_code=400, detail="With weather_source='epw' you must upload 'epw_file'.")
+            raise HTTPException(
+                status_code=400, detail="With weather_source='epw' you must upload 'epw_file'."
+            )
         with tempfile.NamedTemporaryFile(delete=False, suffix=".epw") as tmp:
             tmp.write(await epw_file.read())
             epw_path = tmp.name
@@ -1339,12 +1594,17 @@ async def simulate_uvalues(
 
                 @retry_on_transient_error()
                 def _run_baseline_pvgis():
-                    return run_iso52016_simulation(base_bui, weather_source="pvgis", sankey_graph=False)
+                    return run_iso52016_simulation(
+                        base_bui, weather_source="pvgis", sankey_graph=False
+                    )
 
                 hourly_sim, annual_results_df = _run_baseline_pvgis()
             else:
                 hourly_sim, annual_results_df = run_iso52016_simulation(
-                    base_bui, weather_source="epw", path_weather_file=epw_path, sankey_graph=False, 
+                    base_bui,
+                    weather_source="epw",
+                    path_weather_file=epw_path,
+                    sankey_graph=False,
                 )
             pv_hp_results = None
             annual_results_payload: Any = annual_results_df
@@ -1374,7 +1634,8 @@ async def simulate_uvalues(
                 uni11300_results = integrated_results["results"]["uni11300"]
                 pv_hp_results = integrated_results["results"].get("pv_hp")
                 annual_results_payload = _build_integrated_annual_results_frame(
-                    hourly_building=integrated_results["results"].get("hourly_building") or hourly_sim,
+                    hourly_building=integrated_results["results"].get("hourly_building")
+                    or hourly_sim,
                     uni11300_results=uni11300_results,
                     pv_hp_results=pv_hp_results or {},
                 )
@@ -1426,12 +1687,17 @@ async def simulate_uvalues(
 
                 @retry_on_transient_error()
                 def _run_scenario_pvgis():
-                    return run_iso52016_simulation(bui_variant, weather_source="pvgis", sankey_graph=False)
+                    return run_iso52016_simulation(
+                        bui_variant, weather_source="pvgis", sankey_graph=False
+                    )
 
                 hourly_sim, annual_results_df = _run_scenario_pvgis()
             else:
                 hourly_sim, annual_results_df = run_iso52016_simulation(
-                    bui_variant, weather_source="epw", path_weather_file=epw_path, sankey_graph=False,
+                    bui_variant,
+                    weather_source="epw",
+                    path_weather_file=epw_path,
+                    sankey_graph=False,
                 )
             pv_hp_results = None
             annual_results_payload: Any = annual_results_df
@@ -1461,7 +1727,8 @@ async def simulate_uvalues(
                 uni11300_results = integrated_results["results"]["uni11300"]
                 pv_hp_results = integrated_results["results"].get("pv_hp")
                 annual_results_payload = _build_integrated_annual_results_frame(
-                    hourly_building=integrated_results["results"].get("hourly_building") or hourly_sim,
+                    hourly_building=integrated_results["results"].get("hourly_building")
+                    or hourly_sim,
                     uni11300_results=uni11300_results,
                     pv_hp_results=pv_hp_results or {},
                 )
@@ -1530,9 +1797,15 @@ async def simulate_uvalues(
 
 @app.post("/ecm_application/daly", tags=["Health co-benefits"])
 async def compare_ecm_thermal_daly(
-    archetype: bool = Query(True, description="If True, use an archetype; otherwise provide bui_json."),
-    category: Optional[str] = Query(None, description="Building category. Required for an archetype."),
-    country: Optional[str] = Query(None, description="Building country. Required for an archetype."),
+    archetype: bool = Query(
+        True, description="If True, use an archetype; otherwise provide bui_json."
+    ),
+    category: Optional[str] = Query(
+        None, description="Building category. Required for an archetype."
+    ),
+    country: Optional[str] = Query(
+        None, description="Building country. Required for an archetype."
+    ),
     name: Optional[str] = Query(None, description="Archetype name. Required for an archetype."),
     weather_source: str = Query("pvgis", description="Weather source: 'pvgis' or 'epw'."),
     epw_file: Optional[UploadFile] = File(None, description="EPW file when weather_source='epw'."),
@@ -1550,8 +1823,12 @@ async def compare_ecm_thermal_daly(
         "COMFORT_PAIR_26_20",
         description="Paired DALY thresholds: ITALY_MMT_24_4, COMFORT_PAIR_26_20, or CVD_PAIR_30_21.",
     ),
-    population_persons: float = Query(1.0, gt=0.0, description="Population represented by each profile."),
-    exposure_days_for_period: float = Query(365.0, gt=0.0, description="Days used for period-level DALY totals."),
+    population_persons: float = Query(
+        1.0, gt=0.0, description="Population represented by each profile."
+    ),
+    exposure_days_for_period: float = Query(
+        365.0, gt=0.0, description="Days used for period-level DALY totals."
+    ),
     assessment_days: int = Query(
         365,
         gt=0,
@@ -1560,7 +1837,9 @@ async def compare_ecm_thermal_daly(
 ) -> Dict[str, Any]:
     """Simulate baseline and envelope ECMs and compare thermal DALY health burden."""
     if all(value is None for value in (u_wall, u_roof, u_window, u_slab)):
-        raise HTTPException(status_code=400, detail="At least one envelope ECM U-value is required.")
+        raise HTTPException(
+            status_code=400, detail="At least one envelope ECM U-value is required."
+        )
 
     simulation = await simulate_uvalues(
         archetype=archetype,
@@ -1601,7 +1880,9 @@ async def compare_ecm_thermal_daly(
     baseline = next((item for item in scenarios if item.get("scenario_id") == "baseline"), None)
     interventions = [item for item in scenarios if item.get("scenario_id") != "baseline"]
     if baseline is None:
-        raise HTTPException(status_code=500, detail="Baseline simulation is missing from the ECM response.")
+        raise HTTPException(
+            status_code=500, detail="Baseline simulation is missing from the ECM response."
+        )
     if not interventions:
         raise HTTPException(status_code=400, detail="No ECM intervention scenario was generated.")
 
@@ -1681,7 +1962,9 @@ async def compare_ecm_thermal_daly(
                     "rank": rank,
                     "scenario_id": item["scenario_id"],
                     "avoided_total_DALY": item["comparison_vs_baseline"]["total"]["avoided_DALY"],
-                    "total_DALY_reduction_percent": item["comparison_vs_baseline"]["total"]["reduction_percent"],
+                    "total_DALY_reduction_percent": item["comparison_vs_baseline"]["total"][
+                        "reduction_percent"
+                    ],
                     "interpretation": item["comparison_vs_baseline"]["interpretation"],
                 }
                 for rank, item in enumerate(ranked, start=1)
@@ -1692,21 +1975,48 @@ async def compare_ecm_thermal_daly(
 
 @app.post("/ecm_application/report", response_class=HTMLResponse, tags=["Reports"])
 async def generate_ecm_application_report(
-    archetype: bool = Query(True, description="If True, use an archetype; if False, use a custom BUI from JSON."),
-    category: Optional[str] = Query(None, description="Building category. Required when archetype=True."),
+    archetype: bool = Query(
+        True, description="If True, use an archetype; if False, use a custom BUI from JSON."
+    ),
+    category: Optional[str] = Query(
+        None, description="Building category. Required when archetype=True."
+    ),
     country: Optional[str] = Query(None, description="Country. Required when archetype=True."),
     name: Optional[str] = Query(None, description="Archetype name. Required when archetype=True."),
-    floor_area: Optional[float] = Query(None, gt=0, description="Net floor area (m²) for archetypes. If different from the archetype value, the geometry (walls, windows, roof, slab, volume) is rescaled accordingly."),
+    floor_area: Optional[float] = Query(
+        None,
+        gt=0,
+        description="Net floor area (m²) for archetypes. If different from the archetype value, the geometry (walls, windows, roof, slab, volume) is rescaled accordingly.",
+    ),
     weather_source: str = Query("pvgis", description="Weather source: 'pvgis' or 'epw'."),
-    epw_file: Optional[UploadFile] = File(None, description="EPW weather file (required when weather_source='epw')."),
-    bui_json: Optional[str] = Form(None, description="JSON string with the BUI (required when archetype=False)."),
-    system_json: Optional[str] = Form(None, description="JSON string with SYSTEM (required when use_heat_pump=true in custom mode)."),
-    u_wall: Optional[float] = Query(None, description="New wall U-value (opaque vertical surfaces)."),
-    u_roof: Optional[float] = Query(None, description="New roof U-value (opaque horizontal surface)."),
-    u_window: Optional[float] = Query(None, description="New window U-value (transparent vertical surfaces)."),
-    u_slab: Optional[float] = Query(None, description="New slab-to-ground U-value (opaque ground surface)."),
-    use_heat_pump: bool = Query(False, description="If True, switch generation to heat pump (system update)."),
-    heat_pump_cop: float = Query(3.2, description="Heat pump COP used for system update (if enabled)."),
+    epw_file: Optional[UploadFile] = File(
+        None, description="EPW weather file (required when weather_source='epw')."
+    ),
+    bui_json: Optional[str] = Form(
+        None, description="JSON string with the BUI (required when archetype=False)."
+    ),
+    system_json: Optional[str] = Form(
+        None,
+        description="JSON string with SYSTEM (required when use_heat_pump=true in custom mode).",
+    ),
+    u_wall: Optional[float] = Query(
+        None, description="New wall U-value (opaque vertical surfaces)."
+    ),
+    u_roof: Optional[float] = Query(
+        None, description="New roof U-value (opaque horizontal surface)."
+    ),
+    u_window: Optional[float] = Query(
+        None, description="New window U-value (transparent vertical surfaces)."
+    ),
+    u_slab: Optional[float] = Query(
+        None, description="New slab-to-ground U-value (opaque ground surface)."
+    ),
+    use_heat_pump: bool = Query(
+        False, description="If True, switch generation to heat pump (system update)."
+    ),
+    heat_pump_cop: float = Query(
+        3.2, description="Heat pump COP used for system update (if enabled)."
+    ),
     uni_generation_mode: str = Query(
         "default",
         description="UNI/TS 11300 heating generation mask: 'default' or 'condensing_boiler'. If use_heat_pump=true, the heat pump COP from ECM takes precedence.",
@@ -1762,9 +2072,7 @@ async def generate_ecm_application_report(
         base_bui = archetype_bui_with_floor_area(match["bui"], floor_area)
         base_system = match.get("system")
         base_uni_cfg = copy.deepcopy(
-            match.get("uni11300")
-            or match.get("systems_archetype")
-            or UNI11300_SIMULATION_EXAMPLE
+            match.get("uni11300") or match.get("systems_archetype") or UNI11300_SIMULATION_EXAMPLE
         )
     else:
         if bui_json is None:
@@ -1780,7 +2088,9 @@ async def generate_ecm_application_report(
             try:
                 system_raw = json.loads(system_json)
             except json.JSONDecodeError:
-                raise HTTPException(status_code=400, detail="'system_json' must be a valid JSON string.")
+                raise HTTPException(
+                    status_code=400, detail="'system_json' must be a valid JSON string."
+                )
             base_system = json_to_internal_system(system_raw)
 
     scenarios_spec = build_uvalue_scenarios(
@@ -1829,10 +2139,21 @@ async def generate_ecm_application_report(
         )
 
     selected_spec: Optional[Dict[str, Any]] = None
-    active_elements = {key for key, value in {"roof": u_roof, "wall": u_wall, "window": u_window, "slab": u_slab}.items() if value is not None}
+    active_elements = {
+        key
+        for key, value in {
+            "roof": u_roof,
+            "wall": u_wall,
+            "window": u_window,
+            "slab": u_slab,
+        }.items()
+        if value is not None
+    }
 
     if scenario_id:
-        selected_spec = next((spec for spec in scenarios_spec if str(spec.get("id")) == str(scenario_id)), None)
+        selected_spec = next(
+            (spec for spec in scenarios_spec if str(spec.get("id")) == str(scenario_id)), None
+        )
         if selected_spec is None:
             raise HTTPException(
                 status_code=404,
@@ -1896,7 +2217,9 @@ async def generate_ecm_application_report(
         heat_pump_cop=heat_pump_cop,
     )
 
-    def _as_hourly_df(hourly_output: Union[pd.DataFrame, List[Dict[str, Any]], Dict[str, Any]]) -> pd.DataFrame:
+    def _as_hourly_df(
+        hourly_output: Union[pd.DataFrame, List[Dict[str, Any]], Dict[str, Any]],
+    ) -> pd.DataFrame:
         if isinstance(hourly_output, pd.DataFrame):
             return hourly_output.copy()
         return pd.DataFrame(hourly_output)
@@ -1922,7 +2245,9 @@ async def generate_ecm_application_report(
             )
         return _as_hourly_df(hourly_out), annual_out
 
-    def _build_scenario_label(spec: Optional[Dict[str, Any]], generation_mask: Dict[str, Any]) -> str:
+    def _build_scenario_label(
+        spec: Optional[Dict[str, Any]], generation_mask: Dict[str, Any]
+    ) -> str:
         label_parts: List[str] = []
         if spec is not None:
             label_parts.append(str(spec.get("label") or spec.get("id") or "Envelope ECM"))
@@ -1943,7 +2268,9 @@ async def generate_ecm_application_report(
     epw_path: Optional[str] = None
     if weather_source == "epw":
         if epw_file is None:
-            raise HTTPException(status_code=400, detail="With weather_source='epw' you must upload 'epw_file'.")
+            raise HTTPException(
+                status_code=400, detail="With weather_source='epw' you must upload 'epw_file'."
+            )
         with tempfile.NamedTemporaryFile(delete=False, suffix=".epw") as tmp:
             tmp.write(await epw_file.read())
             epw_path = tmp.name
@@ -2004,7 +2331,9 @@ async def generate_ecm_application_report(
         scenario_meta={
             "id": selected_spec.get("id") if selected_spec is not None else "generation-only",
             "label": _build_scenario_label(selected_spec, scenario_generation_mask),
-            "elements": sorted(_spec_to_elements(selected_spec)) if selected_spec is not None else [],
+            "elements": sorted(_spec_to_elements(selected_spec))
+            if selected_spec is not None
+            else [],
             "generation_mask": scenario_generation_mask,
         },
         baseline_hourly=baseline_hourly_df,
@@ -2016,15 +2345,15 @@ async def generate_ecm_application_report(
     return HTMLResponse(content=html_content)
 
 
-
-
 # -----------------------------------------------------------------------------
 # Helpers (safe + minimal)
 # -----------------------------------------------------------------------------
 
+
 def _slugify(text: str) -> str:
     return (
-        str(text).lower()
+        str(text)
+        .lower()
         .replace(" ", "_")
         .replace("/", "_")
         .replace("\\", "_")
@@ -2691,10 +3020,10 @@ def _generate_combinations(ecm_options: List[str], include_baseline: bool) -> Li
 #     }
 
 
-
 # =============================================================================
 # CO2 endpoints
 # =============================================================================
+
 
 @app.get("/emission-factors", tags=["Co2 Emissions"])
 def get_emission_factors(country: str = "IT"):
@@ -2740,7 +3069,9 @@ def compare_scenarios(input_data: MultiScenarioInput):
     Compare scenarios by emissions. The first scenario is treated as the baseline.
     """
     if len(input_data.scenarios) < 2:
-        raise HTTPException(status_code=400, detail="At least 2 scenarios are required for comparison")
+        raise HTTPException(
+            status_code=400, detail="At least 2 scenarios are required for comparison"
+        )
 
     results: List[EmissionResult] = []
     for scenario in input_data.scenarios:
@@ -2799,7 +3130,9 @@ def calculate_intervention_impact(payload: InterventionInput):
     )
 
     if payload.new_consumption_kwh is None:
-        final_consumption = payload.current_consumption_kwh * (1.0 - payload.energy_reduction_percentage / 100.0)
+        final_consumption = payload.current_consumption_kwh * (
+            1.0 - payload.energy_reduction_percentage / 100.0
+        )
     else:
         final_consumption = payload.new_consumption_kwh
 
@@ -2836,15 +3169,16 @@ def calculate_intervention_impact(payload: InterventionInput):
         },
     }
 
+
 # =============================================================================
 # PV + Heat Pump endpoint
 # =============================================================================
 
 # Import the PV+HP core function (NOT the router endpoint)
 try:
-    from relife_forecasting.routes.pv_hp_analysis import analyze_pv_hp_from_uni11300, BatteryParams
+    from relife_forecasting.routes.pv_hp_analysis import BatteryParams, analyze_pv_hp_from_uni11300
 except Exception:
-    from routes.pv_hp_analysis import analyze_pv_hp_from_uni11300, BatteryParams  # type: ignore
+    from routes.pv_hp_analysis import BatteryParams, analyze_pv_hp_from_uni11300  # type: ignore
 
 
 def _compute_uni11300_full_from_hourly_df(
@@ -2927,7 +3261,9 @@ def _compute_uni11300_full_from_hourly_df(
         "EP_cool_total_kWh",
         "EP_total_kWh",
     ]
-    summary = {col: float(results_df[col].sum()) for col in summary_fields if col in results_df.columns}
+    summary = {
+        col: float(results_df[col].sum()) for col in summary_fields if col in results_df.columns
+    }
 
     return {
         "input_unit": input_unit,
@@ -3005,9 +3341,7 @@ def _build_ecm_uni11300_config(
         "metric": mask_metric,
         "mask_value": mask_value,
         "heating_eta_generation": (
-            float(heating_params["eta_generation"])
-            if "eta_generation" in heating_params
-            else None
+            float(heating_params["eta_generation"]) if "eta_generation" in heating_params else None
         ),
         "heat_pump_cop": float(heat_pump_cop) if applied_mode == "heat_pump" else None,
         "input_unit": uni_cfg["input_unit"],
@@ -3029,18 +3363,31 @@ def _apply_heat_pump_to_uni11300_results(
 
     hourly_records = uni11300_results.get("hourly_results")
     if not isinstance(hourly_records, list) or not hourly_records:
-        raise HTTPException(status_code=400, detail="UNI11300 results must include a non-empty 'hourly_results' list.")
+        raise HTTPException(
+            status_code=400,
+            detail="UNI11300 results must include a non-empty 'hourly_results' list.",
+        )
 
     df = pd.DataFrame(hourly_records)
     if df.empty:
         raise HTTPException(status_code=400, detail="UNI11300 hourly_results parsed empty.")
 
-    q_ideal_heat = pd.to_numeric(df.get("Q_ideal_heat_kWh", 0.0), errors="coerce").fillna(0.0).clip(lower=0.0)
-    e_aux_heat = pd.to_numeric(
-        df.get("E_aux_total_heat_kWh", df.get("E_delivered_electric_heat_kWh", 0.0)),
-        errors="coerce",
-    ).fillna(0.0).clip(lower=0.0)
-    e_electric_cool = pd.to_numeric(df.get("E_delivered_electric_cool_kWh", 0.0), errors="coerce").fillna(0.0).clip(lower=0.0)
+    q_ideal_heat = (
+        pd.to_numeric(df.get("Q_ideal_heat_kWh", 0.0), errors="coerce").fillna(0.0).clip(lower=0.0)
+    )
+    e_aux_heat = (
+        pd.to_numeric(
+            df.get("E_aux_total_heat_kWh", df.get("E_delivered_electric_heat_kWh", 0.0)),
+            errors="coerce",
+        )
+        .fillna(0.0)
+        .clip(lower=0.0)
+    )
+    e_electric_cool = (
+        pd.to_numeric(df.get("E_delivered_electric_cool_kWh", 0.0), errors="coerce")
+        .fillna(0.0)
+        .clip(lower=0.0)
+    )
 
     e_hp_heating = (q_ideal_heat / float(heat_pump_cop)).clip(lower=0.0)
     e_electric_heat_total = e_hp_heating + e_aux_heat
@@ -3192,7 +3539,9 @@ def _run_iso52016_uni11300_pv_pipeline(
       3) PV + optional battery matching
     """
     if bui is None or not isinstance(bui, dict):
-        raise HTTPException(status_code=400, detail="Missing or invalid 'bui' (must be a JSON object).")
+        raise HTTPException(
+            status_code=400, detail="Missing or invalid 'bui' (must be a JSON object)."
+        )
     if not isinstance(pv, dict):
         raise HTTPException(status_code=400, detail="'pv' must be a JSON object.")
 
@@ -3223,7 +3572,9 @@ def _run_iso52016_uni11300_pv_pipeline(
         try:
             battery_params_obj = BatteryParams(**pv["battery_params"])
         except TypeError as exc:
-            raise HTTPException(status_code=400, detail=f"Invalid pv.battery_params: {exc}") from exc
+            raise HTTPException(
+                status_code=400, detail=f"Invalid pv.battery_params: {exc}"
+            ) from exc
 
     uni_cfg = uni_cfg or {}
     if not isinstance(uni_cfg, dict):
@@ -3240,7 +3591,9 @@ def _run_iso52016_uni11300_pv_pipeline(
                 sankey_graph=False,
             )
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"ISO52016 simulation failed: {type(exc).__name__}: {exc}") from exc
+            raise HTTPException(
+                status_code=500, detail=f"ISO52016 simulation failed: {type(exc).__name__}: {exc}"
+            ) from exc
     elif not isinstance(hourly_sim, pd.DataFrame):
         hourly_sim = pd.DataFrame(hourly_sim)
 

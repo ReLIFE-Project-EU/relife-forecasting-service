@@ -111,9 +111,7 @@ class AuthenticatedUser(BaseModel):
 
         settings = get_settings()
 
-        return any(
-            role.name == settings.admin_role_name for role in self.keycloak_roles
-        )
+        return any(role.name == settings.admin_role_name for role in self.keycloak_roles)
 
     @property
     def user_id(self) -> str:

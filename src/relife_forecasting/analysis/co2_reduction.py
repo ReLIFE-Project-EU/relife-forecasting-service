@@ -12,25 +12,25 @@ from __future__ import annotations
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
-
-from pyecharts.globals import ThemeType
-from pyecharts.charts import Page, Bar, Line
+from building_examples import BUI
 from pyecharts import options as opts
+from pyecharts.charts import Bar, Line, Page
+from pyecharts.globals import ThemeType
 
 # Se usi funzioni custom per i bar chart singoli
 from utils.graphs import bar_chart_single
-from building_examples import BUI
-
 
 # ==============================================================================
 #                      SEZIONE CO₂ – MODELS & LOGIC
 # ==============================================================================
 
+
 class EnergySource(str, Enum):
     """Fonti energetiche disponibili"""
+
     GRID_ELECTRICITY = "grid_electricity"
     NATURAL_GAS = "natural_gas"
     LPG = "lpg"
@@ -104,8 +104,8 @@ def calculate_emissions(
     annual_emissions_kg = annual_consumption_kwh * emission_factor
     annual_emissions_ton = annual_emissions_kg / 1000.0
 
-    equivalent_trees = int(annual_emissions_kg / 21.0)     # 1 albero ≈ 21 kg CO2/anno
-    equivalent_km_car = int(annual_emissions_kg / 0.120)   # 1 km ≈ 120 g CO2
+    equivalent_trees = int(annual_emissions_kg / 21.0)  # 1 albero ≈ 21 kg CO2/anno
+    equivalent_km_car = int(annual_emissions_kg / 0.120)  # 1 km ≈ 120 g CO2
 
     return {
         "emission_factor": emission_factor,
@@ -134,6 +134,7 @@ def calculate_savings(
 # ==============================================================================
 #                      LETTURA SYSTEM CSV & TABELLA CO₂
 # ==============================================================================
+
 
 def extract_scenario_name_from_system_path(path: Path) -> str:
     """
@@ -248,6 +249,7 @@ def build_co2_table_from_system(
 #                      GRAFICI – MULTI SIMULATION REPORT
 # ==============================================================================
 
+
 def annual_total_HC_sum_chart(
     labels: List[str],
     values_all_sims: List[List[float]],
@@ -273,9 +275,7 @@ def annual_total_HC_sum_chart(
         ],
         toolbox_opts=opts.ToolboxOpts(
             feature=opts.ToolBoxFeatureOpts(
-                save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(
-                    title="Download as Image"
-                ),
+                save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(title="Download as Image"),
                 restore=opts.ToolBoxFeatureRestoreOpts(title="Restore"),
                 data_view=opts.ToolBoxFeatureDataViewOpts(
                     title="View Data", lang=["Data View", "Close", "Refresh"]
@@ -310,8 +310,9 @@ class MultiSimulationsReport:
         labels: List[str],
         building_areas: List[float],
     ):
-        assert len(dfs) == len(labels) == len(building_areas), \
+        assert len(dfs) == len(labels) == len(building_areas), (
             "dfs, labels e building_areas devono avere la stessa lunghezza"
+        )
 
         self.dfs = [df.sort_index(axis=0) for df in dfs]
         self.labels = labels
@@ -320,24 +321,24 @@ class MultiSimulationsReport:
     # -------- Helpers per Q_H / Q_C --------
 
     @staticmethod
-    def _monthly_HC(df: pd.DataFrame, unit='W') -> pd.DataFrame:
+    def _monthly_HC(df: pd.DataFrame, unit="W") -> pd.DataFrame:
         df_HC = df.loc[:, ["Q_H", "Q_C"]]
         try:
             df_monthly = df_HC.resample("ME").sum()
         except Exception:
             df_monthly = df_HC.resample("M").sum()
-        if unit == 'W':
+        if unit == "W":
             df_monthly = df_monthly / 1000.0
         return df_monthly
 
     @staticmethod
-    def _yearly_HC(df: pd.DataFrame, unit='W') -> pd.DataFrame:
+    def _yearly_HC(df: pd.DataFrame, unit="W") -> pd.DataFrame:
         df_HC = df.loc[:, ["Q_H", "Q_C"]]
         try:
             df_yearly = df_HC.resample("YE").sum()
         except Exception:
             df_yearly = df_HC.resample("Y").sum()
-        if unit == 'W':
+        if unit == "W":
             df_yearly = df_yearly / 1000.0
         return df_yearly
 
@@ -348,7 +349,7 @@ class MultiSimulationsReport:
         folder_directory: str,
         name_file: str = "monthly_heating_comparison",
     ):
-        df_monthly_list = [self._monthly_HC(df, unit='W') for df in self.dfs]
+        df_monthly_list = [self._monthly_HC(df, unit="W") for df in self.dfs]
 
         y_data = []
         y_name = []
@@ -368,7 +369,7 @@ class MultiSimulationsReport:
         folder_directory: str,
         name_file: str = "monthly_cooling_comparison",
     ):
-        df_monthly_list = [self._monthly_HC(df, unit='W') for df in self.dfs]
+        df_monthly_list = [self._monthly_HC(df, unit="W") for df in self.dfs]
 
         y_data = []
         y_name = []
@@ -595,7 +596,6 @@ h1 {{
     path.write_text(full_html, encoding="utf-8")
 
 
-
 def create_reports_from_csv(
     building_csv_paths: List[Path],
     system_csv_paths: List[Path],
@@ -616,14 +616,16 @@ def create_reports_from_csv(
       4) Calcola tabella CO2 e la salva in CSV + HTML
     """
 
-    assert len(building_csv_paths) == len(building_areas), \
+    assert len(building_csv_paths) == len(building_areas), (
         "building_csv_paths e building_areas devono avere la stessa lunghezza"
+    )
 
     if labels is None:
-        labels = [f"Simulation {i+1}" for i in range(len(building_csv_paths))]
+        labels = [f"Simulation {i + 1}" for i in range(len(building_csv_paths))]
 
-    assert len(labels) == len(building_csv_paths), \
+    assert len(labels) == len(building_csv_paths), (
         "labels deve avere la stessa lunghezza di building_csv_paths"
+    )
 
     # --- 1) Building: lettura DataFrame ---
     dfs_building: List[pd.DataFrame] = []
@@ -688,10 +690,7 @@ if __name__ == "__main__":
     system_folder = Path("results/ecm/heating/")
 
     # --- Building CSV: risultati edificio (come nel tuo script originale) ---
-    building_csv_paths = [
-        p for p in base_folder.glob("*.csv")
-        if "annual" not in p.name.lower()
-    ]
+    building_csv_paths = [p for p in base_folder.glob("*.csv") if "annual" not in p.name.lower()]
     building_csv_paths = sorted(building_csv_paths)
 
     if not building_csv_paths:

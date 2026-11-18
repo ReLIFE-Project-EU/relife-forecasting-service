@@ -1,4 +1,3 @@
-
 def _norm_surface_name(name: str) -> str:
     """Normalize th esurface for the lookup ."""
     return " ".join(name.lower().split())

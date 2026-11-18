@@ -52,6 +52,7 @@ _SUPPORTED_BUILDING_TYPE_CLASSES = frozenset(_PBE_OCCUPANTS_SCHEDULE_WORKDAYS.ke
 # JSON / Data utilities
 # =============================================================================
 
+
 def _numeric_array_to_list(values: Any) -> List[Any]:
     """1-D numeric array -> list of floats where NaN/inf become None (valid JSON)."""
     arr = np.asarray(values, dtype=float)
@@ -266,9 +267,7 @@ def drop_iso52016_warmup_rows(hourly: pd.DataFrame) -> pd.DataFrame:
 
     # Catches a warm-up period the copy check missed, whatever its shape.
     if len(hourly) not in (8760, 8784):
-        raise ValueError(
-            f"ISO 52016 hourly output has {len(hourly)} rows; expected 8760 or 8784."
-        )
+        raise ValueError(f"ISO 52016 hourly output has {len(hourly)} rows; expected 8760 or 8784.")
 
     return hourly
 
@@ -290,10 +289,7 @@ def run_iso52016_simulation(
         else None
     )
 
-    if (
-        building_type_class
-        and building_type_class not in _SUPPORTED_BUILDING_TYPE_CLASSES
-    ):
+    if building_type_class and building_type_class not in _SUPPORTED_BUILDING_TYPE_CLASSES:
         supported = ", ".join(sorted(_SUPPORTED_BUILDING_TYPE_CLASSES))
         raise HTTPException(
             status_code=422,
@@ -362,6 +358,7 @@ def run_iso52016_simulation(
 # JSON -> internal pybuildingenergy structures
 # =============================================================================
 
+
 def json_to_internal_bui(bui_json: Dict[str, Any]) -> Dict[str, Any]:
     """
     Convert a JSON BUI representation into the internal format expected by pybuildingenergy.
@@ -407,6 +404,7 @@ def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
           "Minimum outdoor temperature", "Maximum outdoor temperature",
           "Maximum flow temperature", "Minimum flow temperature"]
     """
+
     def _coerce_system_df(
         field_name: str,
         value: Any,
@@ -496,8 +494,7 @@ def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
             raise HTTPException(
                 status_code=422,
                 detail=(
-                    f"Invalid '{field_name}': expected {expected_rows} rows, "
-                    f"but got {actual_rows}."
+                    f"Invalid '{field_name}': expected {expected_rows} rows, but got {actual_rows}."
                 ),
             )
 
@@ -598,6 +595,7 @@ def json_to_internal_system(system_json: Dict[str, Any]) -> Dict[str, Any]:
 # Validation helpers
 # =============================================================================
 
+
 def validate_bui_and_system(bui: Dict[str, Any], system: Dict[str, Any]) -> Dict[str, Any]:
     """
     Validate both BUI (building input) and HVAC system configuration.
@@ -656,6 +654,7 @@ def validate_bui_and_system(bui: Dict[str, Any], system: Dict[str, Any]) -> Dict
 # =============================================================================
 # Simulation worker (multiprocessing-safe)
 # =============================================================================
+
 
 def simulate_building_worker(building_name: str, bui: dict, system: dict) -> Dict[str, Any]:
     """
@@ -721,6 +720,7 @@ def simulate_building_worker(building_name: str, bui: dict, system: dict) -> Dic
 # ECM helpers (U-values manipulation)
 # =============================================================================
 
+
 def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
     """
     Classify a building surface based on simplified geometric/type rules.
@@ -783,7 +783,7 @@ def scale_bui_floor_area(
     k = float(new_floor_area) / float(old_area)
     if abs(k - 1.0) <= rel_tol:
         return scaled
-    s = k ** 0.5
+    s = k**0.5
 
     building["net_floor_area"] = float(new_floor_area)
     if isinstance(building.get("volume"), (int, float)):
@@ -938,8 +938,10 @@ def apply_heat_pump_to_system(system: Dict[str, Any], cop: float = 3.2) -> Dict[
 # CO2 / emissions models & business logic
 # =============================================================================
 
+
 class EnergySource(str, Enum):
     """Supported energy sources for emissions accounting."""
+
     GRID_ELECTRICITY = "grid_electricity"
     NATURAL_GAS = "natural_gas"
     LPG = "lpg"
@@ -990,6 +992,7 @@ EMISSION_FACTORS: Dict[str, Dict[str, float]] = {
 
 class ScenarioInput(BaseModel):
     """Input payload for a single scenario emissions calculation."""
+
     name: str = Field(..., description="Scenario name")
     energy_source: EnergySource = Field(..., description="Energy source")
     annual_consumption_kwh: float = Field(..., gt=0, description="Annual consumption [kWh]")
@@ -998,11 +1001,13 @@ class ScenarioInput(BaseModel):
 
 class MultiScenarioInput(BaseModel):
     """Input payload for comparing multiple scenarios (first scenario is baseline)."""
+
     scenarios: List[ScenarioInput] = Field(..., min_length=1, max_length=10)
 
 
 class EmissionResult(BaseModel):
     """Response model for a single emissions calculation."""
+
     name: str
     energy_source: str
     annual_consumption_kwh: float
@@ -1015,6 +1020,7 @@ class EmissionResult(BaseModel):
 
 class SavingResult(BaseModel):
     """Response model for savings vs. baseline."""
+
     scenario_name: str
     absolute_kg_co2eq: float
     absolute_ton_co2eq: float
@@ -1023,6 +1029,7 @@ class SavingResult(BaseModel):
 
 class ComparisonResult(BaseModel):
     """Response model for a multi-scenario comparison."""
+
     baseline: EmissionResult
     scenarios: List[EmissionResult]
     best_scenario: str
@@ -1031,11 +1038,16 @@ class ComparisonResult(BaseModel):
 
 class InterventionInput(BaseModel):
     """Input payload to evaluate a retrofit intervention impact on emissions."""
+
     current_consumption_kwh: float = Field(..., gt=0, description="Current consumption [kWh/year]")
     current_source: EnergySource = Field(..., description="Current energy source")
-    energy_reduction_percentage: float = Field(0, ge=0, le=100, description="Consumption reduction [%]")
+    energy_reduction_percentage: float = Field(
+        0, ge=0, le=100, description="Consumption reduction [%]"
+    )
     new_source: Optional[EnergySource] = Field(None, description="New energy source (optional)")
-    new_consumption_kwh: Optional[float] = Field(None, description="New annual consumption (optional)")
+    new_consumption_kwh: Optional[float] = Field(
+        None, description="New annual consumption (optional)"
+    )
     country: str = Field("IT", description="Country code for emission factors (IT, EU, DE)")
 
 
@@ -1059,7 +1071,9 @@ def calculate_emissions(
     if country not in EMISSION_FACTORS:
         country = "IT"
 
-    source_key = energy_source.value if isinstance(energy_source, EnergySource) else str(energy_source)
+    source_key = (
+        energy_source.value if isinstance(energy_source, EnergySource) else str(energy_source)
+    )
 
     emission_factor = EMISSION_FACTORS[country].get(
         source_key,
@@ -1070,8 +1084,8 @@ def calculate_emissions(
     annual_emissions_ton = annual_emissions_kg / 1000.0
 
     # Practical equivalents (heuristics)
-    equivalent_trees = int(annual_emissions_kg / 21.0)   # ~21 kg CO2 per tree per year
-    equivalent_km_car = int(annual_emissions_kg / 0.120) # ~120 g CO2 per km
+    equivalent_trees = int(annual_emissions_kg / 21.0)  # ~21 kg CO2 per tree per year
+    equivalent_km_car = int(annual_emissions_kg / 0.120)  # ~120 g CO2 per km
 
     return {
         "emission_factor": emission_factor,
@@ -1087,7 +1101,9 @@ def calculate_savings(baseline_emissions: float, scenario_emissions: float) -> D
     Compute absolute and relative savings between a baseline and an alternative scenario.
     """
     absolute_saving = baseline_emissions - scenario_emissions
-    percentage_saving = (absolute_saving / baseline_emissions * 100.0) if baseline_emissions > 0 else 0.0
+    percentage_saving = (
+        (absolute_saving / baseline_emissions * 100.0) if baseline_emissions > 0 else 0.0
+    )
 
     return {
         "absolute_kg_co2eq": round(absolute_saving, 2),

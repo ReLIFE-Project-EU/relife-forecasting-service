@@ -16,7 +16,6 @@ from relife_forecasting.scripts.linear_tool_calculator import (
     read_temperatures_csv,
 )
 
-
 WORKBOOK_PATH = Path("D_Antolucci_NEI_CoBen_linear_heat_cold_DALY_tool_v2.xlsx")
 client = TestClient(app)
 
@@ -66,9 +65,7 @@ def test_linear_tool_calculator_can_reproduce_saved_excel_summary_divisor():
 def test_linear_tool_calculator_accepts_csv_input(tmp_path):
     csv_path = tmp_path / "temps.csv"
     csv_path.write_text(
-        "date,indoor_air_temperature_C\n"
-        "2026-01-01,22.0\n"
-        "2026-01-02,27.0\n",
+        "date,indoor_air_temperature_C\n2026-01-01,22.0\n2026-01-02,27.0\n",
         encoding="utf-8",
     )
 
@@ -84,8 +81,7 @@ def test_linear_tool_calculator_accepts_csv_input(tmp_path):
 def test_linear_tool_calculator_accepts_csv_decimal_comma(tmp_path):
     csv_path = tmp_path / "temps_decimal_comma.csv"
     csv_path.write_text(
-        "date,indoor_air_temperature_C\n"
-        "2026-01-01,24,29\n",
+        "date,indoor_air_temperature_C\n2026-01-01,24,29\n",
         encoding="utf-8",
     )
 

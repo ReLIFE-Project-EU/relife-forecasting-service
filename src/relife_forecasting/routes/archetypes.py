@@ -72,7 +72,9 @@ def _building_summary(archetype: Dict[str, Any]) -> Dict[str, Any]:
 
 @router.get("/building/archetypes_info_capex", tags=["archetypes"])
 def list_archetypes(
-    country: Optional[str] = Query(None, description="Country to filter by, e.g. Austria, Greece, Italy."),
+    country: Optional[str] = Query(
+        None, description="Country to filter by, e.g. Austria, Greece, Italy."
+    ),
     building_type: Optional[str] = Query(
         None,
         description="Building typology: Single Family House, Multi family House, Apartment buildings.",
@@ -120,6 +122,14 @@ def list_archetypes(
 @router.get("/building/archetypes/options", tags=["archetypes"])
 def list_archetype_options() -> Dict[str, Any]:
     """Return available countries and typologies derived from the archetype list."""
-    countries = sorted({str(item.get("country")) for item in BUILDING_ARCHETYPES if item.get("country")})
-    building_types = sorted({str(item.get("category")) for item in BUILDING_ARCHETYPES if item.get("category")})
-    return {"countries": countries, "building_types": building_types, "count": len(BUILDING_ARCHETYPES)}
+    countries = sorted(
+        {str(item.get("country")) for item in BUILDING_ARCHETYPES if item.get("country")}
+    )
+    building_types = sorted(
+        {str(item.get("category")) for item in BUILDING_ARCHETYPES if item.get("category")}
+    )
+    return {
+        "countries": countries,
+        "building_types": building_types,
+        "count": len(BUILDING_ARCHETYPES),
+    }

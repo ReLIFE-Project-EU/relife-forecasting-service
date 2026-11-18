@@ -1,6 +1,6 @@
 import pytest
-from fastapi.testclient import TestClient
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from relife_forecasting.building_examples import BUILDING_ARCHETYPES
 from relife_forecasting.routes.archetypes import router
@@ -38,9 +38,7 @@ def test_archetypes_route_filters_by_country_type_and_name():
 
 
 def test_generated_archetype_splits_surface_areas_across_sides():
-    archetype = next(
-        entry for entry in BUILDING_ARCHETYPES if entry["name"] == "SE_AB_1990-1999"
-    )
+    archetype = next(entry for entry in BUILDING_ARCHETYPES if entry["name"] == "SE_AB_1990-1999")
     surfaces = archetype["bui"]["building_surface"]
     walls = [
         surface

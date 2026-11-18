@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from relife_forecasting.auth.dependencies import AuthenticatedUserWithRolesDep
 from relife_forecasting.models.auth import AuthenticatedUser
 

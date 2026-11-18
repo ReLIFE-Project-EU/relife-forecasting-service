@@ -70,9 +70,7 @@ def load_environment() -> Dict[str, str]:
 
     if missing_vars:
         console = Console()
-        console.print(
-            f"[red]ERROR: Missing environment variables: {', '.join(missing_vars)}[/red]"
-        )
+        console.print(f"[red]ERROR: Missing environment variables: {', '.join(missing_vars)}[/red]")
         console.print(
             "[blue]Please set these environment variables before running the script.[/blue]"
         )
@@ -81,9 +79,7 @@ def load_environment() -> Dict[str, str]:
     return config
 
 
-def prompt_credentials(
-    email: str | None = None, password: str | None = None
-) -> tuple[str, str]:
+def prompt_credentials(email: str | None = None, password: str | None = None) -> tuple[str, str]:
     """Prompt user for authentication credentials.
 
     Args:
@@ -157,9 +153,7 @@ def show_info_panel():
     console.print(panel)
 
 
-async def authenticate_supabase(
-    email: str, password: str, config: Dict[str, str]
-) -> str:
+async def authenticate_supabase(email: str, password: str, config: Dict[str, str]) -> str:
     """Authenticate with Supabase using email/password.
 
     Args:
@@ -184,9 +178,7 @@ async def authenticate_supabase(
             options=ClientOptions(),
         )
 
-        response = client.auth.sign_in_with_password(
-            {"email": email, "password": password}
-        )
+        response = client.auth.sign_in_with_password({"email": email, "password": password})
 
         if response.user and response.session:
             console.print("[green]Supabase authentication successful[/green]")
@@ -199,9 +191,7 @@ async def authenticate_supabase(
         raise
 
 
-async def authenticate_keycloak_user(
-    email: str, password: str, config: Dict[str, str]
-) -> str:
+async def authenticate_keycloak_user(email: str, password: str, config: Dict[str, str]) -> str:
     """Authenticate with Keycloak using Resource Owner Password Grant.
 
     Args:
@@ -236,8 +226,7 @@ async def authenticate_keycloak_user(
 
         # Debug: show request details (without sensitive data)
         debug_data = {
-            k: v if k != "password" and k != "client_secret" else "***"
-            for k, v in data.items()
+            k: v if k != "password" and k != "client_secret" else "***" for k, v in data.items()
         }
 
         console.print(f"[blue]Request data: {debug_data}[/blue]")
@@ -253,9 +242,7 @@ async def authenticate_keycloak_user(
             return access_token
 
     except httpx.HTTPStatusError as e:
-        console.print(
-            f"[red]HTTP {e.response.status_code}: {e.response.reason_phrase}[/red]"
-        )
+        console.print(f"[red]HTTP {e.response.status_code}: {e.response.reason_phrase}[/red]")
 
         error_detail = "Invalid credentials or configuration"
         try:
@@ -267,9 +254,7 @@ async def authenticate_keycloak_user(
             elif "error" in error_response:
                 error_detail = f"{error_response['error']}: {error_response.get('error_description', 'No description provided')}"
         except Exception as parse_error:
-            console.print(
-                f"[yellow]Could not parse error response: {parse_error}[/yellow]"
-            )
+            console.print(f"[yellow]Could not parse error response: {parse_error}[/yellow]")
 
             console.print(f"[yellow]Raw response: {e.response.text}[/yellow]")
 
@@ -392,9 +377,7 @@ async def run_api_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT):
             for attempt in range(SERVER_STARTUP_MAX_ATTEMPTS):
                 await asyncio.sleep(SERVER_STARTUP_RETRY_DELAY)
                 try:
-                    async with httpx.AsyncClient(
-                        timeout=SERVER_HEALTH_CHECK_TIMEOUT
-                    ) as client:
+                    async with httpx.AsyncClient(timeout=SERVER_HEALTH_CHECK_TIMEOUT) as client:
                         response = await client.get(f"http://{host}:{port}/docs")
                         if response.status_code in [200, 404]:
                             progress.update(task, description="Server ready")
@@ -510,11 +493,7 @@ def validate_arguments(args) -> None:
 
     console = Console()
 
-    if (
-        args.auth_method in ["supabase", "keycloak-user"]
-        and args.password
-        and not args.email
-    ):
+    if args.auth_method in ["supabase", "keycloak-user"] and args.password and not args.email:
         console.print(
             f"[red]ERROR: --email must accompany --password for {args.auth_method} authentication[/red]"
         )

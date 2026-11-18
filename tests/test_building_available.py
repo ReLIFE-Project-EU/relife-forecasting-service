@@ -1,8 +1,7 @@
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 import relife_forecasting.main as main_module
-
 
 client = TestClient(main_module.app)
 
@@ -42,24 +41,32 @@ def test_available_archetypes_preserves_identities_and_bui_coordinates():
 def test_available_archetypes_serializes_optional_coordinates(
     monkeypatch, bui, expected_latitude, expected_longitude
 ):
-    monkeypatch.setattr(main_module, "BUILDING_ARCHETYPES", [{
-        "name": "Test reference",
-        "category": "Single Family House",
-        "country": "Austria",
-        "bui": bui,
-    }])
+    monkeypatch.setattr(
+        main_module,
+        "BUILDING_ARCHETYPES",
+        [
+            {
+                "name": "Test reference",
+                "category": "Single Family House",
+                "country": "Austria",
+                "bui": bui,
+            }
+        ],
+    )
 
     response = client.get("/building/available")
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload == [{
-        "name": "Test reference",
-        "category": "Single Family House",
-        "country": "Austria",
-        "latitude": expected_latitude,
-        "longitude": expected_longitude,
-    }]
+    assert payload == [
+        {
+            "name": "Test reference",
+            "category": "Single Family House",
+            "country": "Austria",
+            "latitude": expected_latitude,
+            "longitude": expected_longitude,
+        }
+    ]
     for coordinate in ("latitude", "longitude"):
         if payload[0][coordinate] is not None:
             assert type(payload[0][coordinate]) in (int, float)

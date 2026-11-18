@@ -5,15 +5,12 @@ from fastapi.testclient import TestClient
 
 import relife_forecasting.main as main_module
 
-
 client = TestClient(main_module.app)
 
 
 def test_ecm_lean_trims_hourly_output_only(monkeypatch):
     archetype = next(
-        entry
-        for entry in main_module.BUILDING_ARCHETYPES
-        if entry["name"] == "GR_SFH_2011-now"
+        entry for entry in main_module.BUILDING_ARCHETYPES if entry["name"] == "GR_SFH_2011-now"
     )
 
     def fake_iso_simulation(bui, **kwargs):

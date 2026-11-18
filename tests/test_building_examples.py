@@ -16,9 +16,7 @@ def test_all_archetypes_have_positive_net_floor_area():
 def test_derived_net_floor_area_matches_footprint_times_floors():
     # AT_SFH_0-1945 ships a placeholder 0.0 in its spec, so its area must be
     # derived from the ground slab (74.9 m2) times the floor count (2).
-    archetype = next(
-        entry for entry in BUILDING_ARCHETYPES if entry["name"] == "AT_SFH_0-1945"
-    )
+    archetype = next(entry for entry in BUILDING_ARCHETYPES if entry["name"] == "AT_SFH_0-1945")
 
     assert archetype["bui"]["building"]["net_floor_area"] == 74.9 * 2
 
@@ -32,12 +30,12 @@ def test_belgian_floor_area_matches_vertical_envelope(archetype):
     bui = archetype["bui"]
     building = bui["building"]
     vertical_area = sum(
-        surface["area"] for surface in bui["building_surface"]
+        surface["area"]
+        for surface in bui["building_surface"]
         if surface["orientation"]["tilt"] == 90
     )
     footprint = next(
-        surface["area"] for surface in bui["building_surface"]
-        if surface["name"].startswith("Slab")
+        surface["area"] for surface in bui["building_surface"] if surface["name"].startswith("Slab")
     )
     inferred_floors = vertical_area / (building["exposed_perimeter"] * 2.7)
     assert building["net_floor_area"] == pytest.approx(

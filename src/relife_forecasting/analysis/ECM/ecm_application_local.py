@@ -10,17 +10,17 @@ Version that:
 
 import copy
 import itertools
+import json
 import os
 import time
 import traceback
 from multiprocessing import Pool, cpu_count
-from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
-import json
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
-import pybuildingenergy as pybui
 import pandas as pd
-from typing import Union
+import pybuildingenergy as pybui
 
 # Import BUI and INPUT_SYSTEM_HVAC
 try:
@@ -126,6 +126,7 @@ def simulate_hourly(
 # UTILITY FUNCTIONS
 # ============================================================================
 
+
 def slugify(text: str) -> str:
     """OS-safe filename."""
     return (
@@ -201,6 +202,7 @@ def save_bui_to_folder(
 # SURFACE CLASSIFICATION
 # ============================================================================
 
+
 def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
     """Classify surface as 'roof', 'wall', or 'window'."""
     s_type = str(surface.get("type", "")).lower()
@@ -261,8 +263,7 @@ def apply_u_values_to_BUI(
             surface["u_value"] = u_map[s_class]
             modified_count += 1
             print(
-                f"  [OK] {surface.get('name', 'Unknown')}: "
-                f"{s_class} U={old_u} -> {u_map[s_class]}"
+                f"  [OK] {surface.get('name', 'Unknown')}: {s_class} U={old_u} -> {u_map[s_class]}"
             )
 
     print(f"  [INFO] Modified surfaces: {modified_count}")
@@ -277,6 +278,7 @@ def apply_u_values_to_BUI(
 # ECM COMBINATION GENERATION
 # ============================================================================
 
+
 def generate_ecm_combinations(ecm_options: List[str]) -> List[List[str]]:
     """Generate all NON-EMPTY ECM combinations."""
     combos: List[List[str]] = []
@@ -289,6 +291,7 @@ def generate_ecm_combinations(ecm_options: List[str]) -> List[List[str]]:
 # ============================================================================
 # SINGLE SIMULATION
 # ============================================================================
+
 
 def run_single_simulation(
     BUI: Dict[str, Any],
@@ -303,11 +306,11 @@ def run_single_simulation(
     start_time = time.time()
 
     try:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"   SIMULATION: {Path(name_file).name}")
         print(f"   Building: {BUI['building']['name']}")
         print(f"   EPW: {epw_name}")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Run simulation
         result = simulate_hourly(
@@ -367,6 +370,7 @@ def _mp_worker(task: Dict[str, Any]) -> Dict[str, Any]:
 # ============================================================================
 # MAIN FUNCTION
 # ============================================================================
+
 
 def run_ecm_multiprocessing(
     BUI_base: Dict[str, Any],
@@ -455,9 +459,9 @@ def run_ecm_multiprocessing(
         tasks.append(task)
 
     # Run simulations
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"[RUN] EXECUTING SIMULATIONS ({len(tasks)} tasks)")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     start_time = time.time()
 
@@ -477,13 +481,13 @@ def run_ecm_multiprocessing(
     successful = [r for r in results if r["status"] == "success"]
     failed = [r for r in results if r["status"] == "error"]
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("FINAL RESULTS")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"Successes: {len(successful)}/{len(results)}")
     print(f"Errors: {len(failed)}/{len(results)}")
     print(f"Total time: {total_time:.1f}s")
-    print(f"[INFO] Avg time: {total_time/len(results):.1f}s per simulation")
+    print(f"[INFO] Avg time: {total_time / len(results):.1f}s per simulation")
 
     if successful:
         total_size = sum(r["size_kb"] for r in successful)

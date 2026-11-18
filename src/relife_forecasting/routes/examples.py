@@ -49,9 +49,7 @@ async def upload_file(
             content_type=file.content_type,
         )
 
-        public_url = await supabase.storage.from_(settings.bucket_name).get_public_url(
-            file_path
-        )
+        public_url = await supabase.storage.from_(settings.bucket_name).get_public_url(file_path)
 
         return FileUploadResponse(
             message="File uploaded successfully",
@@ -79,16 +77,14 @@ async def list_files(
     """
 
     try:
-        response = await supabase.storage.from_(settings.bucket_name).list(
-            current_user.user_id
-        )
+        response = await supabase.storage.from_(settings.bucket_name).list(current_user.user_id)
 
         files = []
 
         for file in response:
-            public_url = await supabase.storage.from_(
-                settings.bucket_name
-            ).get_public_url(f"{current_user.user_id}/{file['name']}")
+            public_url = await supabase.storage.from_(settings.bucket_name).get_public_url(
+                f"{current_user.user_id}/{file['name']}"
+            )
 
             files.append(
                 StorageFileInfo(

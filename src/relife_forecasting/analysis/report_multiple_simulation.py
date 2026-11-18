@@ -1,18 +1,20 @@
-from pyecharts.globals import ThemeType
-from pyecharts.charts import Page, Bar, Line
-from pyecharts import options as opts
-from relife_forecasting.utils.graphs import *
-import pandas as pd
 import json
-from pathlib import Path
 import os
+from pathlib import Path
+
+import pandas as pd
 import pytest
+from pyecharts import options as opts
+from pyecharts.charts import Bar, Line, Page
+from pyecharts.globals import ThemeType
 
 from relife_forecasting.building_examples import BUI
+from relife_forecasting.utils.graphs import *
 
 # -------------------------------------------------------------------------------------------------
 #   ANNUAL CHART FOR N SIMULATIONS (BUILDING)
 # -------------------------------------------------------------------------------------------------
+
 
 def annual_total_HC_sum_chart(
     labels: list,
@@ -34,10 +36,7 @@ def annual_total_HC_sum_chart(
     :param sim_labels: labels for each simulation (same length as values_all_sims)
     :param theme_type: pyecharts theme
     """
-    c = (
-        Bar(init_opts=opts.InitOpts(theme=theme_type))
-        .add_xaxis(labels)
-    )
+    c = Bar(init_opts=opts.InitOpts(theme=theme_type)).add_xaxis(labels)
 
     for vals, lab in zip(values_all_sims, sim_labels):
         c = c.add_yaxis(lab, vals)
@@ -53,9 +52,7 @@ def annual_total_HC_sum_chart(
         ],
         toolbox_opts=opts.ToolboxOpts(
             feature=opts.ToolBoxFeatureOpts(
-                save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(
-                    title="Download as Image"
-                ),
+                save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(title="Download as Image"),
                 restore=opts.ToolBoxFeatureRestoreOpts(title="Restore"),
                 data_view=opts.ToolBoxFeatureDataViewOpts(
                     title="View Data", lang=["Data View", "Close", "Refresh"]
@@ -81,6 +78,7 @@ def annual_total_HC_sum_chart(
 # -------------------------------------------------------------------------------------------------
 #   MONTHLY TIME SERIES GENERATION CHART (SYSTEM)
 # -------------------------------------------------------------------------------------------------
+
 
 def monthly_generation_time_series_chart(
     x_labels: list[str],
@@ -135,9 +133,7 @@ def monthly_generation_time_series_chart(
         ],
         toolbox_opts=opts.ToolboxOpts(
             feature=opts.ToolBoxFeatureOpts(
-                save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(
-                    title="Download as Image"
-                ),
+                save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(title="Download as Image"),
                 restore=opts.ToolBoxFeatureRestoreOpts(title="Restore"),
                 data_view=opts.ToolBoxFeatureDataViewOpts(
                     title="View Data", lang=["Data View", "Close", "Refresh"]
@@ -166,6 +162,7 @@ def monthly_generation_time_series_chart(
 # -------------------------------------------------------------------------------------------------
 #   REPORT FOR N SIMULATIONS
 # -------------------------------------------------------------------------------------------------
+
 
 class MultiSimulationsReport:
     """
@@ -209,7 +206,7 @@ class MultiSimulationsReport:
     # ------------------------ HELPERS ------------------------
 
     @staticmethod
-    def _monthly_HC(df: pd.DataFrame, unit='W') -> pd.DataFrame:
+    def _monthly_HC(df: pd.DataFrame, unit="W") -> pd.DataFrame:
         """
         Returns a DataFrame with monthly sum of Q_H and Q_C.
         """
@@ -218,12 +215,12 @@ class MultiSimulationsReport:
             df_monthly = df_HC.resample("ME").sum()
         except Exception:
             df_monthly = df_HC.resample("M").sum()
-        if unit == 'W':
+        if unit == "W":
             df_monthly = df_monthly / 1000
         return df_monthly
 
     @staticmethod
-    def _yearly_HC(df: pd.DataFrame, unit='W') -> pd.DataFrame:
+    def _yearly_HC(df: pd.DataFrame, unit="W") -> pd.DataFrame:
         """
         Returns a DataFrame with annual sum of Q_H and Q_C.
         """
@@ -232,7 +229,7 @@ class MultiSimulationsReport:
             df_yearly = df_HC.resample("YE").sum()
         except Exception:
             df_yearly = df_HC.resample("Y").sum()
-        if unit == 'W':
+        if unit == "W":
             df_yearly = df_yearly / 1000
         return df_yearly
 
@@ -278,7 +275,7 @@ class MultiSimulationsReport:
         Values are in kWh.
         """
 
-        df_monthly_list = [self._monthly_HC(df, unit='W') for df in self.dfs]
+        df_monthly_list = [self._monthly_HC(df, unit="W") for df in self.dfs]
 
         y_data = []
         y_name = []
@@ -303,7 +300,7 @@ class MultiSimulationsReport:
         Values are in kWh.
         """
 
-        df_monthly_list = [self._monthly_HC(df, unit='W') for df in self.dfs]
+        df_monthly_list = [self._monthly_HC(df, unit="W") for df in self.dfs]
 
         y_data = []
         y_name = []
@@ -460,6 +457,7 @@ class MultiSimulationsReport:
 #   HELPER FUNCTION FOR N CSV FILES (BUILDING + SYSTEM)
 # ========================================================================================================
 
+
 def create_multi_simulations_report_from_csv(
     building_csv_paths: list[str],
     folder_directory: str,
@@ -488,7 +486,7 @@ def create_multi_simulations_report_from_csv(
     """
 
     if labels is None:
-        labels = [f"Simulation {i+1}" for i in range(len(building_csv_paths))]
+        labels = [f"Simulation {i + 1}" for i in range(len(building_csv_paths))]
 
     assert len(building_csv_paths) == len(building_areas) == len(labels), (
         "building_csv_paths, building_areas, and labels must have the same length"
@@ -536,6 +534,7 @@ def create_multi_simulations_report_from_csv(
 #   WRAPPER FOR 2 SIMULATIONS (OPTIONAL)
 # ========================================================================================================
 
+
 def create_two_simulations_report_from_csv(
     building_csv_path_1: str,
     building_csv_path_2: str,
@@ -573,6 +572,7 @@ def create_two_simulations_report_from_csv(
 #   TEST ENTRY POINT (MULTI-SIM, BUILDING + SYSTEM)
 # ========================================================================================================
 
+
 def test_create_multi_simulations_report_from_csv():
     """
     Smoke test that generates a multi-simulation report when CSVs are available.
@@ -588,15 +588,12 @@ def test_create_multi_simulations_report_from_csv():
 
     # --- BUILDING FILES ---
     building_csv_list = [
-        str(p) for p in Path(building_folder).glob("*.csv")
-        if "annual" not in p.name.lower()
+        str(p) for p in Path(building_folder).glob("*.csv") if "annual" not in p.name.lower()
     ]
     building_csv_list = sorted(building_csv_list)
 
     # --- SYSTEM FILES ---
-    system_csv_list = sorted(
-        str(p) for p in Path(system_folder).glob("*.csv")
-    )
+    system_csv_list = sorted(str(p) for p in Path(system_folder).glob("*.csv"))
 
     if not building_csv_list:
         pytest.skip("No building CSVs found for report generation.")
@@ -606,18 +603,13 @@ def test_create_multi_simulations_report_from_csv():
 
     # Minimal consistency check
     if len(system_csv_list) != len(building_csv_list):
-        pytest.skip(
-            "Building CSV count differs from system CSV count."
-        )
+        pytest.skip("Building CSV count differs from system CSV count.")
 
     # Areas: same area for all simulations (example)
     areas_list = [BUI["building"]["net_floor_area"]] * len(building_csv_list)
 
     # Labels derived from building file names
-    labels_list = [
-        os.path.basename(p).split("__")[1].split("___")[0]
-        for p in building_csv_list
-    ]
+    labels_list = [os.path.basename(p).split("__")[1].split("___")[0] for p in building_csv_list]
 
     create_multi_simulations_report_from_csv(
         building_csv_paths=building_csv_list,

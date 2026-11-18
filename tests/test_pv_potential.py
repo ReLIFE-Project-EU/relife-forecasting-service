@@ -14,11 +14,10 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pytest
 import requests
-
 
 BASE_URL = os.getenv("RELIFE_BASE_URL", "http://127.0.0.1:9091")
 ENDPOINT = "/run/iso52016-uni11300-pv"
@@ -147,7 +146,9 @@ def test_run_iso52016_uni11300_pv_endpoint(use_archetype_bui: bool) -> None:
 
     # Ensure coords exist (endpoint allows pv overrides, but we keep it simple)
     b = bui.get("building", {})
-    assert "latitude" in b and "longitude" in b, "BUI missing building.latitude/longitude (needed for PVGIS/PV)."
+    assert "latitude" in b and "longitude" in b, (
+        "BUI missing building.latitude/longitude (needed for PVGIS/PV)."
+    )
 
     # --- 2) optional battery via env
     enable_battery = os.getenv("RELIFE_ENABLE_BATTERY", "false").lower() == "true"
@@ -194,7 +195,10 @@ def test_run_iso52016_uni11300_pv_endpoint(use_archetype_bui: bool) -> None:
     assert int(uni.get("n_hours", 0)) >= 8760  # typically 8760 (or 8784 for leap)
     assert "summary" in uni and isinstance(uni["summary"], dict)
     # at least one of these should exist
-    assert any(k in uni["summary"] for k in ("EP_total_kWh", "E_delivered_electric_total_kWh", "Q_ideal_heat_kWh"))
+    assert any(
+        k in uni["summary"]
+        for k in ("EP_total_kWh", "E_delivered_electric_total_kWh", "Q_ideal_heat_kWh")
+    )
 
     pv_hp = results["pv_hp"]
     assert "summary" in pv_hp and isinstance(pv_hp["summary"], dict)

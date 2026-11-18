@@ -7,11 +7,11 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-
 ROOT_DIR = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
+
 
 def _load_building_archetypes() -> List[Dict[str, Any]]:
     ns = runpy.run_path(str(SRC_DIR / "relife_forecasting" / "building_examples.py"))
@@ -122,7 +122,9 @@ def _plot_run_single_results(payload: Dict[str, Any], plot_dir: Path) -> List[Pa
     if not isinstance(results, list):
         return saved_plots
 
-    successful_results = [item for item in results if isinstance(item, dict) and item.get("status") == "success"]
+    successful_results = [
+        item for item in results if isinstance(item, dict) and item.get("status") == "success"
+    ]
     if not successful_results:
         return saved_plots
 
@@ -217,28 +219,50 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Test endpoint /ecm_application/run_single_save usando dati archetipi."
     )
-    parser.add_argument("--list-archetypes", action="store_true", help="Stampa tutti gli archetipi e termina.")
+    parser.add_argument(
+        "--list-archetypes", action="store_true", help="Stampa tutti gli archetipi e termina."
+    )
     parser.add_argument("--name", default="AT_SFH_1946-1969", help="Nome archetipo.")
     parser.add_argument("--category", default="Single Family House", help="Categoria archetipo.")
     parser.add_argument("--country", default="Austria", help="Paese archetipo.")
-    parser.add_argument("--weather-source", default="pvgis", choices=["pvgis", "epw"], help="Fonte meteo.")
-    parser.add_argument("--include-baseline", action="store_true", default=True, help="Esegue scenario baseline.")
+    parser.add_argument(
+        "--weather-source", default="pvgis", choices=["pvgis", "epw"], help="Fonte meteo."
+    )
+    parser.add_argument(
+        "--include-baseline", action="store_true", default=True, help="Esegue scenario baseline."
+    )
     parser.add_argument("--no-include-baseline", dest="include_baseline", action="store_false")
     parser.add_argument("--u-wall", type=float, default=None, help="Nuovo U-value parete.")
     parser.add_argument("--u-roof", type=float, default=None, help="Nuovo U-value tetto.")
     parser.add_argument("--u-window", type=float, default=None, help="Nuovo U-value finestra.")
     parser.add_argument("--u-slab", type=float, default=None, help="Nuovo U-value solaio.")
-    parser.add_argument("--use-heat-pump", action="store_true", default=False, help="Attiva heat pump.")
+    parser.add_argument(
+        "--use-heat-pump", action="store_true", default=False, help="Attiva heat pump."
+    )
     parser.add_argument("--heat-pump-cop", type=float, default=3.2, help="COP heat pump.")
     parser.add_argument("--use-pv", action="store_true", default=False, help="Attiva PV integrato.")
-    parser.add_argument("--pv-kwp", type=float, default=None, help="Potenza PV [kWp]. Richiesta con --use-pv.")
-    parser.add_argument("--output-dir", default="results/ecm_api_single_script", help="Cartella CSV output.")
-    parser.add_argument("--bui-dir", default="building_examples_ecm_api_single_script", help="Cartella BUI output.")
-    parser.add_argument("--save-bui", action="store_true", default=True, help="Salva BUI modificati.")
+    parser.add_argument(
+        "--pv-kwp", type=float, default=None, help="Potenza PV [kWp]. Richiesta con --use-pv."
+    )
+    parser.add_argument(
+        "--output-dir", default="results/ecm_api_single_script", help="Cartella CSV output."
+    )
+    parser.add_argument(
+        "--bui-dir", default="building_examples_ecm_api_single_script", help="Cartella BUI output."
+    )
+    parser.add_argument(
+        "--save-bui", action="store_true", default=True, help="Salva BUI modificati."
+    )
     parser.add_argument("--no-save-bui", dest="save_bui", action="store_false")
-    parser.add_argument("--plot", action="store_true", default=True, help="Genera grafici PNG dai CSV restituiti.")
-    parser.add_argument("--no-plot", dest="plot", action="store_false", help="Disattiva generazione grafici.")
-    parser.add_argument("--plot-dir", default=None, help="Cartella output grafici (default: <output-dir>/plots).")
+    parser.add_argument(
+        "--plot", action="store_true", default=True, help="Genera grafici PNG dai CSV restituiti."
+    )
+    parser.add_argument(
+        "--no-plot", dest="plot", action="store_false", help="Disattiva generazione grafici."
+    )
+    parser.add_argument(
+        "--plot-dir", default=None, help="Cartella output grafici (default: <output-dir>/plots)."
+    )
     parser.add_argument(
         "--real-iso",
         action="store_true",

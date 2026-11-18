@@ -1,9 +1,10 @@
 """Tests for retry utilities."""
 
 import asyncio
+
 import pytest
 
-from relife_forecasting.utils.retry import retry_on_transient_error, TRANSIENT_EXCEPTIONS
+from relife_forecasting.utils.retry import TRANSIENT_EXCEPTIONS, retry_on_transient_error
 
 
 def test_retry_successful_on_first_attempt():
@@ -47,7 +48,7 @@ def test_retry_exhausts_retries():
 
     with pytest.raises(ConnectionError):
         always_fails()
-    
+
     assert call_count[0] == 3
 
 
@@ -62,7 +63,7 @@ def test_retry_non_transient_exception_not_retried():
 
     with pytest.raises(ValueError):
         raises_value_error()
-    
+
     assert call_count[0] == 1
 
 
@@ -116,6 +117,7 @@ def test_requests_exception_is_transient():
     """Test that requests exceptions are included in transient exceptions."""
     try:
         from requests.exceptions import RequestException
+
         assert RequestException in TRANSIENT_EXCEPTIONS or any(
             issubclass(RequestException, exc) for exc in TRANSIENT_EXCEPTIONS
         )
