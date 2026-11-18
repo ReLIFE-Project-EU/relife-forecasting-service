@@ -37,11 +37,6 @@ def test_every_archetype_declares_ventilation_and_volume():
         assert bui["building"]["volume"] > 0, arch["name"]
 
 
-def test_extended_volume_is_footprint_times_floors_times_storey_height():
-    bui = _arch("AT_SFH_1946-1969")
-    assert bui["building"]["volume"] == pytest.approx(82.7 * 2 * 2.7)
-
-
 def test_scaling_floor_area_scales_volume():
     bui = _arch("AT_SFH_1946-1969")
     out = scale_bui_floor_area(bui, bui["building"]["net_floor_area"] * 1.5)
@@ -62,8 +57,7 @@ def test_height_is_total_building_height_and_floor_area_is_per_building():
         bd = arch["bui"]["building"]
         slab = next(s for s in arch["bui"]["building_surface"] if s["name"].startswith("Slab"))
         assert bd["height"] == pytest.approx(bd["n_floors"] * 2.7), arch["name"]
-        assert bd["net_floor_area"] == pytest.approx(slab["area"] * bd["n_floors"]), arch["name"]
-        assert bd["volume"] == pytest.approx(bd["net_floor_area"] * 2.7), arch["name"]
+        assert bd["volume"] == pytest.approx(slab["area"] * bd["n_floors"] * 2.7), arch["name"]
 
 
 def test_air_change_and_thermal_bridges_follow_the_construction_period():

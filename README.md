@@ -44,7 +44,7 @@ Run tests with `uv run --frozen pytest`. Licensed under [EUPL-1.2](LICENSE).
 
 ## Archetype assumptions
 
-Country archetypes (like `AT_SFH_1946-1969`) are generated in `building_examples.py` using data from Excel workbooks in `EU_new archetypes/`. The script `python scripts/check_archetypes_vs_excel.py` checks that the code matches these workbooks. When data is missing, the following assumptions are made:
+Country archetypes (such as `AT_SFH_1946-1969`) come from the Excel workbooks in `EU_new archetypes/`, defined in [country records](src/relife_forecasting/catalogue/records) ([schema](src/relife_forecasting/catalogue/spec.py), [builders](src/relife_forecasting/catalogue/builders.py)). When the source workbooks are available, run `python scripts/check_archetypes_vs_excel.py` to compare them with the records. Missing values use these assumptions:
 
 - **Net floor area**: footprint × number of floors. Height = floors × 2.7 m. Volume = footprint × floors × 2.7 m.
 - **Ventilation**: Each archetype has a constant air change rate per hour (ACH) by construction period: 0.90 (oldest) down to 0.55 (most recent), applied to volume.

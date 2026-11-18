@@ -1,7 +1,11 @@
+from uuid import uuid4
+
 import pytest
 from fastapi.testclient import TestClient
 
 import relife_forecasting.main as main_module
+from relife_forecasting import building_examples
+from relife_forecasting.catalogue.spec import BuildingCategory, Country
 
 client = TestClient(main_module.app)
 
@@ -70,3 +74,34 @@ def test_available_archetypes_serializes_optional_coordinates(
     for coordinate in ("latitude", "longitude"):
         if payload[0][coordinate] is not None:
             assert type(payload[0][coordinate]) in (int, float)
+
+
+def test_epc_archetype_is_visible_in_both_catalogue_routes():
+    catalogue = building_examples.BUILDING_ARCHETYPES
+    original = catalogue.copy()
+    name = f"test-epc-{uuid4().hex}"
+    try:
+        created = client.post(
+            "/bui/epc_update_u_values",
+            params={
+                "name": "AT_SFH_1946-1969",
+                "category": BuildingCategory.SINGLE_FAMILY_HOUSE,
+                "country": Country.AUSTRIA,
+                "energy_class": "A",
+                "new_name": name,
+            },
+        )
+        assert created.status_code == 200, created.text
+        assert created.json()["new_archetype_name"] == name
+
+        available = client.get("/building/available")
+        assert available.status_code == 200
+        assert name in [entry["name"] for entry in available.json()]
+
+        capex = client.get(
+            "/building/archetypes_info_capex", params={"name": name, "country": Country.AUSTRIA}
+        )
+        assert capex.status_code == 200
+        assert [entry["name"] for entry in capex.json()["archetypes"]] == [name]
+    finally:
+        catalogue[:] = original
