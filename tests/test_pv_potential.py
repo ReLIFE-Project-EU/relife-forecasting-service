@@ -13,8 +13,7 @@ Run:
 from __future__ import annotations
 
 import os
-from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 import requests
@@ -50,7 +49,7 @@ def _get_bui_from_archetype(
     category: str = DEFAULT_CATEGORY,
     country: str = DEFAULT_COUNTRY,
     name: str = DEFAULT_ARCHETYPE_NAME,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Uses GET /building?archetype=true ... to retrieve archetype BUI and return only 'bui'.
     """
@@ -65,7 +64,7 @@ def _get_bui_from_archetype(
     if not r.ok:
         try:
             detail = r.json()
-        except Exception:
+        except requests.exceptions.JSONDecodeError:
             detail = r.text
         raise AssertionError(f"Failed to fetch archetype BUI: HTTP {r.status_code}: {detail}")
 
@@ -77,7 +76,7 @@ def _get_bui_from_archetype(
 
 def call_run_iso52016_uni11300_pv(
     *,
-    bui: Dict[str, Any],
+    bui: dict[str, Any],
     pv_kwp: float = PV_KWP,
     tilt_deg: float = PV_TILT,
     azimuth_deg: float = PV_AZIMUTH,
@@ -86,15 +85,15 @@ def call_run_iso52016_uni11300_pv(
     pvgis_year: int | None = PVGIS_YEAR,
     # optional UNI overrides (keep empty for defaults)
     uni_input_unit: str = "Wh",
-    heating_params: Dict[str, Any] | None = None,
-    cooling_params: Dict[str, Any] | None = None,
+    heating_params: dict[str, Any] | None = None,
+    cooling_params: dict[str, Any] | None = None,
     return_hourly_building: bool = False,
     # optional battery (set env RELIFE_ENABLE_BATTERY=true)
-    battery_params: Dict[str, Any] | None = None,
-) -> Dict[str, Any]:
+    battery_params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     url = f"{BASE_URL}{ENDPOINT}"
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "bui": bui,
         "pv": {
             "pv_kwp": pv_kwp,
@@ -125,7 +124,7 @@ def call_run_iso52016_uni11300_pv(
     if not r.ok:
         try:
             detail = r.json()
-        except Exception:
+        except requests.exceptions.JSONDecodeError:
             detail = r.text
         raise AssertionError(f"HTTP {r.status_code}: {detail}")
 

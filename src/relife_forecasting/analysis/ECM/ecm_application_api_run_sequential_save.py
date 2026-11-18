@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -57,7 +57,7 @@ def build_report_path(
     *,
     building_name: str,
     output_dir: str,
-    epw_path: Optional[Path],
+    epw_path: Path | None,
 ) -> Path:
     weather_tag = "pvgis"
     if epw_path is not None:
@@ -73,16 +73,16 @@ def call_run_sequential_save(
     country: str = "Greece",
     name: str = "GR_SFH_1946-1969",
     weather_source: str = "pvgis",
-    epw_path: Optional[Path] = None,
+    epw_path: Path | None = None,
     ecm_options: str = "wall,window",
     u_wall: float = 0.5,
-    u_roof: Optional[float] = None,
+    u_roof: float | None = None,
     u_window: float = 1.0,
     include_baseline: bool = True,
     output_dir: str = "results/ecm_api",
     save_bui: bool = True,
     bui_dir: str = "building_examples_ecm_api",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     url = f"{BASE_URL}{ENDPOINT}"
 
     params = {
@@ -115,7 +115,7 @@ def call_run_sequential_save(
         # try to show FastAPI error details
         try:
             detail = r.json()
-        except Exception:
+        except requests.exceptions.JSONDecodeError:
             detail = r.text
         raise RuntimeError(f"HTTP {r.status_code}: {detail}")
 
@@ -129,17 +129,17 @@ def call_ecm_report(
     country: str = "Greece",
     name: str = "GR_SFH_1946-1969",
     weather_source: str = "pvgis",
-    epw_path: Optional[Path] = None,
-    scenario_elements: Optional[str] = None,
-    u_wall: Optional[float] = None,
-    u_roof: Optional[float] = None,
-    u_window: Optional[float] = None,
-    u_slab: Optional[float] = None,
-    report_title: Optional[str] = None,
+    epw_path: Path | None = None,
+    scenario_elements: str | None = None,
+    u_wall: float | None = None,
+    u_roof: float | None = None,
+    u_window: float | None = None,
+    u_slab: float | None = None,
+    report_title: str | None = None,
 ) -> str:
     url = f"{BASE_URL}{REPORT_ENDPOINT}"
 
-    params: Dict[str, Any] = {
+    params: dict[str, Any] = {
         "archetype": str(archetype).lower(),
         "category": category,
         "country": country,
@@ -171,7 +171,7 @@ def call_ecm_report(
     if not r.ok:
         try:
             detail = r.json()
-        except Exception:
+        except requests.exceptions.JSONDecodeError:
             detail = r.text
         raise RuntimeError(f"HTTP {r.status_code}: {detail}")
 

@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import pandas as pd
 
@@ -114,7 +114,8 @@ def _build_considerations() -> list[str]:
     ]
 
 
-def _ensure_plot_runtime_dirs() -> None:
+def _load_pyplot():
+    """Configure the writable cache and headless backend before loading pyplot."""
     cache_root = Path(tempfile.gettempdir()) / "relife_forecasting_plot_cache"
     cache_root.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("MPLCONFIGDIR", str(cache_root / "matplotlib"))
@@ -122,13 +123,16 @@ def _ensure_plot_runtime_dirs() -> None:
     Path(os.environ["MPLCONFIGDIR"]).mkdir(parents=True, exist_ok=True)
     Path(os.environ["XDG_CACHE_HOME"]).mkdir(parents=True, exist_ok=True)
 
-
-def _render_primary_energy_chart(scenario_summary: pd.DataFrame, output_path: Path) -> None:
-    _ensure_plot_runtime_dirs()
-    import matplotlib
+    import matplotlib  # noqa: PLC0415 - Reads MPLCONFIGDIR on import.
 
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: PLC0415 - Load after backend selection.
+
+    return plt
+
+
+def _render_primary_energy_chart(scenario_summary: pd.DataFrame, output_path: Path) -> None:
+    plt = _load_pyplot()
 
     labels = scenario_summary["scenario_label"].tolist()
     iso_values = pd.to_numeric(scenario_summary["iso_total_kwh"], errors="coerce").fillna(0.0)
@@ -166,11 +170,7 @@ def _render_primary_energy_chart(scenario_summary: pd.DataFrame, output_path: Pa
 
 
 def _render_co2_chart(scenario_summary: pd.DataFrame, output_path: Path) -> None:
-    _ensure_plot_runtime_dirs()
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    plt = _load_pyplot()
 
     labels = scenario_summary["scenario_label"].tolist()
     emissions = pd.to_numeric(scenario_summary["annual_co2_ton"], errors="coerce").fillna(0.0)
@@ -217,13 +217,13 @@ def _render_co2_chart(scenario_summary: pd.DataFrame, output_path: Path) -> None
 
 def build_ecm_presentation(
     *,
-    output_path: Union[str, Path],
+    output_path: str | Path,
     report_title: str,
-    building_meta: Dict[str, Any],
-    run_stats: Dict[str, Any],
+    building_meta: dict[str, Any],
+    run_stats: dict[str, Any],
     scenario_summary: pd.DataFrame,
-    html_report_path: Optional[Union[str, Path]] = None,
-) -> Dict[str, str]:
+    html_report_path: str | Path | None = None,
+) -> dict[str, str]:
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 

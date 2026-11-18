@@ -115,11 +115,5 @@ async def test_async_retry_with_transient_error():
 
 def test_requests_exception_is_transient():
     """Test that requests exceptions are included in transient exceptions."""
-    try:
-        from requests.exceptions import RequestException
-
-        assert RequestException in TRANSIENT_EXCEPTIONS or any(
-            issubclass(RequestException, exc) for exc in TRANSIENT_EXCEPTIONS
-        )
-    except ImportError:
-        pytest.skip("requests library not installed")
+    request_exception = pytest.importorskip("requests.exceptions").RequestException
+    assert any(issubclass(request_exception, exc) for exc in TRANSIENT_EXCEPTIONS)

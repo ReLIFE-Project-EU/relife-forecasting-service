@@ -1,4 +1,4 @@
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -84,7 +84,7 @@ async def get_service_client(settings: SettingsDep) -> AsyncClient:
 
 async def _get_authenticated_user(
     settings: SettingsDep,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
     fetch_roles: bool = False,
 ) -> AuthenticatedUser:
     """Authenticates user with fallback from Supabase to Keycloak.
@@ -109,7 +109,7 @@ async def _get_authenticated_user(
             user_id=authenticated_user.user_id,
         )
 
-    except Exception as supabase_error:
+    except Exception as supabase_error:  # noqa: BLE001 - Try the second identity provider on any Supabase failure.
         logger.debug("Supabase authentication failed", error=str(supabase_error))
 
         try:
@@ -121,14 +121,12 @@ async def _get_authenticated_user(
                 user_id=authenticated_user.user_id,
             )
 
-        except Exception as keycloak_error:
+        except HTTPException as keycloak_error:
             logger.debug("Keycloak authentication failed", error=str(keycloak_error))
 
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Supabase and Keycloak authentication failed: Supabase error: '{}', Keycloak error: '{}'".format(
-                    supabase_error, keycloak_error
-                ),
+                detail=f"Supabase and Keycloak authentication failed: Supabase error: '{supabase_error}', Keycloak error: '{keycloak_error}'",
             )
 
     # Fetch Keycloak roles if requested
@@ -140,7 +138,7 @@ async def _get_authenticated_user(
 
 async def get_authenticated_user_without_roles(
     settings: SettingsDep,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
 ) -> AuthenticatedUser:
     """Authenticates user without fetching Keycloak roles."""
 
@@ -151,7 +149,7 @@ async def get_authenticated_user_without_roles(
 
 async def get_authenticated_user_with_roles(
     settings: SettingsDep,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
 ) -> AuthenticatedUser:
     """Authenticates user and fetches their Keycloak roles."""
 
@@ -175,8 +173,8 @@ Use this dependency when both user authentication and role-based access control 
 
 async def get_optional_authenticated_user(
     settings: SettingsDep,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional),
-) -> Optional[AuthenticatedUser]:
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security_optional)],
+) -> AuthenticatedUser | None:
     """Optionally authenticates user if a token is provided.
 
     Returns None if no token is provided, allowing unauthenticated access.
@@ -193,7 +191,7 @@ async def get_optional_authenticated_user(
 
 
 OptionalAuthenticatedUserDep = Annotated[
-    Optional[AuthenticatedUser], Depends(get_optional_authenticated_user)
+    AuthenticatedUser | None, Depends(get_optional_authenticated_user)
 ]
 """Dependency that optionally provides an authenticated user.
 Returns None if no token is provided, allowing endpoints to work without authentication.

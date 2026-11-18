@@ -3,7 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from relife_forecasting.building_examples import BUILDING_ARCHETYPES
+from relife_forecasting.building_examples import (
+    _EXTENDED_ARCHETYPE_SPECS,
+    _HDD_BY_COUNTRY,
+    BUILDING_ARCHETYPES,
+)
 from relife_forecasting.routes.forecasting_service_functions import (
     run_iso52016_simulation,
     scale_bui_floor_area,
@@ -132,8 +136,6 @@ def test_heating_capacity_is_larger_in_colder_countries():
 
 
 def test_every_country_has_degree_days():
-    from relife_forecasting.building_examples import _EXTENDED_ARCHETYPE_SPECS, _HDD_BY_COUNTRY
-
     countries = {s["country"] for s in _EXTENDED_ARCHETYPE_SPECS.values()}
     assert countries == set(_HDD_BY_COUNTRY)
     assert 2000 < _HDD_BY_COUNTRY["Belgium"] < 3000  # not the 1415 of the workbook

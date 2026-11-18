@@ -1,6 +1,7 @@
 # %%
 import json
 
+import numpy as np
 import pandas as pd
 from pyecharts import options as opts
 from pyecharts.charts import Bar, Gauge, Line, Page, Scatter
@@ -415,7 +416,7 @@ def Scatter_with_regression(
     for data in y_data:
         # calcuation of regression line
         # Perform linear regression using numpy
-        slope, intercept, r_value, p_value, std_err = linregress(x_data, data)
+        slope, intercept, r_value, _p_value, _std_err = linregress(x_data, data)
 
         # Calculate R-squared
         r_squared.append(r_value**2)
@@ -466,7 +467,7 @@ class Graphs_and_report:
         if season in season_type:
             self.season = season
         else:
-            raise ValueError(f"Invalid choice for season. Select heating or cooling")
+            raise ValueError("Invalid choice for season. Select heating or cooling")
 
     def single_variable_plot(self, folder_directory: str, name_file: str):
         """
@@ -480,10 +481,7 @@ class Graphs_and_report:
         # filtering dataset only for heating and cooling
         df_HC = self.df.loc[:, ["Q_H", "Q_HC", "Q_C"]]
         # Monthly resample
-        try:
-            dfHC_monthly = df_HC.resample("ME").sum()
-        except:
-            dfHC_monthly = df_HC.resample("M").sum()
+        dfHC_monthly = df_HC.resample(pd.offsets.MonthEnd()).sum()
         if self.season == "heating":
             y_data = [[value / 1000 for value in dfHC_monthly.loc[:, "Q_H"].tolist()]]
             y_name = "Heating consumption"
@@ -504,7 +502,7 @@ class Graphs_and_report:
 
         Chart = bar_chart_single(y_name, y_data, theme_type)
 
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         Chart.render(file_path)
 
         return Chart
@@ -547,30 +545,20 @@ class Graphs_and_report:
                 else:
                     df_HC = df_HC[df_HC.index.month == _month]
         elif month_selected is not None:
-            raise ValueError("Value must be either True or False")
+            raise TypeError("Value must be either True or False")
         # ===============================================================
         # Filtering by frequency
         df_HC_energy = df_HC.loc[:, ["Q_H", "Q_HC", "Q_C"]]
         df_HC_temp = df_HC.loc[:, ["T_op", "T_ext"]]
 
-        try:
-            frequency_mapping = {
-                "yearly": "YE",
-                "monthly": "ME",
-                "daily": "D",
-                "hourly": "h",
-            }
-            # Get the resampling frequency code
-            freq = frequency_mapping.get(_frequency, None)
-        except:
-            frequency_mapping = {
-                "yearly": "Y",
-                "monthly": "M",
-                "daily": "D",
-                "hourly": "h",
-            }
-            # Get the resampling frequency code
-            freq = frequency_mapping.get(_frequency, None)
+        frequency_mapping = {
+            "yearly": pd.offsets.YearEnd(),
+            "monthly": pd.offsets.MonthEnd(),
+            "daily": "D",
+            "hourly": "h",
+        }
+        # Get the resampling frequency code
+        freq = frequency_mapping.get(_frequency, None)
 
         if freq:
             # Resample energy and temperature data
@@ -617,7 +605,7 @@ class Graphs_and_report:
             frequency=capitalize_first_letter(_frequency),
         )
         # Chart.render(os.getcwd()+f"/pybuildingenergy/charts/{chart_name}.html")
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         # directory_chart = os.getcwd()+f"/charts/{chart_name}.html"
         Chart.render(file_path)
         return Chart
@@ -650,7 +638,7 @@ class Graphs_and_report:
         )
         # Plot chart in a single html file
         # Chart.render(os.getcwd()+f"/pybuildingenergy/charts/{chart_name}.html")
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         # directory_chart = os.getcwd()+f"/charts/{chart_name}.html"
         Chart.render(file_path)
 
@@ -678,14 +666,9 @@ class Graphs_and_report:
         df_HC_energy = df_HC.loc[:, ["Q_H", "Q_HC", "Q_C"]]
         df_HC_temp = df_HC.loc[:, ["T_op", "T_ext"]]
         # FREQUENCY MAPPING
-        try:
-            frequency_mapping = {"monthly": "ME", "daily": "D"}
-            # Get the resampling frequency code
-            freq = frequency_mapping.get(_frequency, None)
-        except:
-            frequency_mapping = {"monthly": "M", "daily": "D"}
-            # Get the resampling frequency code
-            freq = frequency_mapping.get(_frequency, None)
+        frequency_mapping = {"monthly": pd.offsets.MonthEnd(), "daily": "D"}
+        # Get the resampling frequency code
+        freq = frequency_mapping.get(_frequency, None)
 
         if freq:
             # Resample energy and temperature data
@@ -708,7 +691,7 @@ class Graphs_and_report:
             else:
                 pass  # No cleaning needed
         else:
-            raise ValueError("Value must be either True or False")
+            raise TypeError("Value must be either True or False")
         # Equation of regeression
         regress = Simple_regeression(df_HDD_Q["HDD"].to_list(), df_HDD_Q["Q_H"].to_list(), "HDD")
 
@@ -724,13 +707,12 @@ class Graphs_and_report:
         )
 
         # Chart.render(os.getcwd()+f"/pybuildingenergy/charts/{chart_name}.html")
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         # directory_chart = os.getcwd()+f"/charts/{chart_name}.html"
         Chart.render(file_path)
 
         return Chart
 
-    #
     def bui_analysis_page(self, folder_directory: str, name_file: str):
         """
         Create a simple report with building performance graphs:
@@ -763,7 +745,7 @@ class Graphs_and_report:
             self.annual_charts(folder_directory=folder_directory),
         )
 
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         page.render(file_path)
 
         print("Report created!")

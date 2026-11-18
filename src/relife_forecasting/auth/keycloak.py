@@ -1,5 +1,3 @@
-from typing import List
-
 import httpx
 import jwt
 from fastapi import HTTPException, status
@@ -40,7 +38,7 @@ async def get_keycloak_token(keycloak_url: str, client_id: str, client_secret: s
 
 async def get_keycloak_user_roles(
     keycloak_url: str, admin_token: str, user_id: str
-) -> List[KeycloakRole]:
+) -> list[KeycloakRole]:
     """Fetch a user's realm roles from Keycloak's admin API.
     Requires an admin token with appropriate permissions."""
 
@@ -154,20 +152,20 @@ async def validate_keycloak_jwt(
 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid Keycloak token: {str(e)}",
+            detail=f"Invalid Keycloak token: {e!s}",
         )
-    except Exception as e:
+    except (jwt.PyJWTError, ValueError, TypeError) as e:
         logger.debug("Keycloak authentication error", error=str(e))
 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Keycloak authentication failed: {str(e)}",
-        )
+            detail=f"Keycloak authentication failed: {e!s}",
+        ) from e
 
 
 async def fetch_user_roles(
     keycloak_url: str, client_id: str, client_secret: str, user_id: str
-) -> List[KeycloakRole]:
+) -> list[KeycloakRole]:
     """Fetch Keycloak roles for a user.
 
     This is a convenience function that combines token acquisition and role fetching.
@@ -188,6 +186,6 @@ async def fetch_user_roles(
     try:
         admin_token = await get_keycloak_token(keycloak_url, client_id, client_secret)
         return await get_keycloak_user_roles(keycloak_url, admin_token, user_id)
-    except Exception as e:
+    except (httpx.HTTPError, HTTPException, KeyError, TypeError, ValueError) as e:
         logger.warning("Failed to fetch Keycloak roles for user", user_id=user_id, error=str(e))
         return []

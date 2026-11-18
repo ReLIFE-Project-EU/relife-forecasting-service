@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # -----------------------------------------------------------------------------
 # Envelope archetypes (provided dataset)
@@ -193,7 +193,7 @@ def _design_heating_capacity_w(
     return float(-(-watts // 100) * 100)
 
 
-def _constant_ach_ventilation(ach: float) -> Dict[str, Any]:
+def _constant_ach_ventilation(ach: float) -> dict[str, Any]:
     """Ventilation block read by pybuildingenergy >= 2.1.
 
     Without ``building_parameters.ventilation`` the library applies no
@@ -214,7 +214,7 @@ def _constant_ach_ventilation(ach: float) -> Dict[str, Any]:
 
 
 # Default UNI/TS 11300 input for /run/iso52016-uni11300-pv.
-UNI11300_SIMULATION_EXAMPLE: Dict[str, Any] = {
+UNI11300_SIMULATION_EXAMPLE: dict[str, Any] = {
     "input_unit": "Wh",
     "heating_params": {
         "eta_emission": 0.95,
@@ -278,12 +278,12 @@ def _make_extended_building(
     g_value: float = 0.76,
     thermal_bridge_delta_u: float = 0.08,
     infiltration_rate: float = 1.0,
-    heating_capacity: Optional[float] = None,
-    cooling_capacity: Optional[float] = None,
+    heating_capacity: float | None = None,
+    cooling_capacity: float | None = None,
     hdd: float = 3000.0,
     occupants_full_load: float = 2.8,
     appliances_full_load: float = 2.4,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     opaque_wall_area_per_side = (wall_area - window_area) / 4
     volume = slab_area * n_floors * 2.7
     h_tb = thermal_bridge_delta_u * (roof_area + wall_area + slab_area)
@@ -535,7 +535,7 @@ def _make_extended_uni11300(
     dhw_eta_generation: float,
     ventilation_rate_1_per_h: float = 0.8,
     fp_electric: float = 2.18,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {
         "input_unit": "Wh",
         "heating_params": {
@@ -582,7 +582,7 @@ def _make_extended_uni11300(
     }
 
 
-_EXTENDED_ARCHETYPE_SPECS: Dict[str, Dict[str, Any]] = {
+_EXTENDED_ARCHETYPE_SPECS: dict[str, dict[str, Any]] = {
     "AT_SFH_0-1945": {
         "country": "Austria",
         "category": "Single Family House",
@@ -17050,7 +17050,7 @@ _EXTENDED_ARCHETYPE_SPECS: Dict[str, Dict[str, Any]] = {
 }
 
 
-_EXTENDED_ARCHETYPE_INDEX: List[Dict[str, Any]] = []
+_EXTENDED_ARCHETYPE_INDEX: list[dict[str, Any]] = []
 for _arch_name, _spec in _EXTENDED_ARCHETYPE_SPECS.items():
     # Some specs ship a placeholder net_floor_area of 0.0. A zero area breaks
     # per-m2 metrics and gets silently coerced to 1.0 m2 by
@@ -17120,7 +17120,7 @@ del _arch_name, _spec, _net_floor_area, _period, _bui, _uni
 
 
 # Backward-compatible alias used by other modules/scripts in this repo.
-BUI_SINGLE_FAMILY_1946_1969: Dict[str, Any] = next(
+BUI_SINGLE_FAMILY_1946_1969: dict[str, Any] = next(
     item["bui"] for item in _EXTENDED_ARCHETYPE_INDEX if item["name"] == "AT_SFH_1946-1969"
 )
 
@@ -17129,7 +17129,7 @@ BUI_SINGLE_FAMILY_1946_1969: Dict[str, Any] = next(
 # SYSTEM: JSON-safe (condensing boiler + radiators)
 # NOTE: fields that were DataFrames are now list-of-dict.
 # -----------------------------------------------------------------------------
-SYSTEM_CONDENSING_BOILER_RADIATORS: Dict[str, Any] = {
+SYSTEM_CONDENSING_BOILER_RADIATORS: dict[str, Any] = {
     # ---- emission ----
     "emitter_type": "Radiator",
     "nominal_power": 10,  # kW
@@ -17197,7 +17197,7 @@ SYSTEM_CONDENSING_BOILER_RADIATORS: Dict[str, Any] = {
 # -----------------------------------------------------------------------------
 # Required by main.py imports
 # -----------------------------------------------------------------------------
-BUILDING_ARCHETYPES: List[Dict[str, Any]] = [
+BUILDING_ARCHETYPES: list[dict[str, Any]] = [
     {
         "name": item["name"],
         "category": item["category"],
@@ -17212,10 +17212,10 @@ BUILDING_ARCHETYPES: List[Dict[str, Any]] = [
 
 
 def build_iso52016_uni11300_pv_payload(
-    archetype: Dict[str, Any],
-    pv: Dict[str, Any],
+    archetype: dict[str, Any],
+    pv: dict[str, Any],
     return_hourly_building: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Build a normalized request body for /run/iso52016-uni11300-pv from an archetype.
 

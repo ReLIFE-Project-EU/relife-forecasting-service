@@ -158,9 +158,8 @@ def test_json_to_internal_system_accepts_scalar_lists_with_canonical_columns():
 
 
 def test_json_to_internal_system_invalid_type_returns_422_and_logs(caplog):
-    with caplog.at_level("WARNING"):
-        with pytest.raises(HTTPException) as exc_info:
-            json_to_internal_system({"heat_emission_data": None})
+    with caplog.at_level("WARNING"), pytest.raises(HTTPException) as exc_info:
+        json_to_internal_system({"heat_emission_data": None})
 
     exc = exc_info.value
     assert exc.status_code == 422
@@ -170,9 +169,8 @@ def test_json_to_internal_system_invalid_type_returns_422_and_logs(caplog):
 
 
 def test_json_to_internal_system_strict_row_count_returns_422_and_logs(caplog):
-    with caplog.at_level("WARNING"):
-        with pytest.raises(HTTPException) as exc_info:
-            json_to_internal_system({"heat_emission_data": {"value": [45.0]}})
+    with caplog.at_level("WARNING"), pytest.raises(HTTPException) as exc_info:
+        json_to_internal_system({"heat_emission_data": {"value": [45.0]}})
 
     exc = exc_info.value
     assert exc.status_code == 422

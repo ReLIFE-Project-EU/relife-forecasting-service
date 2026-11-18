@@ -10,12 +10,18 @@ from __future__ import annotations
 
 import argparse
 import csv
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Literal
+from typing import Literal
 
 import openpyxl
+
+try:
+    import requests
+except ImportError:
+    requests = None
 
 
 @dataclass(frozen=True)
@@ -186,7 +192,7 @@ def read_temperatures(ws) -> list[tuple[datetime, float]]:
     return rows
 
 
-def parse_float(value: str | int | float) -> float:
+def parse_float(value: str | float) -> float:
     if isinstance(value, int | float):
         return float(value)
     return float(str(value).strip().replace(",", "."))
@@ -399,10 +405,8 @@ def call_main_api_linear_heat_cold_daly(
 
     Useful for a quick smoke test that the API wiring matches the standalone calculator.
     """
-    try:
-        import requests
-    except Exception as exc:  # pragma: no cover - import failure is environment-specific
-        raise RuntimeError("The 'requests' package is required to call the API endpoint.") from exc
+    if requests is None:
+        raise RuntimeError("The 'requests' package is required to call the API endpoint.")
 
     payload = {
         "selected_threshold_pair": selected_threshold_pair,

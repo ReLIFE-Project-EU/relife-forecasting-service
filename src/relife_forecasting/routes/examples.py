@@ -1,4 +1,8 @@
+from typing import Annotated
+
+import httpx
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from storage3.utils import StorageException
 
 from relife_forecasting.auth.dependencies import (
     AuthenticatedUserDep,
@@ -23,7 +27,7 @@ async def upload_file(
     supabase: UserClientDep,
     current_user: AuthenticatedUserDep,
     settings: SettingsDep,
-    file: UploadFile = File(...),
+    file: Annotated[UploadFile, File()],
 ):
     """Upload a file to Supabase Storage with user-specific organization.
 
@@ -56,11 +60,11 @@ async def upload_file(
             path=file_path,
             public_url=public_url,
         )
-    except Exception as e:
+    except (StorageException, httpx.HTTPError, ValueError, KeyError, TypeError) as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload file: {str(e)}",
-        )
+            detail=f"Failed to upload file: {e!s}",
+        ) from e
 
 
 @router.get("/storage", response_model=list[StorageFileInfo])
@@ -96,11 +100,11 @@ async def list_files(
             )
 
         return files
-    except Exception as e:
+    except (StorageException, httpx.HTTPError, ValueError, KeyError, TypeError) as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list files: {str(e)}",
-        )
+            detail=f"Failed to list files: {e!s}",
+        ) from e
 
 
 @router.get("/table/{table_name}", response_model=TableDataResponse)

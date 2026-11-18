@@ -4,19 +4,20 @@ import asyncio
 import inspect
 import logging
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 try:
     # `requests` is used by the calling code; include its base exception when available.
     from requests.exceptions import RequestException as _RequestsRequestException
-except Exception:  # ImportError or if `requests` is not installed
+except ImportError:  # ImportError or if `requests` is not installed
     _RequestsRequestException = None  # type: ignore[assignment]
 
 try:
     # `urllib3` underpins `requests`; include its HTTPError when available.
     from urllib3.exceptions import HTTPError as _Urllib3HTTPError
-except Exception:  # ImportError or if `urllib3` is not installed
+except ImportError:  # ImportError or if `urllib3` is not installed
     _Urllib3HTTPError = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)

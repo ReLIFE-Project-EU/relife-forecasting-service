@@ -5,7 +5,7 @@ import json
 import runpy
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT_DIR / "src"
@@ -13,17 +13,17 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 
-def _load_building_archetypes() -> List[Dict[str, Any]]:
+def _load_building_archetypes() -> list[dict[str, Any]]:
     ns = runpy.run_path(str(SRC_DIR / "relife_forecasting" / "building_examples.py"))
     value = ns.get("BUILDING_ARCHETYPES")
     if not isinstance(value, list):
-        raise RuntimeError("BUILDING_ARCHETYPES non trovato o non valido in building_examples.py.")
+        raise TypeError("BUILDING_ARCHETYPES non trovato o non valido in building_examples.py.")
     return value
 
 
-def _list_archetypes() -> List[Dict[str, str]]:
+def _list_archetypes() -> list[dict[str, str]]:
     building_archetypes = _load_building_archetypes()
-    out: List[Dict[str, str]] = []
+    out: list[dict[str, str]] = []
     for item in building_archetypes:
         name = item.get("name")
         category = item.get("category")
@@ -38,7 +38,7 @@ def _pick_archetype(
     name: str | None,
     category: str | None,
     country: str | None,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     archetypes = _list_archetypes()
     matches = [
         a
@@ -57,7 +57,7 @@ def _pick_archetype(
 
 def _install_mock_iso(main_module: Any) -> None:
     def _fake_iso_calc(
-        bui: Dict[str, Any],
+        bui: dict[str, Any],
         weather_source: str = "pvgis",
         sankey_graph: bool = False,
         path_weather_file: str | None = None,
@@ -75,14 +75,14 @@ def _install_mock_iso(main_module: Any) -> None:
 
 def _load_runtime_deps():
     try:
-        from fastapi.testclient import TestClient  # type: ignore
+        from fastapi.testclient import TestClient  # noqa: PLC0415 - Listing archetypes only needs the standard library.
     except Exception as exc:
         raise RuntimeError(
             "Dipendenza mancante: fastapi. Installa le dipendenze del progetto prima di eseguire questo script."
         ) from exc
 
     try:
-        import relife_forecasting.main as main_module  # noqa: WPS433
+        import relife_forecasting.main as main_module  # noqa: PLC0415 - Load the app only for simulation.
     except Exception as exc:
         raise RuntimeError(
             "Impossibile importare relife_forecasting.main. Verifica che le dipendenze runtime (es. uvicorn/fastapi) siano installate."
@@ -91,7 +91,7 @@ def _load_runtime_deps():
     return TestClient, main_module
 
 
-def _pick_column(columns: List[str], candidates: List[str]) -> Optional[str]:
+def _pick_column(columns: list[str], candidates: list[str]) -> str | None:
     for col in candidates:
         if col in columns:
             return col
@@ -103,20 +103,20 @@ def _pick_column(columns: List[str], candidates: List[str]) -> Optional[str]:
     return None
 
 
-def _plot_run_single_results(payload: Dict[str, Any], plot_dir: Path) -> List[Path]:
+def _plot_run_single_results(payload: dict[str, Any], plot_dir: Path) -> list[Path]:
     try:
-        import matplotlib
-        import pandas as pd
+        import matplotlib  # noqa: PLC0415 - Plotting is optional.
+        import pandas as pd  # noqa: PLC0415 - Plotting is optional.
 
         matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt  # noqa: PLC0415 - Load after backend selection.
     except Exception as exc:
         raise RuntimeError(
             "Dipendenze plotting mancanti: installa matplotlib e pandas per generare i grafici."
         ) from exc
 
     plot_dir.mkdir(parents=True, exist_ok=True)
-    saved_plots: List[Path] = []
+    saved_plots: list[Path] = []
 
     results = payload.get("results")
     if not isinstance(results, list):
@@ -128,8 +128,8 @@ def _plot_run_single_results(payload: Dict[str, Any], plot_dir: Path) -> List[Pa
     if not successful_results:
         return saved_plots
 
-    hourly_series: List[Dict[str, Any]] = []
-    annual_rows: List[Dict[str, float]] = []
+    hourly_series: list[dict[str, Any]] = []
+    annual_rows: list[dict[str, float]] = []
 
     for item in successful_results:
         scenario_id = str(item.get("scenario_id") or item.get("combo_tag") or "scenario")
@@ -164,8 +164,8 @@ def _plot_run_single_results(payload: Dict[str, Any], plot_dir: Path) -> List[Pa
                 annual_rows.append(
                     {
                         "scenario_id": scenario_id,
-                        "Q_H_annual": 0.0 if heating != heating else heating,
-                        "Q_C_annual": 0.0 if cooling != cooling else cooling,
+                        "Q_H_annual": 0.0 if pd.isna(heating) else heating,
+                        "Q_C_annual": 0.0 if pd.isna(cooling) else cooling,
                     }
                 )
 
@@ -296,7 +296,7 @@ def main() -> int:
     if not args.real_iso:
         _install_mock_iso(main_module)
 
-    params: Dict[str, Any] = {
+    params: dict[str, Any] = {
         "archetype": "true",
         "category": selected["category"],
         "country": selected["country"],
@@ -331,7 +331,7 @@ def main() -> int:
     print(f"HTTP {response.status_code}")
     try:
         payload = response.json()
-    except Exception:
+    except ValueError:
         print(response.text)
         return 1
 

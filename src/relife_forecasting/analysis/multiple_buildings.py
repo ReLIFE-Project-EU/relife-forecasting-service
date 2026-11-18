@@ -23,7 +23,7 @@ Outputs:
 from __future__ import annotations
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -36,8 +36,8 @@ from building_examples import BUILDING_ARCHETYPES
 
 
 def simulate_one_archetype(
-    archetype: Dict[str, Any],
-) -> Tuple[str, Dict[str, pd.DataFrame], pd.Series]:
+    archetype: dict[str, Any],
+) -> tuple[str, dict[str, pd.DataFrame], pd.Series]:
     """
     Simulate a single archetype.
 
@@ -114,7 +114,7 @@ def simulate_one_archetype(
 
 
 def simulate_archetypes_in_parallel(
-    archetypes: list[Dict[str, Any]],
+    archetypes: list[dict[str, Any]],
     max_workers: int | None = None,
 ):
     """
@@ -128,7 +128,7 @@ def simulate_archetypes_in_parallel(
         results_by_archetype: dict[name] -> dict of DataFrames
         summary_df: DataFrame with one row per archetype (compact KPIs)
     """
-    results_by_archetype: Dict[str, Dict[str, pd.DataFrame]] = {}
+    results_by_archetype: dict[str, dict[str, pd.DataFrame]] = {}
     summaries: list[pd.Series] = []
 
     # ProcessPoolExecutor runs each archetype in a separate process (useful for CPU-bound tasks).
@@ -146,7 +146,7 @@ def simulate_archetypes_in_parallel(
                 results_by_archetype[name] = dfs
                 summaries.append(summary)
                 print(f"[OK] Simulation completed for archetype: {name}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - Record a failed simulation and continue the batch.
                 # Continue running other archetypes even if one fails.
                 print(f"[ERR] Simulation failed for archetype {arch_name}: {e}")
 

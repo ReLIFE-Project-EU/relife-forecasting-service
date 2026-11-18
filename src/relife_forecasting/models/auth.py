@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import HTTPException, status
 from gotrue.types import UserResponse
@@ -45,9 +45,9 @@ class UniversalUser(BaseModel):
     """
 
     id: str
-    email: Optional[str] = None
-    user_metadata: Dict[str, Any] = {}
-    identities: List[UserIdentity] = []
+    email: str | None = None
+    user_metadata: dict[str, Any] = {}
+    identities: list[UserIdentity] = []
 
     @classmethod
     def from_supabase_user(cls, user_response: UserResponse) -> "UniversalUser":
@@ -72,7 +72,7 @@ class UniversalUser(BaseModel):
 
     @classmethod
     def from_keycloak_jwt(
-        cls, user_id: str, email: Optional[str], keycloak_url: str
+        cls, user_id: str, email: str | None, keycloak_url: str
     ) -> "UniversalUser":
         """Create UniversalUser from Keycloak JWT payload."""
 
@@ -100,7 +100,7 @@ class AuthenticatedUser(BaseModel):
     token: str
     user: UniversalUser
     authentication_method: AuthenticationMethod
-    keycloak_roles: Optional[List[KeycloakRole]] = None
+    keycloak_roles: list[KeycloakRole] | None = None
 
     @property
     def has_admin_role(self) -> bool:
@@ -120,7 +120,7 @@ class AuthenticatedUser(BaseModel):
         return self.user.id
 
     @property
-    def email(self) -> Optional[str]:
+    def email(self) -> str | None:
         """Get the user's email address."""
 
         return self.user.email

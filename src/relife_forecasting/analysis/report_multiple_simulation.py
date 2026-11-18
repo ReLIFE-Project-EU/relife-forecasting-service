@@ -211,10 +211,7 @@ class MultiSimulationsReport:
         Returns a DataFrame with monthly sum of Q_H and Q_C.
         """
         df_HC = df.loc[:, ["Q_H", "Q_C"]]
-        try:
-            df_monthly = df_HC.resample("ME").sum()
-        except Exception:
-            df_monthly = df_HC.resample("M").sum()
+        df_monthly = df_HC.resample(pd.offsets.MonthEnd()).sum()
         if unit == "W":
             df_monthly = df_monthly / 1000
         return df_monthly
@@ -225,10 +222,7 @@ class MultiSimulationsReport:
         Returns a DataFrame with annual sum of Q_H and Q_C.
         """
         df_HC = df.loc[:, ["Q_H", "Q_C"]]
-        try:
-            df_yearly = df_HC.resample("YE").sum()
-        except Exception:
-            df_yearly = df_HC.resample("Y").sum()
+        df_yearly = df_HC.resample(pd.offsets.YearEnd()).sum()
         if unit == "W":
             df_yearly = df_yearly / 1000
         return df_yearly
@@ -256,10 +250,7 @@ class MultiSimulationsReport:
 
         df_gen = df.loc[:, cols]
 
-        try:
-            df_monthly = df_gen.resample("ME").sum()
-        except Exception:
-            df_monthly = df_gen.resample("M").sum()
+        df_monthly = df_gen.resample(pd.offsets.MonthEnd()).sum()
 
         return df_monthly
 
@@ -286,7 +277,7 @@ class MultiSimulationsReport:
         theme_type = ThemeType.ESSOS
         Chart = bar_chart_single(y_name, y_data, theme_type)
 
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         Chart.render(file_path)
         return Chart
 
@@ -311,7 +302,7 @@ class MultiSimulationsReport:
         theme_type = ThemeType.WALDEN
         Chart = bar_chart_single(y_name, y_data, theme_type)
 
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         Chart.render(file_path)
         return Chart
 
@@ -399,7 +390,7 @@ class MultiSimulationsReport:
             theme_type=ThemeType.ROMA,
         )
 
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         Chart.render(file_path)
         return Chart
 
@@ -446,7 +437,7 @@ class MultiSimulationsReport:
             ),
         )
 
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         page.render(file_path)
 
         print("Comparison report created!")
@@ -464,7 +455,7 @@ def create_multi_simulations_report_from_csv(
     name_file: str,
     building_areas: list[float],
     labels: list[str] | None = None,
-    datetime_column: str = None,
+    datetime_column: str | None = None,
     sep: str = ",",
     system_csv_paths: list[str] | None = None,
 ):
@@ -544,7 +535,7 @@ def create_two_simulations_report_from_csv(
     building_area_2: float,
     label1: str = "Simulation 1",
     label2: str = "Simulation 2",
-    datetime_column: str = None,
+    datetime_column: str | None = None,
     sep: str = ",",
     system_csv_path_1: str | None = None,
     system_csv_path_2: str | None = None,

@@ -5,7 +5,7 @@ import math
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -40,7 +40,7 @@ class BatterySimulator:
     def reset(self):
         self.soc = self.p.initial_soc * self.p.capacity_kwh
 
-    def step(self, net_load_kw: float, timestep_hours: float = 1.0) -> Dict[str, float]:
+    def step(self, net_load_kw: float, timestep_hours: float = 1.0) -> dict[str, float]:
         # Self-discharge
         self.soc *= 1.0 - self.p.self_discharge_rate_per_hour * timestep_hours
 
@@ -170,7 +170,7 @@ def _fetch_pvgis_hourly_pv_kwh_per_kwp(
     azimuth_deg: float = 0.0,
     loss_percent: float = 14.0,
     pv_tech: str = "crystSi",
-    year: Optional[int] = None,
+    year: int | None = None,
 ) -> np.ndarray:
     """
     PVGIS seriescalc hourly PV for 1 kWp -> returns kWh/kWp per hour.
@@ -236,7 +236,7 @@ def _fetch_pvgis_hourly_pv_kwh_per_kwp(
 # =============================================================================
 
 
-def _extract_uni_hourly_df(payload: Dict[str, Any]) -> pd.DataFrame:
+def _extract_uni_hourly_df(payload: dict[str, Any]) -> pd.DataFrame:
     """
     Expected to receive the output of /primary-energy/uni11300, or an object containing it.
 
@@ -313,7 +313,7 @@ def _get_hp_electric_series_kwh(df_uni: pd.DataFrame) -> pd.Series:
 
 
 def analyze_pv_hp_from_uni11300(
-    uni_payload: Dict[str, Any],
+    uni_payload: dict[str, Any],
     pv_kwp: float,
     latitude: float,
     longitude: float,
@@ -321,10 +321,10 @@ def analyze_pv_hp_from_uni11300(
     azimuth_deg: float = 0.0,
     use_pvgis: bool = True,
     annual_pv_yield_kwh_per_kwp: float = 1400.0,
-    battery_params: Optional[BatteryParams] = None,
+    battery_params: BatteryParams | None = None,
     pvgis_loss_percent: float = 14.0,
-    pvgis_year: Optional[int] = None,
-) -> Dict[str, Any]:
+    pvgis_year: int | None = None,
+) -> dict[str, Any]:
     """
     Uses UNI/TS 11300 hourly results as HP electricity demand input.
     Computes PV generation (PVGIS or simplified), optional battery, grid import/export,
@@ -362,7 +362,7 @@ def analyze_pv_hp_from_uni11300(
                 year=pvgis_year,
             )
             pv_source = "pvgis"
-        except Exception:
+        except (RuntimeError, TypeError, ValueError, OverflowError):
             pv_per_kwp = None
 
     if pv_per_kwp is None:
@@ -489,7 +489,7 @@ def analyze_pv_hp_from_uni11300(
 
 
 @router.post("/pv-hp/analysis", tags=["PV + Heat Pump"])
-def pv_hp_analysis(payload: Dict[str, Any]) -> Dict[str, Any]:
+def pv_hp_analysis(payload: dict[str, Any]) -> dict[str, Any]:
     """
     Compute PV+HP hourly matching using UNI/TS 11300 endpoint output as input.
 

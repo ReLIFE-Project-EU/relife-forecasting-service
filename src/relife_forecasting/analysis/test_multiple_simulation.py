@@ -592,8 +592,7 @@ INPUT_SYSTEM_HVAC = {
         index=["Generator curve"],
     ),
     "speed_control_generator_pump": "variable",
-    "generator_nominal_deltaT": 20,  # °C
-    "mixing_valve_delta": 2,
+    "generator_nominal_deltaT": 20,
     # Optional explicit generator setpoints (commented by default)
     # 'θHW_gen_flw_set': 50,
     # 'θHW_gen_ret_set': 40,
@@ -610,7 +609,7 @@ def test_multiple_simulation():
 
     calc = pybui.HeatingSystemCalculator(INPUT_SYSTEM_HVAC)
 
-    bui_fixed, report = pybui.sanitize_and_validate_BUI(BUI, fix=True)
+    _bui_fixed, report = pybui.sanitize_and_validate_BUI(BUI, fix=True)
 
     # print issues
     for r in report:
@@ -654,7 +653,7 @@ def test_multiple_simulation():
     annual_results_df.to_csv(path_annual_sim_result)
 
     # ISO 15316-1 calculation
-    df_in = calc.load_csv_data(hourly_sim)  # colonne: Q_H, T_op, T_ext (o alias)
+    calc.load_csv_data(hourly_sim)  # colonne: Q_H, T_op, T_ext (o alias)
     df_out = calc.run_timeseries()
     df_out.to_csv(file_dir / f"{name_file}_heating_system.csv")
 
