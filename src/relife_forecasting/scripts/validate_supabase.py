@@ -13,7 +13,7 @@ import asyncio
 import os
 import sys
 from contextlib import asynccontextmanager
-from typing import Any, Dict
+from typing import Any
 
 import httpx
 import uvicorn
@@ -40,7 +40,7 @@ API_REQUEST_TIMEOUT = 30.0
 ADMIN_ROLE_NAME = "relife_admin"
 
 
-def load_environment() -> Dict[str, str]:
+def load_environment() -> dict[str, str]:
     """Load and validate required environment variables.
 
     Returns:
@@ -70,9 +70,7 @@ def load_environment() -> Dict[str, str]:
 
     if missing_vars:
         console = Console()
-        console.print(
-            f"[red]ERROR: Missing environment variables: {', '.join(missing_vars)}[/red]"
-        )
+        console.print(f"[red]ERROR: Missing environment variables: {', '.join(missing_vars)}[/red]")
         console.print(
             "[blue]Please set these environment variables before running the script.[/blue]"
         )
@@ -81,9 +79,7 @@ def load_environment() -> Dict[str, str]:
     return config
 
 
-def prompt_credentials(
-    email: str | None = None, password: str | None = None
-) -> tuple[str, str]:
+def prompt_credentials(email: str | None = None, password: str | None = None) -> tuple[str, str]:
     """Prompt user for authentication credentials.
 
     Args:
@@ -157,9 +153,7 @@ def show_info_panel():
     console.print(panel)
 
 
-async def authenticate_supabase(
-    email: str, password: str, config: Dict[str, str]
-) -> str:
+async def authenticate_supabase(email: str, password: str, config: dict[str, str]) -> str:
     """Authenticate with Supabase using email/password.
 
     Args:
@@ -184,24 +178,20 @@ async def authenticate_supabase(
             options=ClientOptions(),
         )
 
-        response = client.auth.sign_in_with_password(
-            {"email": email, "password": password}
-        )
+        response = client.auth.sign_in_with_password({"email": email, "password": password})
 
         if response.user and response.session:
             console.print("[green]Supabase authentication successful[/green]")
             return response.session.access_token
         else:
-            raise Exception("No session returned from Supabase")
+            raise RuntimeError("No session returned from Supabase")
 
     except Exception as e:
         console.print(f"[red]Supabase authentication failed: {e}[/red]")
         raise
 
 
-async def authenticate_keycloak_user(
-    email: str, password: str, config: Dict[str, str]
-) -> str:
+async def authenticate_keycloak_user(email: str, password: str, config: dict[str, str]) -> str:
     """Authenticate with Keycloak using Resource Owner Password Grant.
 
     Args:
@@ -236,8 +226,7 @@ async def authenticate_keycloak_user(
 
         # Debug: show request details (without sensitive data)
         debug_data = {
-            k: v if k != "password" and k != "client_secret" else "***"
-            for k, v in data.items()
+            k: v if k != "password" and k != "client_secret" else "***" for k, v in data.items()
         }
 
         console.print(f"[blue]Request data: {debug_data}[/blue]")
@@ -253,9 +242,7 @@ async def authenticate_keycloak_user(
             return access_token
 
     except httpx.HTTPStatusError as e:
-        console.print(
-            f"[red]HTTP {e.response.status_code}: {e.response.reason_phrase}[/red]"
-        )
+        console.print(f"[red]HTTP {e.response.status_code}: {e.response.reason_phrase}[/red]")
 
         error_detail = "Invalid credentials or configuration"
         try:
@@ -266,21 +253,19 @@ async def authenticate_keycloak_user(
                 error_detail = error_response["error_description"]
             elif "error" in error_response:
                 error_detail = f"{error_response['error']}: {error_response.get('error_description', 'No description provided')}"
-        except Exception as parse_error:
-            console.print(
-                f"[yellow]Could not parse error response: {parse_error}[/yellow]"
-            )
+        except (TypeError, ValueError) as parse_error:
+            console.print(f"[yellow]Could not parse error response: {parse_error}[/yellow]")
 
             console.print(f"[yellow]Raw response: {e.response.text}[/yellow]")
 
         console.print(f"[red]Keycloak user authentication failed: {error_detail}[/red]")
-        raise Exception(error_detail)
+        raise RuntimeError(error_detail) from e
     except Exception as e:
         console.print(f"[red]Keycloak user authentication failed: {e}[/red]")
         raise
 
 
-async def authenticate_keycloak_client(config: Dict[str, str]) -> str:
+async def authenticate_keycloak_client(config: dict[str, str]) -> str:
     """Authenticate with Keycloak using client credentials flow.
 
     Args:
@@ -325,7 +310,7 @@ async def authenticate_keycloak_client(config: Dict[str, str]) -> str:
 
 
 async def get_auth_token(
-    auth_method: str, email: str, password: str, config: Dict[str, str]
+    auth_method: str, email: str, password: str, config: dict[str, str]
 ) -> str:
     """Get authentication token using the specified method.
 
@@ -392,9 +377,7 @@ async def run_api_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT):
             for attempt in range(SERVER_STARTUP_MAX_ATTEMPTS):
                 await asyncio.sleep(SERVER_STARTUP_RETRY_DELAY)
                 try:
-                    async with httpx.AsyncClient(
-                        timeout=SERVER_HEALTH_CHECK_TIMEOUT
-                    ) as client:
+                    async with httpx.AsyncClient(timeout=SERVER_HEALTH_CHECK_TIMEOUT) as client:
                         response = await client.get(f"http://{host}:{port}/docs")
                         if response.status_code in [200, 404]:
                             progress.update(task, description="Server ready")
@@ -413,7 +396,7 @@ async def run_api_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT):
         server.should_exit = True
         try:
             await asyncio.wait_for(server_task, timeout=SERVER_SHUTDOWN_TIMEOUT)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             console.print("[yellow]Server shutdown timed out[/yellow]")
 
 
@@ -447,11 +430,11 @@ async def verify_whoami_endpoint(base_url: str, auth_token: str):
 
     except httpx.TimeoutException:
         console.print("[red]Request timed out[/red]")
-    except Exception as e:
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
         console.print(f"[red]Request failed: {e}[/red]")
 
 
-def display_user_info(data: Dict[str, Any]):
+def display_user_info(data: dict[str, Any]):
     """Display user information in a formatted table.
 
     Args:
@@ -510,11 +493,7 @@ def validate_arguments(args) -> None:
 
     console = Console()
 
-    if (
-        args.auth_method in ["supabase", "keycloak-user"]
-        and args.password
-        and not args.email
-    ):
+    if args.auth_method in ["supabase", "keycloak-user"] and args.password and not args.email:
         console.print(
             f"[red]ERROR: --email must accompany --password for {args.auth_method} authentication[/red]"
         )
@@ -559,19 +538,18 @@ async def main():
 
     # Load environment
     config = load_environment()
-    console.print(f"[green]Environment loaded[/green]")
+    console.print("[green]Environment loaded[/green]")
 
     # Get authentication credentials if needed (interactive fallback)
     email, password = args.email, args.password
 
-    if args.auth_method in ["supabase", "keycloak-user"]:
-        if email is None or password is None:
-            email, password = prompt_credentials(email, password)
+    if args.auth_method in ["supabase", "keycloak-user"] and (email is None or password is None):
+        email, password = prompt_credentials(email, password)
 
     # Get authentication token
     try:
         auth_token = await get_auth_token(args.auth_method, email, password, config)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - Report provider failures at the CLI boundary.
         console.print(f"[red]Authentication failed: {e}[/red]")
         sys.exit(1)
 
@@ -581,7 +559,7 @@ async def main():
     try:
         async with run_api_server(args.host, args.port) as server_url:
             await verify_whoami_endpoint(server_url, auth_token)
-    except Exception as e:
+    except (OSError, RuntimeError, httpx.HTTPError) as e:
         console.print(f"[red]Server error: {e}[/red]")
         sys.exit(1)
 

@@ -2,20 +2,16 @@ from __future__ import annotations
 
 import inspect
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 import relife_forecasting.main as main_module
-
 
 client = TestClient(main_module.app)
 
 
 def _hourly_temperature_profile(value: float, days: int = 2) -> list[dict]:
-    return [
-        {"T_op": value, "Q_H": 0.0, "Q_C": 0.0}
-        for _ in range(days * 24)
-    ]
+    return [{"T_op": value, "Q_H": 0.0, "Q_C": 0.0} for _ in range(days * 24)]
 
 
 def test_ecm_daly_compares_baseline_and_intervention(monkeypatch) -> None:

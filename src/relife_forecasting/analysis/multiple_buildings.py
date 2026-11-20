@@ -22,21 +22,22 @@ Outputs:
 
 from __future__ import annotations
 
-from typing import Dict, Any, Tuple
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from typing import Any
 
 import numpy as np
 import pandas as pd
-
 import pybuildingenergy as pybui
 from building_examples import BUILDING_ARCHETYPES
-
 
 # ---------------------------
 # Single-archetype simulation
 # ---------------------------
 
-def simulate_one_archetype(archetype: Dict[str, Any]) -> Tuple[str, Dict[str, pd.DataFrame], pd.Series]:
+
+def simulate_one_archetype(
+    archetype: dict[str, Any],
+) -> tuple[str, dict[str, pd.DataFrame], pd.Series]:
     """
     Simulate a single archetype.
 
@@ -111,8 +112,9 @@ def simulate_one_archetype(archetype: Dict[str, Any]) -> Tuple[str, Dict[str, pd
 # Parallel batch simulation function
 # -----------------------------------
 
+
 def simulate_archetypes_in_parallel(
-    archetypes: list[Dict[str, Any]],
+    archetypes: list[dict[str, Any]],
     max_workers: int | None = None,
 ):
     """
@@ -126,13 +128,15 @@ def simulate_archetypes_in_parallel(
         results_by_archetype: dict[name] -> dict of DataFrames
         summary_df: DataFrame with one row per archetype (compact KPIs)
     """
-    results_by_archetype: Dict[str, Dict[str, pd.DataFrame]] = {}
+    results_by_archetype: dict[str, dict[str, pd.DataFrame]] = {}
     summaries: list[pd.Series] = []
 
     # ProcessPoolExecutor runs each archetype in a separate process (useful for CPU-bound tasks).
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         # Submit one job per archetype; keep a mapping from Future -> archetype name for error reporting.
-        futures = {executor.submit(simulate_one_archetype, arch): arch["name"] for arch in archetypes}
+        futures = {
+            executor.submit(simulate_one_archetype, arch): arch["name"] for arch in archetypes
+        }
 
         # Collect results as they complete (order is not guaranteed).
         for future in as_completed(futures):
@@ -142,7 +146,7 @@ def simulate_archetypes_in_parallel(
                 results_by_archetype[name] = dfs
                 summaries.append(summary)
                 print(f"[OK] Simulation completed for archetype: {name}")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - Record a failed simulation and continue the batch.
                 # Continue running other archetypes even if one fails.
                 print(f"[ERR] Simulation failed for archetype {arch_name}: {e}")
 

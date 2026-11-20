@@ -10,12 +10,18 @@ from __future__ import annotations
 
 import argparse
 import csv
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Literal
+from typing import Literal
 
 import openpyxl
+
+try:
+    import requests
+except ImportError:
+    requests = None
 
 
 @dataclass(frozen=True)
@@ -79,7 +85,9 @@ def _assert_matches(name: str, provided: str | float | None, expected: str | flo
         return
     if isinstance(expected, float):
         if abs(parse_float(provided) - expected) > 1e-9:
-            raise ValueError(f"{name}={provided!r} does not match selected scenario value {expected!r}")
+            raise ValueError(
+                f"{name}={provided!r} does not match selected scenario value {expected!r}"
+            )
         return
     if str(provided) != expected:
         raise ValueError(f"{name}={provided!r} does not match selected scenario value {expected!r}")
@@ -133,7 +141,9 @@ def calculate_linear_heat_cold_daly(
 
     if selected_threshold_pair not in EXCEL_SCENARIOS:
         available = ", ".join(EXCEL_SCENARIOS)
-        raise ValueError(f"Unknown selected_threshold_pair {selected_threshold_pair!r}. Available: {available}")
+        raise ValueError(
+            f"Unknown selected_threshold_pair {selected_threshold_pair!r}. Available: {available}"
+        )
 
     scenario = EXCEL_SCENARIOS[selected_threshold_pair]
     neutral_note = (
@@ -182,7 +192,7 @@ def read_temperatures(ws) -> list[tuple[datetime, float]]:
     return rows
 
 
-def parse_float(value: str | int | float) -> float:
+def parse_float(value: str | float) -> float:
     if isinstance(value, int | float):
         return float(value)
     return float(str(value).strip().replace(",", "."))
@@ -364,7 +374,9 @@ def calculate(
         ),
         "pasted_profile_heat_harm_for_population": sum(r["heat_population_DALY_day"] for r in rows),
         "pasted_profile_cold_harm_for_population": sum(r["cold_population_DALY_day"] for r in rows),
-        "pasted_profile_total_harm_for_population": sum(r["total_population_DALY_day"] for r in rows),
+        "pasted_profile_total_harm_for_population": sum(
+            r["total_population_DALY_day"] for r in rows
+        ),
         "rows": rows,
     }
 
@@ -393,10 +405,8 @@ def call_main_api_linear_heat_cold_daly(
 
     Useful for a quick smoke test that the API wiring matches the standalone calculator.
     """
-    try:
-        import requests
-    except Exception as exc:  # pragma: no cover - import failure is environment-specific
-        raise RuntimeError("The 'requests' package is required to call the API endpoint.") from exc
+    if requests is None:
+        raise RuntimeError("The 'requests' package is required to call the API endpoint.")
 
     payload = {
         "selected_threshold_pair": selected_threshold_pair,
@@ -483,8 +493,12 @@ def main() -> int:
     print(f"Average daily heat harm rate: {result['average_daily_heat_harm_rate']}")
     print(f"Average daily cold harm rate: {result['average_daily_cold_harm_rate']}")
     print(f"Average daily total harm rate: {result['average_daily_total_harm_rate']}")
-    print(f"Pasted-profile total harm for population: {result['pasted_profile_total_harm_for_population']}")
-    print(f"Annual/period total harm for population: {result['annual_period_total_harm_for_population']}")
+    print(
+        f"Pasted-profile total harm for population: {result['pasted_profile_total_harm_for_population']}"
+    )
+    print(
+        f"Annual/period total harm for population: {result['annual_period_total_harm_for_population']}"
+    )
 
     if args.csv:
         write_csv(result["rows"], Path(args.csv))

@@ -15,14 +15,14 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
 # Prefer package import; fallback to local module for dev runs.
 try:
     from relife_forecasting.building_examples import BUI_SINGLE_FAMILY_1946_1969
-except Exception:
+except ImportError:
     from building_examples import BUI_SINGLE_FAMILY_1946_1969  # type: ignore
 
 
@@ -34,7 +34,7 @@ TIMEOUT = int(os.getenv("RELIFE_TIMEOUT", "600"))
 # -----------------------------------------------------------------------------
 # PV inputs: keep them local to this script so we don't depend on extra constants
 # -----------------------------------------------------------------------------
-PV_INPUTS_DEFAULT: Dict[str, Any] = {
+PV_INPUTS_DEFAULT: dict[str, Any] = {
     "pv_kwp": 10.0,
     "tilt_deg": 30.0,
     "azimuth_deg": 0.0,  # convention in your pv_hp_analysis: 0=south, 90=west, -90=east
@@ -61,7 +61,7 @@ def _fail_loud(resp: requests.Response) -> None:
         return
     try:
         detail = resp.json()
-    except Exception:
+    except requests.exceptions.JSONDecodeError:
         detail = resp.text
     raise SystemExit(f"HTTP {resp.status_code} calling {resp.url}: {detail}")
 
@@ -72,17 +72,17 @@ def _get_health_url() -> str:
 
 
 def call_pipeline(
-    bui: Dict[str, Any],
-    pv: Dict[str, Any],
+    bui: dict[str, Any],
+    pv: dict[str, Any],
     *,
     input_unit: str = "Wh",
     return_hourly_building: bool = False,
-    heating_params: Optional[Dict[str, Any]] = None,
-    cooling_params: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    heating_params: dict[str, Any] | None = None,
+    cooling_params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     url = f"{BASE_URL}{ENDPOINT}"
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "bui": bui,
         "pv": pv,
         "uni11300": {

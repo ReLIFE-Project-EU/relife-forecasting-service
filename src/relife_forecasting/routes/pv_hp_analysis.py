@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
-import math
 import json
+import math
 import urllib.parse
 import urllib.request
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -17,6 +17,7 @@ router = APIRouter()
 # =============================================================================
 # Battery model (optional)
 # =============================================================================
+
 
 @dataclass
 class BatteryParams:
@@ -39,9 +40,9 @@ class BatterySimulator:
     def reset(self):
         self.soc = self.p.initial_soc * self.p.capacity_kwh
 
-    def step(self, net_load_kw: float, timestep_hours: float = 1.0) -> Dict[str, float]:
+    def step(self, net_load_kw: float, timestep_hours: float = 1.0) -> dict[str, float]:
         # Self-discharge
-        self.soc *= (1.0 - self.p.self_discharge_rate_per_hour * timestep_hours)
+        self.soc *= 1.0 - self.p.self_discharge_rate_per_hour * timestep_hours
 
         energy_kwh = net_load_kw * timestep_hours
 
@@ -60,7 +61,11 @@ class BatterySimulator:
 
             # energy delivered to load after discharge efficiency
             discharge_kwh = min(energy_kwh, max_discharge_from_soc * self.p.discharge_efficiency)
-            discharge_from_soc = discharge_kwh / self.p.discharge_efficiency if self.p.discharge_efficiency > 0 else 0.0
+            discharge_from_soc = (
+                discharge_kwh / self.p.discharge_efficiency
+                if self.p.discharge_efficiency > 0
+                else 0.0
+            )
 
             self.soc -= discharge_from_soc
             grid_import_kwh = max(0.0, energy_kwh - discharge_kwh)
@@ -93,13 +98,16 @@ class BatterySimulator:
             "grid_import_kwh": float(grid_import_kwh) if grid_import_kwh > 1e-9 else 0.0,
             "grid_export_kwh": float(grid_export_kwh) if grid_export_kwh > 1e-9 else 0.0,
             "soc_kwh": float(self.soc),
-            "soc_fraction": float(self.soc / self.p.capacity_kwh) if self.p.capacity_kwh > 0 else 0.0,
+            "soc_fraction": float(self.soc / self.p.capacity_kwh)
+            if self.p.capacity_kwh > 0
+            else 0.0,
         }
 
 
 # =============================================================================
 # PV profile
 # =============================================================================
+
 
 def _simple_pv_hourly_profile(
     latitude: float,
@@ -126,20 +134,22 @@ def _simple_pv_hourly_profile(
         dec_rad = math.radians(decl)
 
         hour_angle = math.radians(15 * (hour - 12))
-        sin_alt = (math.sin(lat_rad) * math.sin(dec_rad) +
-                   math.cos(lat_rad) * math.cos(dec_rad) * math.cos(hour_angle))
+        sin_alt = math.sin(lat_rad) * math.sin(dec_rad) + math.cos(lat_rad) * math.cos(
+            dec_rad
+        ) * math.cos(hour_angle)
 
         if sin_alt <= 0:
             continue
 
         altitude = math.asin(max(-1.0, min(1.0, sin_alt)))
 
-        cos_inc = (math.sin(altitude) * math.cos(tilt_rad) +
-                   math.cos(altitude) * math.sin(tilt_rad) * math.cos(az_rad))
+        cos_inc = math.sin(altitude) * math.cos(tilt_rad) + math.cos(altitude) * math.sin(
+            tilt_rad
+        ) * math.cos(az_rad)
         cos_inc = max(0.0, cos_inc)
 
         air_mass = 1.0 / max(0.01, sin_alt)
-        ghi_clear = 1000 * sin_alt * (0.7 ** (air_mass ** 0.678))
+        ghi_clear = 1000 * sin_alt * (0.7 ** (air_mass**0.678))
 
         poa = ghi_clear * cos_inc / max(0.01, sin_alt)
         cloud = 0.6 + 0.2 * math.cos(math.radians(360 * day / 365))
@@ -149,7 +159,7 @@ def _simple_pv_hourly_profile(
 
     s = prof.sum()
     if s > 0:
-        prof *= (annual_yield_kwh_per_kwp / s)
+        prof *= annual_yield_kwh_per_kwp / s
     return prof
 
 
@@ -160,7 +170,7 @@ def _fetch_pvgis_hourly_pv_kwh_per_kwp(
     azimuth_deg: float = 0.0,
     loss_percent: float = 14.0,
     pv_tech: str = "crystSi",
-    year: Optional[int] = None,
+    year: int | None = None,
 ) -> np.ndarray:
     """
     PVGIS seriescalc hourly PV for 1 kWp -> returns kWh/kWp per hour.
@@ -175,10 +185,10 @@ def _fetch_pvgis_hourly_pv_kwh_per_kwp(
         "lon": longitude,
         "outputformat": "json",
         "pvcalculation": 1,
-        "peakpower": 1,               # 1 kWp -> output is per-kWp (then scale)
-        "loss": loss_percent,         # system losses [%]
+        "peakpower": 1,  # 1 kWp -> output is per-kWp (then scale)
+        "loss": loss_percent,  # system losses [%]
         "angle": tilt_deg,
-        "aspect": azimuth_deg,        # PVGIS: aspect degrees from south? commonly: 0 south, 90 west, -90 east
+        "aspect": azimuth_deg,  # PVGIS: aspect degrees from south? commonly: 0 south, 90 west, -90 east
         "pvtechchoice": pv_tech,
         "mountingplace": "building",
         "optimalangles": 0,
@@ -225,7 +235,8 @@ def _fetch_pvgis_hourly_pv_kwh_per_kwp(
 # Input extraction: UNI/TS 11300 endpoint output
 # =============================================================================
 
-def _extract_uni_hourly_df(payload: Dict[str, Any]) -> pd.DataFrame:
+
+def _extract_uni_hourly_df(payload: dict[str, Any]) -> pd.DataFrame:
     """
     Expected to receive the output of /primary-energy/uni11300, or an object containing it.
 
@@ -243,7 +254,10 @@ def _extract_uni_hourly_df(payload: Dict[str, Any]) -> pd.DataFrame:
         cand = payload["hourly_results"]
     elif isinstance(payload.get("uni11300"), dict) and "hourly_results" in payload["uni11300"]:
         cand = payload["uni11300"]["hourly_results"]
-    elif isinstance(payload.get("primary_energy_uni11300"), dict) and "hourly_results" in payload["primary_energy_uni11300"]:
+    elif (
+        isinstance(payload.get("primary_energy_uni11300"), dict)
+        and "hourly_results" in payload["primary_energy_uni11300"]
+    ):
         cand = payload["primary_energy_uni11300"]["hourly_results"]
     elif isinstance(payload.get("results"), dict):
         pe = payload["results"].get("primary_energy_uni11300")
@@ -283,8 +297,12 @@ def _get_hp_electric_series_kwh(df_uni: pd.DataFrame) -> pd.Series:
         s = pd.to_numeric(df_uni["E_delivered_electric_total_kWh"], errors="coerce").fillna(0.0)
         return s.clip(lower=0.0)
 
-    heat = pd.to_numeric(df_uni.get("E_delivered_electric_heat_kWh", 0.0), errors="coerce").fillna(0.0)
-    cool = pd.to_numeric(df_uni.get("E_delivered_electric_cool_kWh", 0.0), errors="coerce").fillna(0.0)
+    heat = pd.to_numeric(df_uni.get("E_delivered_electric_heat_kWh", 0.0), errors="coerce").fillna(
+        0.0
+    )
+    cool = pd.to_numeric(df_uni.get("E_delivered_electric_cool_kWh", 0.0), errors="coerce").fillna(
+        0.0
+    )
     s = heat + cool
     return s.clip(lower=0.0)
 
@@ -293,8 +311,9 @@ def _get_hp_electric_series_kwh(df_uni: pd.DataFrame) -> pd.Series:
 # Core analysis
 # =============================================================================
 
+
 def analyze_pv_hp_from_uni11300(
-    uni_payload: Dict[str, Any],
+    uni_payload: dict[str, Any],
     pv_kwp: float,
     latitude: float,
     longitude: float,
@@ -302,10 +321,10 @@ def analyze_pv_hp_from_uni11300(
     azimuth_deg: float = 0.0,
     use_pvgis: bool = True,
     annual_pv_yield_kwh_per_kwp: float = 1400.0,
-    battery_params: Optional[BatteryParams] = None,
+    battery_params: BatteryParams | None = None,
     pvgis_loss_percent: float = 14.0,
-    pvgis_year: Optional[int] = None,
-) -> Dict[str, Any]:
+    pvgis_year: int | None = None,
+) -> dict[str, Any]:
     """
     Uses UNI/TS 11300 hourly results as HP electricity demand input.
     Computes PV generation (PVGIS or simplified), optional battery, grid import/export,
@@ -325,7 +344,9 @@ def analyze_pv_hp_from_uni11300(
 
     n_hours = len(hp_elec_kwh)
     if n_hours < 24:
-        raise HTTPException(status_code=400, detail=f"Too few hours in UNI hourly_results: {n_hours}")
+        raise HTTPException(
+            status_code=400, detail=f"Too few hours in UNI hourly_results: {n_hours}"
+        )
 
     # PV profile per kWp (kWh/kWp per hour)
     pv_per_kwp = None
@@ -341,7 +362,7 @@ def analyze_pv_hp_from_uni11300(
                 year=pvgis_year,
             )
             pv_source = "pvgis"
-        except Exception:
+        except (RuntimeError, TypeError, ValueError, OverflowError):
             pv_per_kwp = None
 
     if pv_per_kwp is None:
@@ -466,8 +487,9 @@ def analyze_pv_hp_from_uni11300(
 # FastAPI endpoint
 # =============================================================================
 
+
 @router.post("/pv-hp/analysis", tags=["PV + Heat Pump"])
-def pv_hp_analysis(payload: Dict[str, Any]) -> Dict[str, Any]:
+def pv_hp_analysis(payload: dict[str, Any]) -> dict[str, Any]:
     """
     Compute PV+HP hourly matching using UNI/TS 11300 endpoint output as input.
 
@@ -488,7 +510,9 @@ def pv_hp_analysis(payload: Dict[str, Any]) -> Dict[str, Any]:
     longitude = payload.get("longitude")
 
     if pv_kwp is None or latitude is None or longitude is None:
-        raise HTTPException(status_code=400, detail="Missing required fields: pv_kwp, latitude, longitude.")
+        raise HTTPException(
+            status_code=400, detail="Missing required fields: pv_kwp, latitude, longitude."
+        )
 
     tilt_deg = float(payload.get("tilt_deg", 30.0))
     azimuth_deg = float(payload.get("azimuth_deg", 0.0))

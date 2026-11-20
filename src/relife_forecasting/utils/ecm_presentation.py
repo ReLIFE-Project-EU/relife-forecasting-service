@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import pandas as pd
 
@@ -77,7 +77,9 @@ def _build_findings(scenario_summary: pd.DataFrame) -> list[str]:
         scenario_summary["scenario_name"].astype(str).str.lower() != "baseline"
     ].copy()
     if alternatives.empty:
-        return ["Only the baseline scenario is available, so no comparative finding can be derived yet."]
+        return [
+            "Only the baseline scenario is available, so no comparative finding can be derived yet."
+        ]
 
     findings: list[str] = []
 
@@ -112,7 +114,8 @@ def _build_considerations() -> list[str]:
     ]
 
 
-def _ensure_plot_runtime_dirs() -> None:
+def _load_pyplot():
+    """Configure the writable cache and headless backend before loading pyplot."""
     cache_root = Path(tempfile.gettempdir()) / "relife_forecasting_plot_cache"
     cache_root.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("MPLCONFIGDIR", str(cache_root / "matplotlib"))
@@ -120,24 +123,41 @@ def _ensure_plot_runtime_dirs() -> None:
     Path(os.environ["MPLCONFIGDIR"]).mkdir(parents=True, exist_ok=True)
     Path(os.environ["XDG_CACHE_HOME"]).mkdir(parents=True, exist_ok=True)
 
-
-def _render_primary_energy_chart(scenario_summary: pd.DataFrame, output_path: Path) -> None:
-    _ensure_plot_runtime_dirs()
-    import matplotlib
+    import matplotlib  # noqa: PLC0415 - Reads MPLCONFIGDIR on import.
 
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: PLC0415 - Load after backend selection.
+
+    return plt
+
+
+def _render_primary_energy_chart(scenario_summary: pd.DataFrame, output_path: Path) -> None:
+    plt = _load_pyplot()
 
     labels = scenario_summary["scenario_label"].tolist()
     iso_values = pd.to_numeric(scenario_summary["iso_total_kwh"], errors="coerce").fillna(0.0)
-    primary_values = pd.to_numeric(scenario_summary["primary_total_kwh"], errors="coerce").fillna(0.0)
+    primary_values = pd.to_numeric(scenario_summary["primary_total_kwh"], errors="coerce").fillna(
+        0.0
+    )
 
     fig, ax = plt.subplots(figsize=(11, 6))
     x = list(range(len(labels)))
     width = 0.36
 
-    ax.bar([pos - width / 2 for pos in x], iso_values, width=width, label="ISO total demand", color="#55A630")
-    ax.bar([pos + width / 2 for pos in x], primary_values, width=width, label="Primary energy", color="#007F5F")
+    ax.bar(
+        [pos - width / 2 for pos in x],
+        iso_values,
+        width=width,
+        label="ISO total demand",
+        color="#55A630",
+    )
+    ax.bar(
+        [pos + width / 2 for pos in x],
+        primary_values,
+        width=width,
+        label="Primary energy",
+        color="#007F5F",
+    )
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=18, ha="right")
     ax.set_ylabel("kWh/year")
@@ -150,18 +170,16 @@ def _render_primary_energy_chart(scenario_summary: pd.DataFrame, output_path: Pa
 
 
 def _render_co2_chart(scenario_summary: pd.DataFrame, output_path: Path) -> None:
-    _ensure_plot_runtime_dirs()
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+    plt = _load_pyplot()
 
     labels = scenario_summary["scenario_label"].tolist()
     emissions = pd.to_numeric(scenario_summary["annual_co2_ton"], errors="coerce").fillna(0.0)
     savings = pd.to_numeric(scenario_summary["co2_saving_pct"], errors="coerce").fillna(0.0)
 
     fig, ax1 = plt.subplots(figsize=(11, 6))
-    bars = ax1.bar(labels, emissions, color=["#007F5F", "#55A630", "#80B918", "#AACC00"][: len(labels)])
+    bars = ax1.bar(
+        labels, emissions, color=["#007F5F", "#55A630", "#80B918", "#AACC00"][: len(labels)]
+    )
     ax1.set_ylabel("tCO2eq/year")
     ax1.set_title("Annual CO2 emissions and reduction vs baseline")
     ax1.grid(axis="y", alpha=0.2)
@@ -199,13 +217,13 @@ def _render_co2_chart(scenario_summary: pd.DataFrame, output_path: Path) -> None
 
 def build_ecm_presentation(
     *,
-    output_path: Union[str, Path],
+    output_path: str | Path,
     report_title: str,
-    building_meta: Dict[str, Any],
-    run_stats: Dict[str, Any],
+    building_meta: dict[str, Any],
+    run_stats: dict[str, Any],
     scenario_summary: pd.DataFrame,
-    html_report_path: Optional[Union[str, Path]] = None,
-) -> Dict[str, str]:
+    html_report_path: str | Path | None = None,
+) -> dict[str, str]:
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -231,7 +249,8 @@ def build_ecm_presentation(
     considerations = _build_considerations()
     scenario_labels = ", ".join(scenario_summary["scenario_label"].astype(str).tolist())
 
-    markdown = f"""# {report_title}
+    markdown = (
+        f"""# {report_title}
 
 - Building: {building_meta.get("name") or "-"}
 - Category: {building_meta.get("category") or "-"}
@@ -265,11 +284,16 @@ def build_ecm_presentation(
 
 ![]({co2_chart_path.name}){{width=88%}}
 
-""" + "\n".join(f"- {finding}" for finding in findings) + """
+"""
+        + "\n".join(f"- {finding}" for finding in findings)
+        + """
 
 # Considerations
 
-""" + "\n".join(f"- {item}" for item in considerations) + "\n"
+"""
+        + "\n".join(f"- {item}" for item in considerations)
+        + "\n"
+    )
 
     markdown_path.write_text(markdown, encoding="utf-8")
 

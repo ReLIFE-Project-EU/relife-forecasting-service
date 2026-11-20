@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 
 import relife_forecasting.main as main_module
 
-
 client = TestClient(main_module.app)
 
 
@@ -22,7 +21,9 @@ def _pick_test_archetype_with_uni() -> dict:
         None,
     )
     if archetype is None:
-        raise AssertionError("No archetype with uni11300/system configuration available for ECM tests.")
+        raise AssertionError(
+            "No archetype with uni11300/system configuration available for ECM tests."
+        )
     return archetype
 
 
@@ -226,7 +227,9 @@ def test_ecm_application_applies_condensing_boiler_generation_mask(monkeypatch):
     assert payload["uni11300_generation_mask"]["metric"] == "eta_generation"
     assert payload["uni11300_generation_mask"]["mask_value"] == 1.1
     assert (
-        payload["scenarios"][0]["results"]["primary_energy_uni11300"]["generation_mask"]["mask_value"]
+        payload["scenarios"][0]["results"]["primary_energy_uni11300"]["generation_mask"][
+            "mask_value"
+        ]
         == 1.1
     )
 
@@ -307,4 +310,6 @@ def test_ecm_application_applies_heat_pump_cop_to_uni11300(monkeypatch):
     assert payload["uni11300_generation_mask"]["applied_mode"] == "heat_pump"
     assert payload["uni11300_generation_mask"]["metric"] == "cop_generation"
     assert payload["uni11300_generation_mask"]["mask_value"] == 4.1
-    assert payload["scenarios"][0]["results"]["primary_energy_uni11300"]["heat_pump_applied"] is True
+    assert (
+        payload["scenarios"][0]["results"]["primary_energy_uni11300"]["heat_pump_applied"] is True
+    )

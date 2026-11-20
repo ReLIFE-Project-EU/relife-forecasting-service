@@ -9,7 +9,6 @@ from relife_forecasting.utils.ecm_report_html import (
     build_ecm_comparison_report_html,
 )
 
-
 client = TestClient(main_module.app)
 
 
@@ -98,7 +97,9 @@ def _fake_uni_results(
     heat_pump_cop,
 ):
     _ = uni_cfg, heat_pump_cop
-    hourly_df = hourly_sim.copy() if isinstance(hourly_sim, pd.DataFrame) else pd.DataFrame(hourly_sim)
+    hourly_df = (
+        hourly_sim.copy() if isinstance(hourly_sim, pd.DataFrame) else pd.DataFrame(hourly_sim)
+    )
     q_heat_kwh = pd.to_numeric(hourly_df["Q_H"], errors="coerce").fillna(0.0) * 0.001
 
     multiplier = 1.0
@@ -219,7 +220,12 @@ def test_report_recomputes_uni_monthly_from_hourly_building_when_payload_is_stal
     scenario_hourly["T_op"] = 21.0
 
     baseline_mask = {"requested_mode": "default", "applied_mode": "default"}
-    scenario_mask = {"requested_mode": "default", "applied_mode": "heat_pump", "mask_value": 4.0, "heat_pump_cop": 4.0}
+    scenario_mask = {
+        "requested_mode": "default",
+        "applied_mode": "heat_pump",
+        "mask_value": 4.0,
+        "heat_pump_cop": 4.0,
+    }
 
     baseline_expected_hourly, baseline_expected_summary = _compute_uni_from_building_hourly(
         baseline_hourly,
@@ -229,8 +235,12 @@ def test_report_recomputes_uni_monthly_from_hourly_building_when_payload_is_stal
         scenario_hourly,
         generation_mask=scenario_mask,
     )
-    baseline_expected_monthly = baseline_expected_hourly["EP_total_kWh"].resample("ME").sum().iloc[0]
-    scenario_expected_monthly = scenario_expected_hourly["EP_total_kWh"].resample("ME").sum().iloc[0]
+    baseline_expected_monthly = (
+        baseline_expected_hourly["EP_total_kWh"].resample("ME").sum().iloc[0]
+    )
+    scenario_expected_monthly = (
+        scenario_expected_hourly["EP_total_kWh"].resample("ME").sum().iloc[0]
+    )
 
     html = build_ecm_comparison_report_html(
         report_title="Recomputed UNI Report",
@@ -245,16 +255,34 @@ def test_report_recomputes_uni_monthly_from_hourly_building_when_payload_is_stal
         scenario_hourly=scenario_hourly,
         baseline_uni_results={
             "hourly_results": [
-                {"timestamp": "2025-01-31 23:00:00", "EP_heat_total_kWh": 99999.0, "EP_cool_total_kWh": 0.0, "EP_total_kWh": 99999.0}
+                {
+                    "timestamp": "2025-01-31 23:00:00",
+                    "EP_heat_total_kWh": 99999.0,
+                    "EP_cool_total_kWh": 0.0,
+                    "EP_total_kWh": 99999.0,
+                }
             ],
-            "summary": {"EP_heat_total_kWh": 99999.0, "EP_cool_total_kWh": 0.0, "EP_total_kWh": 99999.0},
+            "summary": {
+                "EP_heat_total_kWh": 99999.0,
+                "EP_cool_total_kWh": 0.0,
+                "EP_total_kWh": 99999.0,
+            },
             "generation_mask": baseline_mask,
         },
         scenario_uni_results={
             "hourly_results": [
-                {"timestamp": "2025-01-31 23:00:00", "EP_heat_total_kWh": 50000.0, "EP_cool_total_kWh": 0.0, "EP_total_kWh": 50000.0}
+                {
+                    "timestamp": "2025-01-31 23:00:00",
+                    "EP_heat_total_kWh": 50000.0,
+                    "EP_cool_total_kWh": 0.0,
+                    "EP_total_kWh": 50000.0,
+                }
             ],
-            "summary": {"EP_heat_total_kWh": 50000.0, "EP_cool_total_kWh": 0.0, "EP_total_kWh": 50000.0},
+            "summary": {
+                "EP_heat_total_kWh": 50000.0,
+                "EP_cool_total_kWh": 0.0,
+                "EP_total_kWh": 50000.0,
+            },
             "generation_mask": scenario_mask,
         },
     )

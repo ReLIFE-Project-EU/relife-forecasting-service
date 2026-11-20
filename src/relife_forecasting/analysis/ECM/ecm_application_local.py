@@ -10,17 +10,17 @@ Version that:
 
 import copy
 import itertools
+import json
 import os
 import time
 import traceback
 from multiprocessing import Pool, cpu_count
-from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
-import json
+from typing import Any
+
 import numpy as np
-import pybuildingenergy as pybui
 import pandas as pd
-from typing import Union
+import pybuildingenergy as pybui
 
 # Import BUI and INPUT_SYSTEM_HVAC
 try:
@@ -60,11 +60,11 @@ BUILDING_EXAMPLES_DIR = "building_examples_ecm"
 
 
 def simulate_hourly(
-    BUI: Dict[str, Any],
-    INPUT_SYSTEM_HVAC: Dict[str, Any],
-    epw_name: Optional[str] = None,
-    name_file: Optional[str] = None,
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    BUI: dict[str, Any],
+    INPUT_SYSTEM_HVAC: dict[str, Any],
+    epw_name: str | None = None,
+    name_file: str | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Wrapper for pybuildingenergy:
       - Computes building needs (ISO 52016)
@@ -126,6 +126,7 @@ def simulate_hourly(
 # UTILITY FUNCTIONS
 # ============================================================================
 
+
 def slugify(text: str) -> str:
     """OS-safe filename."""
     return (
@@ -140,9 +141,9 @@ def slugify(text: str) -> str:
 
 def build_name_file(
     building_name: str,
-    ecm_combo: List[str],
-    epw_name: Union[str, Path],
-    base_dir: Optional[str] = None,
+    ecm_combo: list[str],
+    epw_name: str | Path,
+    base_dir: str | None = None,
 ) -> str:
     """Build a unique filename for CSV results."""
     dir_path = Path(base_dir or RESULTS_DIR)
@@ -159,8 +160,8 @@ def build_name_file(
 
 
 def save_bui_to_folder(
-    BUI_obj: Dict[str, Any],
-    active_elements: List[str],
+    BUI_obj: dict[str, Any],
+    active_elements: list[str],
     folder: str = BUILDING_EXAMPLES_DIR,
 ) -> str:
     """
@@ -201,7 +202,8 @@ def save_bui_to_folder(
 # SURFACE CLASSIFICATION
 # ============================================================================
 
-def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
+
+def classify_surface(surface: dict[str, Any]) -> str | None:
     """Classify surface as 'roof', 'wall', or 'window'."""
     s_type = str(surface.get("type", "")).lower()
     ori = surface.get("orientation", {})
@@ -232,17 +234,17 @@ def classify_surface(surface: Dict[str, Any]) -> Optional[str]:
 
 
 def apply_u_values_to_BUI(
-    BUI_base: Dict[str, Any],
-    u_wall: Optional[float],
-    u_roof: Optional[float],
-    u_window: Optional[float],
-    active_elements: List[str],
-) -> Dict[str, Any]:
+    BUI_base: dict[str, Any],
+    u_wall: float | None,
+    u_roof: float | None,
+    u_window: float | None,
+    active_elements: list[str],
+) -> dict[str, Any]:
     """
     Apply U-values to the specified elements and
     SAVE the modified BUI in building_examples.
     """
-    u_map: Dict[str, float] = {}
+    u_map: dict[str, float] = {}
 
     if "roof" in active_elements and u_roof is not None:
         u_map["roof"] = u_roof
@@ -261,8 +263,7 @@ def apply_u_values_to_BUI(
             surface["u_value"] = u_map[s_class]
             modified_count += 1
             print(
-                f"  [OK] {surface.get('name', 'Unknown')}: "
-                f"{s_class} U={old_u} -> {u_map[s_class]}"
+                f"  [OK] {surface.get('name', 'Unknown')}: {s_class} U={old_u} -> {u_map[s_class]}"
             )
 
     print(f"  [INFO] Modified surfaces: {modified_count}")
@@ -277,9 +278,10 @@ def apply_u_values_to_BUI(
 # ECM COMBINATION GENERATION
 # ============================================================================
 
-def generate_ecm_combinations(ecm_options: List[str]) -> List[List[str]]:
+
+def generate_ecm_combinations(ecm_options: list[str]) -> list[list[str]]:
     """Generate all NON-EMPTY ECM combinations."""
-    combos: List[List[str]] = []
+    combos: list[list[str]] = []
     for r in range(1, len(ecm_options) + 1):
         for subset in itertools.combinations(ecm_options, r):
             combos.append(list(subset))
@@ -290,12 +292,13 @@ def generate_ecm_combinations(ecm_options: List[str]) -> List[List[str]]:
 # SINGLE SIMULATION
 # ============================================================================
 
+
 def run_single_simulation(
-    BUI: Dict[str, Any],
-    INPUT_SYSTEM_HVAC: Dict[str, Any],
+    BUI: dict[str, Any],
+    INPUT_SYSTEM_HVAC: dict[str, Any],
     name_file: str,
     epw_name: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Run a single simulation with error handling.
     Returns a dict with status and info.
@@ -303,14 +306,14 @@ def run_single_simulation(
     start_time = time.time()
 
     try:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"   SIMULATION: {Path(name_file).name}")
         print(f"   Building: {BUI['building']['name']}")
         print(f"   EPW: {epw_name}")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Run simulation
-        result = simulate_hourly(
+        simulate_hourly(
             BUI=BUI,
             INPUT_SYSTEM_HVAC=INPUT_SYSTEM_HVAC,
             epw_name=epw_name,
@@ -336,9 +339,9 @@ def run_single_simulation(
             "size_kb": file_size,
         }
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - Record a failed simulation and continue the batch.
         elapsed = time.time() - start_time
-        error_msg = f"{type(e).__name__}: {str(e)}"
+        error_msg = f"{type(e).__name__}: {e!s}"
 
         print(f"\n[ERROR] FAILED in {elapsed:.1f}s")
         print(f"   {error_msg}")
@@ -354,7 +357,7 @@ def run_single_simulation(
 
 
 # Multiprocessing worker
-def _mp_worker(task: Dict[str, Any]) -> Dict[str, Any]:
+def _mp_worker(task: dict[str, Any]) -> dict[str, Any]:
     """Worker for multiprocessing."""
     return run_single_simulation(
         BUI=task["BUI"],
@@ -368,18 +371,19 @@ def _mp_worker(task: Dict[str, Any]) -> Dict[str, Any]:
 # MAIN FUNCTION
 # ============================================================================
 
+
 def run_ecm_multiprocessing(
-    BUI_base: Dict[str, Any],
-    INPUT_SYSTEM_HVAC: Dict[str, Any],
-    ecm_options: List[str],
-    u_wall: Optional[float] = None,
-    u_roof: Optional[float] = None,
-    u_window: Optional[float] = None,
+    BUI_base: dict[str, Any],
+    INPUT_SYSTEM_HVAC: dict[str, Any],
+    ecm_options: list[str],
+    u_wall: float | None = None,
+    u_roof: float | None = None,
+    u_window: float | None = None,
     epw_name: str = "GRC_Athens.167160_IWEC",
-    n_processes: Optional[int] = None,
-    output_dir: Optional[str] = None,
+    n_processes: int | None = None,
+    output_dir: str | None = None,
     include_baseline: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Run ECM simulations with multiprocessing.
 
@@ -417,7 +421,7 @@ def run_ecm_multiprocessing(
     Path(base_dir).mkdir(parents=True, exist_ok=True)
 
     # Prepare tasks
-    tasks: List[Dict[str, Any]] = []
+    tasks: list[dict[str, Any]] = []
 
     print("\n[INFO] PREPARING TASKS:")
     for i, combo in enumerate(ecm_combos, 1):
@@ -455,9 +459,9 @@ def run_ecm_multiprocessing(
         tasks.append(task)
 
     # Run simulations
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"[RUN] EXECUTING SIMULATIONS ({len(tasks)} tasks)")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     start_time = time.time()
 
@@ -477,13 +481,13 @@ def run_ecm_multiprocessing(
     successful = [r for r in results if r["status"] == "success"]
     failed = [r for r in results if r["status"] == "error"]
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("FINAL RESULTS")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"Successes: {len(successful)}/{len(results)}")
     print(f"Errors: {len(failed)}/{len(results)}")
     print(f"Total time: {total_time:.1f}s")
-    print(f"[INFO] Avg time: {total_time/len(results):.1f}s per simulation")
+    print(f"[INFO] Avg time: {total_time / len(results):.1f}s per simulation")
 
     if successful:
         total_size = sum(r["size_kb"] for r in successful)

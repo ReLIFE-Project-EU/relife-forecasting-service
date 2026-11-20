@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 import requests
 
@@ -7,9 +5,7 @@ import requests
 # TODO: Make this test self-contained by:
 # 1. Using FastAPI TestClient instead of requiring a running server at localhost:9091
 # 2. Either embedding a minimal EPW fixture or mocking the weather file dependency
-@pytest.mark.skip(
-    reason="Not self-contained: requires external EPW file and running server"
-)
+@pytest.mark.skip(reason="Not self-contained: requires external EPW file and running server")
 def test_simulate_using_api():
     """Test the /simulate API endpoint (PVGIS) and UNI/TS 11300 integration.
 

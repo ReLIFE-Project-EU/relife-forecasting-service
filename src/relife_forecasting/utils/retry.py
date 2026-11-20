@@ -4,19 +4,20 @@ import asyncio
 import inspect
 import logging
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import TypeVar, Callable
+from typing import TypeVar
 
 try:
     # `requests` is used by the calling code; include its base exception when available.
     from requests.exceptions import RequestException as _RequestsRequestException
-except Exception:  # ImportError or if `requests` is not installed
+except ImportError:  # ImportError or if `requests` is not installed
     _RequestsRequestException = None  # type: ignore[assignment]
 
 try:
     # `urllib3` underpins `requests`; include its HTTPError when available.
     from urllib3.exceptions import HTTPError as _Urllib3HTTPError
-except Exception:  # ImportError or if `urllib3` is not installed
+except ImportError:  # ImportError or if `urllib3` is not installed
     _Urllib3HTTPError = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ def retry_on_transient_error(
     Uses exponential backoff between attempts.  Only retries on exceptions
     that are subclasses of ``TRANSIENT_EXCEPTIONS``; all other exceptions
     propagate immediately.
-    
+
     Supports both sync and async functions; will automatically detect coroutines
     and use asyncio.sleep instead of time.sleep to avoid blocking the event loop.
     """
@@ -65,7 +66,7 @@ def retry_on_transient_error(
 
     def decorator(fn: Callable[..., T]) -> Callable[..., T]:
         is_coroutine = inspect.iscoroutinefunction(fn)
-        
+
         @wraps(fn)
         async def async_wrapper(*args, **kwargs) -> T:
             delay = initial_delay

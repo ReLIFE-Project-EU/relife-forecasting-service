@@ -24,10 +24,7 @@ def test_primary_energy_preserves_rows_with_duplicate_index_labels() -> None:
     assert result["Q_ideal_heat_kWh"].sum() == pytest.approx(100.0)
     assert result["Q_ideal_cool_kWh"].sum() == pytest.approx(10.0)
     assert result["EP_total_kWh"].tolist() == pytest.approx(
-        (
-            result["EP_heat_total_kWh"]
-            + result["EP_cool_total_kWh"]
-        ).tolist()
+        (result["EP_heat_total_kWh"] + result["EP_cool_total_kWh"]).tolist()
     )
 
 
