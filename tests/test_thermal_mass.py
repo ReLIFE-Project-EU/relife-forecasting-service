@@ -25,6 +25,7 @@ def test_provisional_thermal_mass_prepares_workbook_inputs(
 ):
     monkeypatch.setenv(SETTING, "provisional")
     spec = RECORDS[ARCHETYPE].copy()
+    # Different roof and slab areas make a swapped divisor visible.
     spec.update(
         construction_class=source_class.value,
         roof_area=50.0,
@@ -57,6 +58,7 @@ def test_provisional_thermal_mass_prepares_workbook_inputs(
     [(None, ("class_iii", "J/K")), (" Provisional ", ("class_d", "J/(m²·K)")), ("typo", None)],
 )
 def test_catalogue_thermal_mass_at_startup(monkeypatch, setting, expected):
+    """Load a fresh catalogue so the builder reads the setting for this case."""
     if setting is None:
         monkeypatch.delenv(SETTING, raising=False)
     else:
