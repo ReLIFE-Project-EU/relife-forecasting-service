@@ -1,0 +1,1072 @@
+archetype_id,group,parameter,value,value_type,unit,notes,sources
+LU_SFH_0-1945,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_0-1945,Meta,Construction period,0-1945,text,-,Mapped to MODERATE age band: Before 1945,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_0-1945,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_0-1945,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+LU_SFH_0-1945,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_0-1945,Meta,"Value (archetype dwellings, abs.)",54339,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_SFH_0-1945,Meta,"Total dwellings (country/period, abs.)",71971,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_SFH_0-1945,Meta,Share of period dwellings,0.755,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_SFH_0-1945,Meta,Useful floor area,4.8380000000000001,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_SFH_0-1945,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_SFH_0-1945,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_0-1945,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_0-1945,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_SFH_0-1945,Geometry,Floors,1,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_SFH_0-1945,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_SFH_0-1945,Geometry,Volume-to-surface ratio,1,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_SFH_0-1945,Geometry,A/V ratio,1,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_SFH_0-1945,Geometry,Net floor area per dwelling,89,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_SFH_0-1945,Geometry,Building footprint / ground area,134.9,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_SFH_0-1945,Geometry,"Perimeter (external, estimated)",50.3,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_SFH_0-1945,Geometry,External wall area (gross),135.9,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_SFH_0-1945,Geometry,Window area,10.6,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_SFH_0-1945,Geometry,Window-to-wall ratio (WWR),0.08,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_SFH_0-1945,Envelope,External wall U-value,0.94099999999999995,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_SFH_0-1945,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_0-1945,Envelope,Roof U-value,1.2509999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_SFH_0-1945,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_0-1945,Envelope,Floor/Slab U-value,1.1479999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_SFH_0-1945,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_0-1945,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_SFH_0-1945,Envelope,Approx. transmission heat-loss coefficient,495.8,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_SFH_0-1945,Windows,Window Uw (whole window),4.1920000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_SFH_0-1945,Windows,g-value,0.75,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_SFH_0-1945,Windows,Glazing description,mostly single glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_SFH_0-1945,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_SFH_0-1945,Heating system,COP / seasonal efficiency,0.75,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_SFH_0-1945,Heating system,Useful energy demand - space heating,283.2,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_SFH_0-1945,Heating system,Final energy - space heating,323.89999999999998,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_SFH_0-1945,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_SFH_0-1945,DHW,"Generation efficiency_gen,DHW",0.75,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_SFH_0-1945,DHW,Useful energy demand - DHW,12.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_SFH_0-1945,DHW,Final energy - DHW,12.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_SFH_0-1945,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_SFH_0-1945,Cooling system,SEER,2.2000000000000002,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_SFH_0-1945,Cooling system,Useful energy demand - cooling,4.2,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_SFH_0-1945,Cooling system,Final energy - cooling,1.4,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_SFH_0-1945,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_SFH_0-1945,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_SFH_0-1945,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_SFH_0-1945,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_SFH_0-1945,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_SFH_1946-1969,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1946-1969,Meta,Construction period,1946-1969,text,-,Mapped to MODERATE age band: 1945 - 1969,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1946-1969,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1946-1969,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+LU_SFH_1946-1969,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1946-1969,Meta,"Value (archetype dwellings, abs.)",36801,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_SFH_1946-1969,Meta,"Total dwellings (country/period, abs.)",54286,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_SFH_1946-1969,Meta,Share of period dwellings,0.67800000000000005,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_SFH_1946-1969,Meta,Useful floor area,3.1520000000000001,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_SFH_1946-1969,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_SFH_1946-1969,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_1946-1969,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_1946-1969,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_SFH_1946-1969,Geometry,Floors,1,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_SFH_1946-1969,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_SFH_1946-1969,Geometry,Volume-to-surface ratio,1,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_SFH_1946-1969,Geometry,A/V ratio,0.995,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_SFH_1946-1969,Geometry,Net floor area per dwelling,85.6,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_SFH_1946-1969,Geometry,Building footprint / ground area,139.9,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_SFH_1946-1969,Geometry,"Perimeter (external, estimated)",51.2,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_SFH_1946-1969,Geometry,External wall area (gross),138.4,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_SFH_1946-1969,Geometry,Window area,10.8,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_SFH_1946-1969,Geometry,Window-to-wall ratio (WWR),0.08,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_SFH_1946-1969,Envelope,External wall U-value,1.268,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_SFH_1946-1969,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1946-1969,Envelope,Roof U-value,0.82199999999999995,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_SFH_1946-1969,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1946-1969,Envelope,Floor/Slab U-value,0.97699999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_SFH_1946-1969,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1946-1969,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_SFH_1946-1969,Envelope,Approx. transmission heat-loss coefficient,464.5,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_SFH_1946-1969,Windows,Window Uw (whole window),3.488,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_SFH_1946-1969,Windows,g-value,0.63,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_SFH_1946-1969,Windows,Glazing description,mostly early double glazing / mixed single-double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_SFH_1946-1969,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_SFH_1946-1969,Heating system,COP / seasonal efficiency,0.78,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_SFH_1946-1969,Heating system,Useful energy demand - space heating,254.7,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_SFH_1946-1969,Heating system,Final energy - space heating,291.3,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_SFH_1946-1969,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_SFH_1946-1969,DHW,"Generation efficiency_gen,DHW",0.78,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_SFH_1946-1969,DHW,Useful energy demand - DHW,12.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_SFH_1946-1969,DHW,Final energy - DHW,12.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_SFH_1946-1969,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_SFH_1946-1969,Cooling system,SEER,2.2999999999999998,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_SFH_1946-1969,Cooling system,Useful energy demand - cooling,6.6,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_SFH_1946-1969,Cooling system,Final energy - cooling,2.2000000000000002,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_SFH_1946-1969,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_SFH_1946-1969,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_SFH_1946-1969,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_SFH_1946-1969,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_SFH_1946-1969,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_SFH_1970-1979,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1970-1979,Meta,Construction period,1970-1979,text,-,Mapped to MODERATE age band: 1970 - 1979,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1970-1979,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1970-1979,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+LU_SFH_1970-1979,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1970-1979,Meta,"Value (archetype dwellings, abs.)",22535,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_SFH_1970-1979,Meta,"Total dwellings (country/period, abs.)",35452,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_SFH_1970-1979,Meta,Share of period dwellings,0.63600000000000001,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_SFH_1970-1979,Meta,Useful floor area,2.1360000000000001,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_SFH_1970-1979,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_SFH_1970-1979,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_1970-1979,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_1970-1979,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_SFH_1970-1979,Geometry,Floors,1,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_SFH_1970-1979,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_SFH_1970-1979,Geometry,Volume-to-surface ratio,1.02,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_SFH_1970-1979,Geometry,A/V ratio,0.97799999999999998,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_SFH_1970-1979,Geometry,Net floor area per dwelling,94.8,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_SFH_1970-1979,Geometry,Building footprint / ground area,157.69999999999999,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_SFH_1970-1979,Geometry,"Perimeter (external, estimated)",54.4,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_SFH_1970-1979,Geometry,External wall area (gross),146.9,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_SFH_1970-1979,Geometry,Window area,11.4,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_SFH_1970-1979,Geometry,Window-to-wall ratio (WWR),0.08,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_SFH_1970-1979,Envelope,External wall U-value,0.61299999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_SFH_1970-1979,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1970-1979,Envelope,Roof U-value,0.47699999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_SFH_1970-1979,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1970-1979,Envelope,Floor/Slab U-value,0.58699999999999997,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_SFH_1970-1979,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1970-1979,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_SFH_1970-1979,Envelope,Approx. transmission heat-loss coefficient,289.2,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_SFH_1970-1979,Windows,Window Uw (whole window),2.7530000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_SFH_1970-1979,Windows,g-value,0.63,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_SFH_1970-1979,Windows,Glazing description,mostly early double glazing / mixed single-double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_SFH_1970-1979,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_SFH_1970-1979,Heating system,COP / seasonal efficiency,0.8,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_SFH_1970-1979,Heating system,Useful energy demand - space heating,135.9,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_SFH_1970-1979,Heating system,Final energy - space heating,155.4,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_SFH_1970-1979,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_SFH_1970-1979,DHW,"Generation efficiency_gen,DHW",0.8,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_SFH_1970-1979,DHW,Useful energy demand - DHW,12.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_SFH_1970-1979,DHW,Final energy - DHW,12.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_SFH_1970-1979,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_SFH_1970-1979,Cooling system,SEER,2.4,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_SFH_1970-1979,Cooling system,Useful energy demand - cooling,7.3,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_SFH_1970-1979,Cooling system,Final energy - cooling,2.4,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_SFH_1970-1979,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_SFH_1970-1979,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_SFH_1970-1979,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_SFH_1970-1979,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_SFH_1970-1979,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_SFH_1980-1989,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1980-1989,Meta,Construction period,1980-1989,text,-,Mapped to MODERATE age band: 1980 - 1989,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1980-1989,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1980-1989,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+LU_SFH_1980-1989,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1980-1989,Meta,"Value (archetype dwellings, abs.)",16340,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_SFH_1980-1989,Meta,"Total dwellings (country/period, abs.)",27839,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_SFH_1980-1989,Meta,Share of period dwellings,0.58699999999999997,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_SFH_1980-1989,Meta,Useful floor area,1.6020000000000001,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_SFH_1980-1989,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_SFH_1980-1989,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_1980-1989,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_1980-1989,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_SFH_1980-1989,Geometry,Floors,1,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_SFH_1980-1989,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_SFH_1980-1989,Geometry,Volume-to-surface ratio,1.03,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_SFH_1980-1989,Geometry,A/V ratio,0.96899999999999997,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_SFH_1980-1989,Geometry,Net floor area per dwelling,98.1,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_SFH_1980-1989,Geometry,Building footprint / ground area,168.9,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_SFH_1980-1989,Geometry,"Perimeter (external, estimated)",56.3,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_SFH_1980-1989,Geometry,External wall area (gross),152,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_SFH_1980-1989,Geometry,Window area,11.8,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_SFH_1980-1989,Geometry,Window-to-wall ratio (WWR),0.08,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_SFH_1980-1989,Envelope,External wall U-value,0.52700000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_SFH_1980-1989,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1980-1989,Envelope,Roof U-value,0.35299999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_SFH_1980-1989,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1980-1989,Envelope,Floor/Slab U-value,0.54800000000000004,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_SFH_1980-1989,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1980-1989,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_SFH_1980-1989,Envelope,Approx. transmission heat-loss coefficient,256,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_SFH_1980-1989,Windows,Window Uw (whole window),2.0150000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_SFH_1980-1989,Windows,g-value,0.57999999999999996,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_SFH_1980-1989,Windows,Glazing description,mostly double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_SFH_1980-1989,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_SFH_1980-1989,Heating system,COP / seasonal efficiency,0.82,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_SFH_1980-1989,Heating system,Useful energy demand - space heating,110.5,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_SFH_1980-1989,Heating system,Final energy - space heating,126.3,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_SFH_1980-1989,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_SFH_1980-1989,DHW,"Generation efficiency_gen,DHW",0.82,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_SFH_1980-1989,DHW,Useful energy demand - DHW,12.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_SFH_1980-1989,DHW,Final energy - DHW,12.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_SFH_1980-1989,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_SFH_1980-1989,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_SFH_1980-1989,Cooling system,Useful energy demand - cooling,7.2,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_SFH_1980-1989,Cooling system,Final energy - cooling,2.4,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_SFH_1980-1989,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_SFH_1980-1989,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_SFH_1980-1989,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_SFH_1980-1989,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_SFH_1980-1989,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_SFH_1990-1999,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1990-1999,Meta,Construction period,1990-1999,text,-,Mapped to MODERATE age band: 1990 - 1999,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1990-1999,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1990-1999,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+LU_SFH_1990-1999,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_1990-1999,Meta,"Value (archetype dwellings, abs.)",8552,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_SFH_1990-1999,Meta,"Total dwellings (country/period, abs.)",21245,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_SFH_1990-1999,Meta,Share of period dwellings,0.40300000000000002,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_SFH_1990-1999,Meta,Useful floor area,0.83799999999999997,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_SFH_1990-1999,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_SFH_1990-1999,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_1990-1999,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_1990-1999,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_SFH_1990-1999,Geometry,Floors,1,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_SFH_1990-1999,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_SFH_1990-1999,Geometry,Volume-to-surface ratio,1.02,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_SFH_1990-1999,Geometry,A/V ratio,0.98,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_SFH_1990-1999,Geometry,Net floor area per dwelling,98,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_SFH_1990-1999,Geometry,Building footprint / ground area,155.30000000000001,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_SFH_1990-1999,Geometry,"Perimeter (external, estimated)",54,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_SFH_1990-1999,Geometry,External wall area (gross),145.80000000000001,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_SFH_1990-1999,Geometry,Window area,11.3,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_SFH_1990-1999,Geometry,Window-to-wall ratio (WWR),0.08,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_SFH_1990-1999,Envelope,External wall U-value,0.47799999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_SFH_1990-1999,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1990-1999,Envelope,Roof U-value,0.27500000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_SFH_1990-1999,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1990-1999,Envelope,Floor/Slab U-value,0.49,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_SFH_1990-1999,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_1990-1999,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_SFH_1990-1999,Envelope,Approx. transmission heat-loss coefficient,206.1,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_SFH_1990-1999,Windows,Window Uw (whole window),1.5629999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_SFH_1990-1999,Windows,g-value,0.5,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_SFH_1990-1999,Windows,Glazing description,high-performance double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_SFH_1990-1999,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_SFH_1990-1999,Heating system,COP / seasonal efficiency,0.85,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_SFH_1990-1999,Heating system,Useful energy demand - space heating,93.3,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_SFH_1990-1999,Heating system,Final energy - space heating,106.7,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_SFH_1990-1999,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_SFH_1990-1999,DHW,"Generation efficiency_gen,DHW",0.85,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_SFH_1990-1999,DHW,Useful energy demand - DHW,12.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_SFH_1990-1999,DHW,Final energy - DHW,12.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_SFH_1990-1999,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_SFH_1990-1999,Cooling system,SEER,2.7,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_SFH_1990-1999,Cooling system,Useful energy demand - cooling,8,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_SFH_1990-1999,Cooling system,Final energy - cooling,2.7,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_SFH_1990-1999,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_SFH_1990-1999,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_SFH_1990-1999,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_SFH_1990-1999,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_SFH_1990-1999,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_SFH_2000-2010,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_2000-2010,Meta,Construction period,2000-2010,text,-,Mapped to MODERATE age band: 2000 - 2010,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_2000-2010,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_2000-2010,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+LU_SFH_2000-2010,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_2000-2010,Meta,"Value (archetype dwellings, abs.)",23055,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_SFH_2000-2010,Meta,"Total dwellings (country/period, abs.)",33641,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_SFH_2000-2010,Meta,Share of period dwellings,0.68500000000000005,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_SFH_2000-2010,Meta,Useful floor area,2.073,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_SFH_2000-2010,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_SFH_2000-2010,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_2000-2010,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_2000-2010,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_SFH_2000-2010,Geometry,Floors,1,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_SFH_2000-2010,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_SFH_2000-2010,Geometry,Volume-to-surface ratio,1.04,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_SFH_2000-2010,Geometry,A/V ratio,0.96499999999999997,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_SFH_2000-2010,Geometry,Net floor area per dwelling,89.9,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_SFH_2000-2010,Geometry,Building footprint / ground area,171.4,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_SFH_2000-2010,Geometry,"Perimeter (external, estimated)",56.6,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_SFH_2000-2010,Geometry,External wall area (gross),152.9,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_SFH_2000-2010,Geometry,Window area,11.9,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_SFH_2000-2010,Geometry,Window-to-wall ratio (WWR),0.08,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_SFH_2000-2010,Envelope,External wall U-value,0.314,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_SFH_2000-2010,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_2000-2010,Envelope,Roof U-value,0.218,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_SFH_2000-2010,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_2000-2010,Envelope,Floor/Slab U-value,0.35199999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_SFH_2000-2010,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_2000-2010,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_SFH_2000-2010,Envelope,Approx. transmission heat-loss coefficient,159.69999999999999,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_SFH_2000-2010,Windows,Window Uw (whole window),1.171,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_SFH_2000-2010,Windows,g-value,0.5,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_SFH_2000-2010,Windows,Glazing description,high-performance double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_SFH_2000-2010,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_SFH_2000-2010,Heating system,COP / seasonal efficiency,0.9,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_SFH_2000-2010,Heating system,Useful energy demand - space heating,62.6,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_SFH_2000-2010,Heating system,Final energy - space heating,71.599999999999994,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_SFH_2000-2010,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_SFH_2000-2010,DHW,"Generation efficiency_gen,DHW",0.88,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_SFH_2000-2010,DHW,Useful energy demand - DHW,12.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_SFH_2000-2010,DHW,Final energy - DHW,12.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_SFH_2000-2010,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_SFH_2000-2010,Cooling system,SEER,3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_SFH_2000-2010,Cooling system,Useful energy demand - cooling,6.2,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_SFH_2000-2010,Cooling system,Final energy - cooling,2.1,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_SFH_2000-2010,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_SFH_2000-2010,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_SFH_2000-2010,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_SFH_2000-2010,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_SFH_2000-2010,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_SFH_2011-now,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_2011-now,Meta,Construction period,2011-now,text,-,Mapped to MODERATE age band: 2011 - 2020,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_2011-now,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_2011-now,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+LU_SFH_2011-now,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_SFH_2011-now,Meta,"Value (archetype dwellings, abs.)",19046,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_SFH_2011-now,Meta,"Total dwellings (country/period, abs.)",25408,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_SFH_2011-now,Meta,Share of period dwellings,0.75,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_SFH_2011-now,Meta,Useful floor area,1.7909999999999999,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_SFH_2011-now,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_SFH_2011-now,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_2011-now,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_SFH_2011-now,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_SFH_2011-now,Geometry,Floors,1,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_SFH_2011-now,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_SFH_2011-now,Geometry,Volume-to-surface ratio,1.05,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_SFH_2011-now,Geometry,A/V ratio,0.95299999999999996,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_SFH_2011-now,Geometry,Net floor area per dwelling,94,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_SFH_2011-now,Geometry,Building footprint / ground area,184.7,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_SFH_2011-now,Geometry,"Perimeter (external, estimated)",58.6,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_SFH_2011-now,Geometry,External wall area (gross),158.19999999999999,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_SFH_2011-now,Geometry,Window area,12.3,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_SFH_2011-now,Geometry,Window-to-wall ratio (WWR),0.08,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_SFH_2011-now,Envelope,External wall U-value,0.22800000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_SFH_2011-now,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_2011-now,Envelope,Roof U-value,0.16200000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_SFH_2011-now,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_2011-now,Envelope,Floor/Slab U-value,0.23,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_SFH_2011-now,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_SFH_2011-now,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_SFH_2011-now,Envelope,Approx. transmission heat-loss coefficient,120.1,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_SFH_2011-now,Windows,Window Uw (whole window),0.93400000000000005,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_SFH_2011-now,Windows,g-value,0.5,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_SFH_2011-now,Windows,Glazing description,high-performance double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_SFH_2011-now,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_SFH_2011-now,Heating system,COP / seasonal efficiency,0.94,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_SFH_2011-now,Heating system,Useful energy demand - space heating,41.3,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_SFH_2011-now,Heating system,Final energy - space heating,47.2,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_SFH_2011-now,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_SFH_2011-now,DHW,"Generation efficiency_gen,DHW",0.9,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_SFH_2011-now,DHW,Useful energy demand - DHW,12.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_SFH_2011-now,DHW,Final energy - DHW,12.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_SFH_2011-now,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_SFH_2011-now,Cooling system,SEER,3.3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_SFH_2011-now,Cooling system,Useful energy demand - cooling,6.5,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_SFH_2011-now,Cooling system,Final energy - cooling,2.2000000000000002,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_SFH_2011-now,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_SFH_2011-now,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_SFH_2011-now,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_SFH_2011-now,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_SFH_2011-now,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_MFH_0-1945,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_0-1945,Meta,Construction period,0-1945,text,-,Mapped to MODERATE age band: Before 1945,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_0-1945,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_0-1945,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+LU_MFH_0-1945,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_0-1945,Meta,"Value (archetype dwellings, abs.)",4822,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_MFH_0-1945,Meta,"Total dwellings (country/period, abs.)",71971,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_MFH_0-1945,Meta,Share of period dwellings,6.7000000000000004E-2,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_MFH_0-1945,Meta,Useful floor area,0.42899999999999999,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_MFH_0-1945,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_MFH_0-1945,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_0-1945,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_0-1945,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_MFH_0-1945,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_MFH_0-1945,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_MFH_0-1945,Geometry,Volume-to-surface ratio,2.4500000000000002,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_MFH_0-1945,Geometry,A/V ratio,0.40699999999999997,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_MFH_0-1945,Geometry,Net floor area per dwelling,89,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_MFH_0-1945,Geometry,Building footprint / ground area,174.3,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_MFH_0-1945,Geometry,"Perimeter (external, estimated)",57.2,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_MFH_0-1945,Geometry,External wall area (gross),617.9,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_MFH_0-1945,Geometry,Window area,83.9,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_MFH_0-1945,Geometry,Window-to-wall ratio (WWR),0.14000000000000001,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_MFH_0-1945,Envelope,External wall U-value,0.94299999999999995,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_MFH_0-1945,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_0-1945,Envelope,Roof U-value,1.1990000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_MFH_0-1945,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_0-1945,Envelope,Floor/Slab U-value,1.1990000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_MFH_0-1945,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_0-1945,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_MFH_0-1945,Envelope,Approx. transmission heat-loss coefficient,1353.5,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_MFH_0-1945,Windows,Window Uw (whole window),4.2060000000000004,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_MFH_0-1945,Windows,g-value,0.75,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_MFH_0-1945,Windows,Glazing description,mostly single glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_MFH_0-1945,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_MFH_0-1945,Heating system,COP / seasonal efficiency,0.75,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_MFH_0-1945,Heating system,Useful energy demand - space heating,122.4,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_MFH_0-1945,Heating system,Final energy - space heating,140,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_MFH_0-1945,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_MFH_0-1945,DHW,"Generation efficiency_gen,DHW",0.75,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_MFH_0-1945,DHW,Useful energy demand - DHW,11.9,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_MFH_0-1945,DHW,Final energy - DHW,11.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_MFH_0-1945,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_MFH_0-1945,Cooling system,SEER,2.2000000000000002,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_MFH_0-1945,Cooling system,Useful energy demand - cooling,8.4,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_MFH_0-1945,Cooling system,Final energy - cooling,2.8,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_MFH_0-1945,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_MFH_0-1945,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_MFH_0-1945,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_MFH_0-1945,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_MFH_0-1945,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_MFH_1946-1969,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1946-1969,Meta,Construction period,1946-1969,text,-,Mapped to MODERATE age band: 1945 - 1969,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1946-1969,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1946-1969,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+LU_MFH_1946-1969,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1946-1969,Meta,"Value (archetype dwellings, abs.)",5502,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_MFH_1946-1969,Meta,"Total dwellings (country/period, abs.)",54286,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_MFH_1946-1969,Meta,Share of period dwellings,0.10100000000000001,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_MFH_1946-1969,Meta,Useful floor area,0.47099999999999997,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_MFH_1946-1969,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_MFH_1946-1969,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_1946-1969,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_1946-1969,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_MFH_1946-1969,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_MFH_1946-1969,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_MFH_1946-1969,Geometry,Volume-to-surface ratio,2.5099999999999998,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_MFH_1946-1969,Geometry,A/V ratio,0.39900000000000002,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_MFH_1946-1969,Geometry,Net floor area per dwelling,85.6,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_MFH_1946-1969,Geometry,Building footprint / ground area,187.6,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_MFH_1946-1969,Geometry,"Perimeter (external, estimated)",59.3,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_MFH_1946-1969,Geometry,External wall area (gross),641,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_MFH_1946-1969,Geometry,Window area,87,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_MFH_1946-1969,Geometry,Window-to-wall ratio (WWR),0.14000000000000001,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_MFH_1946-1969,Envelope,External wall U-value,1.258,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_MFH_1946-1969,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1946-1969,Envelope,Roof U-value,0.94099999999999995,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_MFH_1946-1969,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1946-1969,Envelope,Floor/Slab U-value,0.96,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_MFH_1946-1969,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1946-1969,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_MFH_1946-1969,Envelope,Approx. transmission heat-loss coefficient,1455.2,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_MFH_1946-1969,Windows,Window Uw (whole window),3.3540000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_MFH_1946-1969,Windows,g-value,0.63,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_MFH_1946-1969,Windows,Glazing description,mostly early double glazing / mixed single-double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_MFH_1946-1969,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_MFH_1946-1969,Heating system,COP / seasonal efficiency,0.78,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_MFH_1946-1969,Heating system,Useful energy demand - space heating,119.3,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_MFH_1946-1969,Heating system,Final energy - space heating,136.5,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_MFH_1946-1969,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_MFH_1946-1969,DHW,"Generation efficiency_gen,DHW",0.78,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_MFH_1946-1969,DHW,Useful energy demand - DHW,11.9,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_MFH_1946-1969,DHW,Final energy - DHW,11.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_MFH_1946-1969,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_MFH_1946-1969,Cooling system,SEER,2.2999999999999998,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_MFH_1946-1969,Cooling system,Useful energy demand - cooling,12,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_MFH_1946-1969,Cooling system,Final energy - cooling,4,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_MFH_1946-1969,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_MFH_1946-1969,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_MFH_1946-1969,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_MFH_1946-1969,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_MFH_1946-1969,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_MFH_1970-1979,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1970-1979,Meta,Construction period,1970-1979,text,-,Mapped to MODERATE age band: 1970 - 1979,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1970-1979,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1970-1979,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+LU_MFH_1970-1979,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1970-1979,Meta,"Value (archetype dwellings, abs.)",9611,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_MFH_1970-1979,Meta,"Total dwellings (country/period, abs.)",35452,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_MFH_1970-1979,Meta,Share of period dwellings,0.27100000000000002,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_MFH_1970-1979,Meta,Useful floor area,0.91100000000000003,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_MFH_1970-1979,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_MFH_1970-1979,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_1970-1979,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_1970-1979,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_MFH_1970-1979,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_MFH_1970-1979,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_MFH_1970-1979,Geometry,Volume-to-surface ratio,2.5299999999999998,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_MFH_1970-1979,Geometry,A/V ratio,0.39600000000000002,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_MFH_1970-1979,Geometry,Net floor area per dwelling,94.8,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_MFH_1970-1979,Geometry,Building footprint / ground area,193.2,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_MFH_1970-1979,Geometry,"Perimeter (external, estimated)",60.2,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_MFH_1970-1979,Geometry,External wall area (gross),650.6,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_MFH_1970-1979,Geometry,Window area,88.3,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_MFH_1970-1979,Geometry,Window-to-wall ratio (WWR),0.14000000000000001,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_MFH_1970-1979,Envelope,External wall U-value,0.63500000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_MFH_1970-1979,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1970-1979,Envelope,Roof U-value,0.68100000000000005,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_MFH_1970-1979,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1970-1979,Envelope,Floor/Slab U-value,0.60199999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_MFH_1970-1979,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1970-1979,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_MFH_1970-1979,Envelope,Approx. transmission heat-loss coefficient,907.6,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_MFH_1970-1979,Windows,Window Uw (whole window),2.7919999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_MFH_1970-1979,Windows,g-value,0.63,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_MFH_1970-1979,Windows,Glazing description,mostly early double glazing / mixed single-double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_MFH_1970-1979,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_MFH_1970-1979,Heating system,COP / seasonal efficiency,0.8,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_MFH_1970-1979,Heating system,Useful energy demand - space heating,69.7,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_MFH_1970-1979,Heating system,Final energy - space heating,79.7,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_MFH_1970-1979,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_MFH_1970-1979,DHW,"Generation efficiency_gen,DHW",0.8,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_MFH_1970-1979,DHW,Useful energy demand - DHW,11.9,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_MFH_1970-1979,DHW,Final energy - DHW,11.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_MFH_1970-1979,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_MFH_1970-1979,Cooling system,SEER,2.4,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_MFH_1970-1979,Cooling system,Useful energy demand - cooling,15.8,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_MFH_1970-1979,Cooling system,Final energy - cooling,5.3,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_MFH_1970-1979,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_MFH_1970-1979,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_MFH_1970-1979,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_MFH_1970-1979,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_MFH_1970-1979,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_MFH_1980-1989,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1980-1989,Meta,Construction period,1980-1989,text,-,Mapped to MODERATE age band: 1980 - 1989,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1980-1989,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1980-1989,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+LU_MFH_1980-1989,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1980-1989,Meta,"Value (archetype dwellings, abs.)",10466,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_MFH_1980-1989,Meta,"Total dwellings (country/period, abs.)",27839,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_MFH_1980-1989,Meta,Share of period dwellings,0.376,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_MFH_1980-1989,Meta,Useful floor area,1.026,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_MFH_1980-1989,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_MFH_1980-1989,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_1980-1989,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_1980-1989,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_MFH_1980-1989,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_MFH_1980-1989,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_MFH_1980-1989,Geometry,Volume-to-surface ratio,2.5499999999999998,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_MFH_1980-1989,Geometry,A/V ratio,0.39200000000000002,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_MFH_1980-1989,Geometry,Net floor area per dwelling,98.1,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_MFH_1980-1989,Geometry,Building footprint / ground area,200.6,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_MFH_1980-1989,Geometry,"Perimeter (external, estimated)",61.4,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_MFH_1980-1989,Geometry,External wall area (gross),662.6,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_MFH_1980-1989,Geometry,Window area,89.9,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_MFH_1980-1989,Geometry,Window-to-wall ratio (WWR),0.14000000000000001,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_MFH_1980-1989,Envelope,External wall U-value,0.56499999999999995,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_MFH_1980-1989,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1980-1989,Envelope,Roof U-value,0.38500000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_MFH_1980-1989,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1980-1989,Envelope,Floor/Slab U-value,0.55400000000000005,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_MFH_1980-1989,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1980-1989,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_MFH_1980-1989,Envelope,Approx. transmission heat-loss coefficient,743.4,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_MFH_1980-1989,Windows,Window Uw (whole window),2.0110000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_MFH_1980-1989,Windows,g-value,0.57999999999999996,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_MFH_1980-1989,Windows,Glazing description,mostly double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_MFH_1980-1989,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_MFH_1980-1989,Heating system,COP / seasonal efficiency,0.82,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_MFH_1980-1989,Heating system,Useful energy demand - space heating,51.5,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_MFH_1980-1989,Heating system,Final energy - space heating,58.9,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_MFH_1980-1989,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_MFH_1980-1989,DHW,"Generation efficiency_gen,DHW",0.82,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_MFH_1980-1989,DHW,Useful energy demand - DHW,11.9,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_MFH_1980-1989,DHW,Final energy - DHW,11.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_MFH_1980-1989,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_MFH_1980-1989,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_MFH_1980-1989,Cooling system,Useful energy demand - cooling,17.2,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_MFH_1980-1989,Cooling system,Final energy - cooling,5.7,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_MFH_1980-1989,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_MFH_1980-1989,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_MFH_1980-1989,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_MFH_1980-1989,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_MFH_1980-1989,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_MFH_1990-1999,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1990-1999,Meta,Construction period,1990-1999,text,-,Mapped to MODERATE age band: 1990 - 1999,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1990-1999,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1990-1999,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+LU_MFH_1990-1999,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_1990-1999,Meta,"Value (archetype dwellings, abs.)",11866,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_MFH_1990-1999,Meta,"Total dwellings (country/period, abs.)",21245,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_MFH_1990-1999,Meta,Share of period dwellings,0.55900000000000005,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_MFH_1990-1999,Meta,Useful floor area,1.1619999999999999,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_MFH_1990-1999,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_MFH_1990-1999,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_1990-1999,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_1990-1999,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_MFH_1990-1999,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_MFH_1990-1999,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_MFH_1990-1999,Geometry,Volume-to-surface ratio,2.75,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_MFH_1990-1999,Geometry,A/V ratio,0.36399999999999999,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_MFH_1990-1999,Geometry,Net floor area per dwelling,98,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_MFH_1990-1999,Geometry,Building footprint / ground area,265.3,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_MFH_1990-1999,Geometry,"Perimeter (external, estimated)",70.5,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_MFH_1990-1999,Geometry,External wall area (gross),761.5,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_MFH_1990-1999,Geometry,Window area,103.3,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_MFH_1990-1999,Geometry,Window-to-wall ratio (WWR),0.14000000000000001,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_MFH_1990-1999,Envelope,External wall U-value,0.44,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_MFH_1990-1999,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1990-1999,Envelope,Roof U-value,0.27200000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_MFH_1990-1999,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1990-1999,Envelope,Floor/Slab U-value,0.52800000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_MFH_1990-1999,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_1990-1999,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_MFH_1990-1999,Envelope,Approx. transmission heat-loss coefficient,707.5,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_MFH_1990-1999,Windows,Window Uw (whole window),1.55,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_MFH_1990-1999,Windows,g-value,0.5,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_MFH_1990-1999,Windows,Glazing description,high-performance double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_MFH_1990-1999,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_MFH_1990-1999,Heating system,COP / seasonal efficiency,0.85,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_MFH_1990-1999,Heating system,Useful energy demand - space heating,36.700000000000003,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_MFH_1990-1999,Heating system,Final energy - space heating,41.9,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_MFH_1990-1999,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_MFH_1990-1999,DHW,"Generation efficiency_gen,DHW",0.85,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_MFH_1990-1999,DHW,Useful energy demand - DHW,11.9,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_MFH_1990-1999,DHW,Final energy - DHW,11.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_MFH_1990-1999,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_MFH_1990-1999,Cooling system,SEER,2.7,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_MFH_1990-1999,Cooling system,Useful energy demand - cooling,16.899999999999999,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_MFH_1990-1999,Cooling system,Final energy - cooling,5.6,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_MFH_1990-1999,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_MFH_1990-1999,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_MFH_1990-1999,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_MFH_1990-1999,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_MFH_1990-1999,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_MFH_2000-2010,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_2000-2010,Meta,Construction period,2000-2010,text,-,Mapped to MODERATE age band: 2000 - 2010,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_2000-2010,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_2000-2010,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+LU_MFH_2000-2010,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_2000-2010,Meta,"Value (archetype dwellings, abs.)",5007,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_MFH_2000-2010,Meta,"Total dwellings (country/period, abs.)",33641,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_MFH_2000-2010,Meta,Share of period dwellings,0.14899999999999999,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_MFH_2000-2010,Meta,Useful floor area,0.45,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_MFH_2000-2010,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_MFH_2000-2010,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_2000-2010,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_2000-2010,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_MFH_2000-2010,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_MFH_2000-2010,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_MFH_2000-2010,Geometry,Volume-to-surface ratio,2.81,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_MFH_2000-2010,Geometry,A/V ratio,0.35599999999999998,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_MFH_2000-2010,Geometry,Net floor area per dwelling,89.9,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_MFH_2000-2010,Geometry,Building footprint / ground area,286.2,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_MFH_2000-2010,Geometry,"Perimeter (external, estimated)",73.2,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_MFH_2000-2010,Geometry,External wall area (gross),790.7,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_MFH_2000-2010,Geometry,Window area,107.3,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_MFH_2000-2010,Geometry,Window-to-wall ratio (WWR),0.14000000000000001,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_MFH_2000-2010,Envelope,External wall U-value,0.312,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_MFH_2000-2010,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_2000-2010,Envelope,Roof U-value,0.222,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_MFH_2000-2010,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_2000-2010,Envelope,Floor/Slab U-value,0.36599999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_MFH_2000-2010,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_2000-2010,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_MFH_2000-2010,Envelope,Approx. transmission heat-loss coefficient,542.4,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_MFH_2000-2010,Windows,Window Uw (whole window),1.1839999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_MFH_2000-2010,Windows,g-value,0.5,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_MFH_2000-2010,Windows,Glazing description,high-performance double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_MFH_2000-2010,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_MFH_2000-2010,Heating system,COP / seasonal efficiency,0.9,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_MFH_2000-2010,Heating system,Useful energy demand - space heating,27.2,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_MFH_2000-2010,Heating system,Final energy - space heating,31.1,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_MFH_2000-2010,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_MFH_2000-2010,DHW,"Generation efficiency_gen,DHW",0.88,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_MFH_2000-2010,DHW,Useful energy demand - DHW,11.9,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_MFH_2000-2010,DHW,Final energy - DHW,11.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_MFH_2000-2010,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_MFH_2000-2010,Cooling system,SEER,3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_MFH_2000-2010,Cooling system,Useful energy demand - cooling,13.1,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_MFH_2000-2010,Cooling system,Final energy - cooling,4.4000000000000004,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_MFH_2000-2010,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_MFH_2000-2010,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_MFH_2000-2010,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_MFH_2000-2010,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_MFH_2000-2010,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_MFH_2011-now,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_2011-now,Meta,Construction period,2011-now,text,-,Mapped to MODERATE age band: 2011 - 2020,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_2011-now,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_2011-now,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+LU_MFH_2011-now,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_MFH_2011-now,Meta,"Value (archetype dwellings, abs.)",3676,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_MFH_2011-now,Meta,"Total dwellings (country/period, abs.)",25408,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_MFH_2011-now,Meta,Share of period dwellings,0.14499999999999999,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_MFH_2011-now,Meta,Useful floor area,0.34599999999999997,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_MFH_2011-now,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_MFH_2011-now,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_2011-now,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_MFH_2011-now,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_MFH_2011-now,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_MFH_2011-now,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_MFH_2011-now,Geometry,Volume-to-surface ratio,2.89,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_MFH_2011-now,Geometry,A/V ratio,0.34699999999999998,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_MFH_2011-now,Geometry,Net floor area per dwelling,94,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_MFH_2011-now,Geometry,Building footprint / ground area,309.10000000000002,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_MFH_2011-now,Geometry,"Perimeter (external, estimated)",75.8,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_MFH_2011-now,Geometry,External wall area (gross),818.6,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_MFH_2011-now,Geometry,Window area,111.1,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_MFH_2011-now,Geometry,Window-to-wall ratio (WWR),0.14000000000000001,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_MFH_2011-now,Envelope,External wall U-value,0.21299999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_MFH_2011-now,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_2011-now,Envelope,Roof U-value,0.16,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_MFH_2011-now,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_2011-now,Envelope,Floor/Slab U-value,0.24099999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_MFH_2011-now,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_MFH_2011-now,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_MFH_2011-now,Envelope,Approx. transmission heat-loss coefficient,402,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_MFH_2011-now,Windows,Window Uw (whole window),0.93300000000000005,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_MFH_2011-now,Windows,g-value,0.5,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_MFH_2011-now,Windows,Glazing description,high-performance double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_MFH_2011-now,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_MFH_2011-now,Heating system,COP / seasonal efficiency,0.94,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_MFH_2011-now,Heating system,Useful energy demand - space heating,19.7,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_MFH_2011-now,Heating system,Final energy - space heating,22.6,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_MFH_2011-now,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_MFH_2011-now,DHW,"Generation efficiency_gen,DHW",0.9,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_MFH_2011-now,DHW,Useful energy demand - DHW,11.9,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_MFH_2011-now,DHW,Final energy - DHW,11.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_MFH_2011-now,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_MFH_2011-now,Cooling system,SEER,3.3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_MFH_2011-now,Cooling system,Useful energy demand - cooling,13.8,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_MFH_2011-now,Cooling system,Final energy - cooling,4.5999999999999996,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_MFH_2011-now,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_MFH_2011-now,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_MFH_2011-now,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_MFH_2011-now,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_MFH_2011-now,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_AB_0-1945,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_0-1945,Meta,Construction period,0-1945,text,-,Mapped to MODERATE age band: Before 1945,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_0-1945,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_0-1945,Meta,Typology,apartment buildings,text,-,Requested RELIFE typology class.,User specification
+LU_AB_0-1945,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_0-1945,Meta,"Value (archetype dwellings, abs.)",12810,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_AB_0-1945,Meta,"Total dwellings (country/period, abs.)",71971,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_AB_0-1945,Meta,Share of period dwellings,0.17799999999999999,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_AB_0-1945,Meta,Useful floor area,0.64900000000000002,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_AB_0-1945,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_AB_0-1945,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_0-1945,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_0-1945,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_AB_0-1945,Geometry,Floors,4.2,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_AB_0-1945,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_AB_0-1945,Geometry,Volume-to-surface ratio,3.08,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_AB_0-1945,Geometry,A/V ratio,0.32500000000000001,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_AB_0-1945,Geometry,Net floor area per dwelling,50.7,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_AB_0-1945,Geometry,Building footprint / ground area,374.3,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_AB_0-1945,Geometry,"Perimeter (external, estimated)",101.7,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_AB_0-1945,Geometry,External wall area (gross),1148.4000000000001,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_AB_0-1945,Geometry,Window area,239.3,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_AB_0-1945,Geometry,Window-to-wall ratio (WWR),0.21,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_AB_0-1945,Envelope,External wall U-value,1.6,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_AB_0-1945,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_AB_0-1945,Envelope,Roof U-value,1.43,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_AB_0-1945,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_0-1945,Envelope,Floor/Slab U-value,1.8,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_AB_0-1945,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_0-1945,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_AB_0-1945,Envelope,Approx. transmission heat-loss coefficient,4123,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_AB_0-1945,Windows,Window Uw (whole window),4.5,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_AB_0-1945,Windows,g-value,0.75,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_AB_0-1945,Windows,Glazing description,mostly single glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_AB_0-1945,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_AB_0-1945,Heating system,COP / seasonal efficiency,0.75,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_AB_0-1945,Heating system,Useful energy demand - space heating,195,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_AB_0-1945,Heating system,Final energy - space heating,223,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_AB_0-1945,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_AB_0-1945,DHW,"Generation efficiency_gen,DHW",0.75,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_AB_0-1945,DHW,Useful energy demand - DHW,31.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_AB_0-1945,DHW,Final energy - DHW,31.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_AB_0-1945,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_AB_0-1945,Cooling system,SEER,2.2000000000000002,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_AB_0-1945,Cooling system,Useful energy demand - cooling,29.5,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_AB_0-1945,Cooling system,Final energy - cooling,9.8000000000000007,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_AB_0-1945,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_AB_0-1945,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_AB_0-1945,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_AB_0-1945,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_AB_0-1945,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_AB_1946-1969,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1946-1969,Meta,Construction period,1946-1969,text,-,Mapped to MODERATE age band: 1945 - 1969,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1946-1969,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1946-1969,Meta,Typology,apartment buildings,text,-,Requested RELIFE typology class.,User specification
+LU_AB_1946-1969,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1946-1969,Meta,"Value (archetype dwellings, abs.)",11984,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_AB_1946-1969,Meta,"Total dwellings (country/period, abs.)",54286,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_AB_1946-1969,Meta,Share of period dwellings,0.221,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_AB_1946-1969,Meta,Useful floor area,0.60699999999999998,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_AB_1946-1969,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_AB_1946-1969,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_1946-1969,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_1946-1969,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_AB_1946-1969,Geometry,Floors,4.0999999999999996,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_AB_1946-1969,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_AB_1946-1969,Geometry,Volume-to-surface ratio,2.96,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_AB_1946-1969,Geometry,A/V ratio,0.33700000000000002,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_AB_1946-1969,Geometry,Net floor area per dwelling,50.7,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_AB_1946-1969,Geometry,Building footprint / ground area,401.1,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_AB_1946-1969,Geometry,"Perimeter (external, estimated)",95.2,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_AB_1946-1969,Geometry,External wall area (gross),1055.9000000000001,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_AB_1946-1969,Geometry,Window area,338.4,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_AB_1946-1969,Geometry,Window-to-wall ratio (WWR),0.32,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_AB_1946-1969,Envelope,External wall U-value,1.1000000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_AB_1946-1969,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1946-1969,Envelope,Roof U-value,0.93,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_AB_1946-1969,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1946-1969,Envelope,Floor/Slab U-value,1.4,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_AB_1946-1969,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1946-1969,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_AB_1946-1969,Envelope,Approx. transmission heat-loss coefficient,3382.2,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_AB_1946-1969,Windows,Window Uw (whole window),3.8,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_AB_1946-1969,Windows,g-value,0.63,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_AB_1946-1969,Windows,Glazing description,mostly early double glazing / mixed single-double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_AB_1946-1969,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_AB_1946-1969,Heating system,COP / seasonal efficiency,0.78,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_AB_1946-1969,Heating system,Useful energy demand - space heating,202.8,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_AB_1946-1969,Heating system,Final energy - space heating,232,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_AB_1946-1969,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_AB_1946-1969,DHW,"Generation efficiency_gen,DHW",0.78,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_AB_1946-1969,DHW,Useful energy demand - DHW,31.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_AB_1946-1969,DHW,Final energy - DHW,31.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_AB_1946-1969,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_AB_1946-1969,Cooling system,SEER,2.2999999999999998,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_AB_1946-1969,Cooling system,Useful energy demand - cooling,62,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_AB_1946-1969,Cooling system,Final energy - cooling,20.6,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_AB_1946-1969,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_AB_1946-1969,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_AB_1946-1969,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_AB_1946-1969,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_AB_1946-1969,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_AB_1970-1979,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1970-1979,Meta,Construction period,1970-1979,text,-,Mapped to MODERATE age band: 1970 - 1979,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1970-1979,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1970-1979,Meta,Typology,apartment buildings,text,-,Requested RELIFE typology class.,User specification
+LU_AB_1970-1979,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1970-1979,Meta,"Value (archetype dwellings, abs.)",3306,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_AB_1970-1979,Meta,"Total dwellings (country/period, abs.)",35452,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_AB_1970-1979,Meta,Share of period dwellings,9.2999999999999999E-2,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_AB_1970-1979,Meta,Useful floor area,0.16800000000000001,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_AB_1970-1979,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_AB_1970-1979,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_1970-1979,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_1970-1979,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_AB_1970-1979,Geometry,Floors,5.4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_AB_1970-1979,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_AB_1970-1979,Geometry,Volume-to-surface ratio,3.4,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_AB_1970-1979,Geometry,A/V ratio,0.29399999999999998,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_AB_1970-1979,Geometry,Net floor area per dwelling,50.7,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_AB_1970-1979,Geometry,Building footprint / ground area,385,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_AB_1970-1979,Geometry,"Perimeter (external, estimated)",89.2,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_AB_1970-1979,Geometry,External wall area (gross),1294.4000000000001,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_AB_1970-1979,Geometry,Window area,302.39999999999998,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_AB_1970-1979,Geometry,Window-to-wall ratio (WWR),0.23,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_AB_1970-1979,Envelope,External wall U-value,0.85,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_AB_1970-1979,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1970-1979,Envelope,Roof U-value,0.56999999999999995,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_AB_1970-1979,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1970-1979,Envelope,Floor/Slab U-value,0.6,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_AB_1970-1979,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1970-1979,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_AB_1970-1979,Envelope,Approx. transmission heat-loss coefficient,2457.6999999999998,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_AB_1970-1979,Windows,Window Uw (whole window),3,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_AB_1970-1979,Windows,g-value,0.63,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_AB_1970-1979,Windows,Glazing description,mostly early double glazing / mixed single-double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_AB_1970-1979,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_AB_1970-1979,Heating system,COP / seasonal efficiency,0.8,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_AB_1970-1979,Heating system,Useful energy demand - space heating,123,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_AB_1970-1979,Heating system,Final energy - space heating,140.6,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_AB_1970-1979,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_AB_1970-1979,DHW,"Generation efficiency_gen,DHW",0.8,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_AB_1970-1979,DHW,Useful energy demand - DHW,31.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_AB_1970-1979,DHW,Final energy - DHW,31.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_AB_1970-1979,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_AB_1970-1979,Cooling system,SEER,2.4,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_AB_1970-1979,Cooling system,Useful energy demand - cooling,33.5,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_AB_1970-1979,Cooling system,Final energy - cooling,11.1,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_AB_1970-1979,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_AB_1970-1979,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_AB_1970-1979,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_AB_1970-1979,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_AB_1970-1979,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_AB_1980-1989,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1980-1989,Meta,Construction period,1980-1989,text,-,Mapped to MODERATE age band: 1980 - 1989,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1980-1989,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1980-1989,Meta,Typology,apartment buildings,text,-,Requested RELIFE typology class.,User specification
+LU_AB_1980-1989,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1980-1989,Meta,"Value (archetype dwellings, abs.)",1033,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_AB_1980-1989,Meta,"Total dwellings (country/period, abs.)",27839,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_AB_1980-1989,Meta,Share of period dwellings,3.6999999999999998E-2,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_AB_1980-1989,Meta,Useful floor area,5.1999999999999998E-2,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_AB_1980-1989,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_AB_1980-1989,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_1980-1989,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_1980-1989,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_AB_1980-1989,Geometry,Floors,4.5999999999999996,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_AB_1980-1989,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_AB_1980-1989,Geometry,Volume-to-surface ratio,3.15,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_AB_1980-1989,Geometry,A/V ratio,0.318,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_AB_1980-1989,Geometry,Net floor area per dwelling,50.7,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_AB_1980-1989,Geometry,Building footprint / ground area,488.9,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_AB_1980-1989,Geometry,"Perimeter (external, estimated)",105.1,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_AB_1980-1989,Geometry,External wall area (gross),1316.7,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_AB_1980-1989,Geometry,Window area,360.6,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_AB_1980-1989,Geometry,Window-to-wall ratio (WWR),0.27,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_AB_1980-1989,Envelope,External wall U-value,0.6,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_AB_1980-1989,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1980-1989,Envelope,Roof U-value,0.35,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_AB_1980-1989,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1980-1989,Envelope,Floor/Slab U-value,0.53400000000000003,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_AB_1980-1989,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1980-1989,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_AB_1980-1989,Envelope,Approx. transmission heat-loss coefficient,1943.5,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_AB_1980-1989,Windows,Window Uw (whole window),2,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_AB_1980-1989,Windows,g-value,0.57999999999999996,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_AB_1980-1989,Windows,Glazing description,mostly double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_AB_1980-1989,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_AB_1980-1989,Heating system,COP / seasonal efficiency,0.82,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_AB_1980-1989,Heating system,Useful energy demand - space heating,102.9,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_AB_1980-1989,Heating system,Final energy - space heating,117.7,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_AB_1980-1989,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_AB_1980-1989,DHW,"Generation efficiency_gen,DHW",0.82,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_AB_1980-1989,DHW,Useful energy demand - DHW,31.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_AB_1980-1989,DHW,Final energy - DHW,31.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_AB_1980-1989,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_AB_1980-1989,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_AB_1980-1989,Cooling system,Useful energy demand - cooling,19.8,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_AB_1980-1989,Cooling system,Final energy - cooling,6.6,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_AB_1980-1989,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_AB_1980-1989,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_AB_1980-1989,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_AB_1980-1989,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_AB_1980-1989,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_AB_1990-1999,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1990-1999,Meta,Construction period,1990-1999,text,-,Mapped to MODERATE age band: 1990 - 1999,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1990-1999,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1990-1999,Meta,Typology,apartment buildings,text,-,Requested RELIFE typology class.,User specification
+LU_AB_1990-1999,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_1990-1999,Meta,"Value (archetype dwellings, abs.)",826,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_AB_1990-1999,Meta,"Total dwellings (country/period, abs.)",21245,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_AB_1990-1999,Meta,Share of period dwellings,3.9E-2,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_AB_1990-1999,Meta,Useful floor area,4.2000000000000003E-2,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_AB_1990-1999,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_AB_1990-1999,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_1990-1999,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_1990-1999,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_AB_1990-1999,Geometry,Floors,3.7,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_AB_1990-1999,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_AB_1990-1999,Geometry,Volume-to-surface ratio,3.03,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_AB_1990-1999,Geometry,A/V ratio,0.33,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_AB_1990-1999,Geometry,Net floor area per dwelling,50.7,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_AB_1990-1999,Geometry,Building footprint / ground area,629,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_AB_1990-1999,Geometry,"Perimeter (external, estimated)",123.9,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_AB_1990-1999,Geometry,External wall area (gross),1228.5999999999999,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_AB_1990-1999,Geometry,Window area,327.9,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_AB_1990-1999,Geometry,Window-to-wall ratio (WWR),0.27,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_AB_1990-1999,Envelope,External wall U-value,0.5,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_AB_1990-1999,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1990-1999,Envelope,Roof U-value,0.28000000000000003,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_AB_1990-1999,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1990-1999,Envelope,Floor/Slab U-value,0.5,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_AB_1990-1999,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_1990-1999,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_AB_1990-1999,Envelope,Approx. transmission heat-loss coefficient,1629.5,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_AB_1990-1999,Windows,Window Uw (whole window),1.6,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_AB_1990-1999,Windows,g-value,0.5,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_AB_1990-1999,Windows,Glazing description,high-performance double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_AB_1990-1999,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_AB_1990-1999,Heating system,COP / seasonal efficiency,0.85,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_AB_1990-1999,Heating system,Useful energy demand - space heating,71.400000000000006,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_AB_1990-1999,Heating system,Final energy - space heating,81.599999999999994,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_AB_1990-1999,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_AB_1990-1999,DHW,"Generation efficiency_gen,DHW",0.85,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_AB_1990-1999,DHW,Useful energy demand - DHW,31.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_AB_1990-1999,DHW,Final energy - DHW,31.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_AB_1990-1999,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_AB_1990-1999,Cooling system,SEER,2.7,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_AB_1990-1999,Cooling system,Useful energy demand - cooling,21.9,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_AB_1990-1999,Cooling system,Final energy - cooling,7.3,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_AB_1990-1999,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_AB_1990-1999,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_AB_1990-1999,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_AB_1990-1999,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_AB_1990-1999,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_AB_2000-2010,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_2000-2010,Meta,Construction period,2000-2010,text,-,Mapped to MODERATE age band: 2000 - 2010,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_2000-2010,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_2000-2010,Meta,Typology,apartment buildings,text,-,Requested RELIFE typology class.,User specification
+LU_AB_2000-2010,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_2000-2010,Meta,"Value (archetype dwellings, abs.)",5579,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_AB_2000-2010,Meta,"Total dwellings (country/period, abs.)",33641,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_AB_2000-2010,Meta,Share of period dwellings,0.16600000000000001,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_AB_2000-2010,Meta,Useful floor area,0.28299999999999997,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_AB_2000-2010,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_AB_2000-2010,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_2000-2010,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_2000-2010,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_AB_2000-2010,Geometry,Floors,3.6,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_AB_2000-2010,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_AB_2000-2010,Geometry,Volume-to-surface ratio,2.92,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_AB_2000-2010,Geometry,A/V ratio,0.34300000000000003,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_AB_2000-2010,Geometry,Net floor area per dwelling,50.7,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_AB_2000-2010,Geometry,Building footprint / ground area,621,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_AB_2000-2010,Geometry,"Perimeter (external, estimated)",121.3,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_AB_2000-2010,Geometry,External wall area (gross),1165.3,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_AB_2000-2010,Geometry,Window area,279.10000000000002,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_AB_2000-2010,Geometry,Window-to-wall ratio (WWR),0.24,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_AB_2000-2010,Envelope,External wall U-value,0.4,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_AB_2000-2010,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_AB_2000-2010,Envelope,Roof U-value,0.25,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_AB_2000-2010,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_2000-2010,Envelope,Floor/Slab U-value,0.4,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_AB_2000-2010,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_2000-2010,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_AB_2000-2010,Envelope,Approx. transmission heat-loss coefficient,1232.5999999999999,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_AB_2000-2010,Windows,Window Uw (whole window),1.3,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_AB_2000-2010,Windows,g-value,0.5,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_AB_2000-2010,Windows,Glazing description,high-performance double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_AB_2000-2010,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_AB_2000-2010,Heating system,COP / seasonal efficiency,0.9,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_AB_2000-2010,Heating system,Useful energy demand - space heating,35.9,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_AB_2000-2010,Heating system,Final energy - space heating,41,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_AB_2000-2010,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_AB_2000-2010,DHW,"Generation efficiency_gen,DHW",0.88,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_AB_2000-2010,DHW,Useful energy demand - DHW,31.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_AB_2000-2010,DHW,Final energy - DHW,31.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_AB_2000-2010,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_AB_2000-2010,Cooling system,SEER,3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_AB_2000-2010,Cooling system,Useful energy demand - cooling,15.6,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_AB_2000-2010,Cooling system,Final energy - cooling,5.2,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_AB_2000-2010,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_AB_2000-2010,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_AB_2000-2010,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_AB_2000-2010,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_AB_2000-2010,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+LU_AB_2011-now,Meta,Country,Luxembourg,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_2011-now,Meta,Construction period,2011-now,text,-,Mapped to MODERATE age band: 2011 - 2020,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_2011-now,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_2011-now,Meta,Typology,apartment buildings,text,-,Requested RELIFE typology class.,User specification
+LU_AB_2011-now,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Luxembourg sheet
+LU_AB_2011-now,Meta,"Value (archetype dwellings, abs.)",2686,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+LU_AB_2011-now,Meta,"Total dwellings (country/period, abs.)",25408,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+LU_AB_2011-now,Meta,Share of period dwellings,0.106,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+LU_AB_2011-now,Meta,Useful floor area,0.13600000000000001,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+LU_AB_2011-now,Meta,Notes,Generated as a 21-sheet Luxembourgn archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+LU_AB_2011-now,Climate,HDD,2776.1,number,HDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_2011-now,Climate,CDD,33,number,CDD,Luxembourg representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+LU_AB_2011-now,Climate,Köppen-Geiger class,Cfb,text,-,Luxembourg is represented mainly by temperate oceanic climate class for national archetype purposes.,Assumption / national climate classification
+LU_AB_2011-now,Geometry,Floors,3.5,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+LU_AB_2011-now,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+LU_AB_2011-now,Geometry,Volume-to-surface ratio,2.89,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+LU_AB_2011-now,Geometry,A/V ratio,0.34499999999999997,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+LU_AB_2011-now,Geometry,Net floor area per dwelling,50.7,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+LU_AB_2011-now,Geometry,Building footprint / ground area,621.5,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+LU_AB_2011-now,Geometry,"Perimeter (external, estimated)",121,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+LU_AB_2011-now,Geometry,External wall area (gross),1153.9000000000001,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+LU_AB_2011-now,Geometry,Window area,270.39999999999998,number,m²,Representative window area.,MODERATE: surface_windows_m2
+LU_AB_2011-now,Geometry,Window-to-wall ratio (WWR),0.23,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+LU_AB_2011-now,Envelope,External wall U-value,0.34,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+LU_AB_2011-now,Envelope,External wall - Stratigraphy,solid/cavity masonry or concrete wall with period-typical insulation level; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+LU_AB_2011-now,Envelope,Roof U-value,0.2,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+LU_AB_2011-now,Envelope,Roof - Stratigraphy,pitched or flat roof with period-typical insulation; Luxembourgn equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_2011-now,Envelope,Floor/Slab U-value,0.37,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+LU_AB_2011-now,Envelope,Floor/Slab - Stratigraphy,ground floor/slab or suspended floor with period-typical insulation; Luxembourgn equivalent construction calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+LU_AB_2011-now,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+LU_AB_2011-now,Envelope,Approx. transmission heat-loss coefficient,1125.2,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+LU_AB_2011-now,Windows,Window Uw (whole window),1.4,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+LU_AB_2011-now,Windows,g-value,0.5,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+LU_AB_2011-now,Windows,Glazing description,high-performance double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+LU_AB_2011-now,Heating system,System type,representative system not specified; representative system not specified; representative system not specified dominant,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+LU_AB_2011-now,Heating system,COP / seasonal efficiency,0.94,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+LU_AB_2011-now,Heating system,Useful energy demand - space heating,5.2,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+LU_AB_2011-now,Heating system,Final energy - space heating,5.9,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+LU_AB_2011-now,DHW,System type,representative system not specified; representative system not specified,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+LU_AB_2011-now,DHW,"Generation efficiency_gen,DHW",0.9,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+LU_AB_2011-now,DHW,Useful energy demand - DHW,31.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+LU_AB_2011-now,DHW,Final energy - DHW,31.2,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+LU_AB_2011-now,Cooling system,System type,no or marginal active space cooling,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+LU_AB_2011-now,Cooling system,SEER,3.3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+LU_AB_2011-now,Cooling system,Useful energy demand - cooling,2.7,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+LU_AB_2011-now,Cooling system,Final energy - cooling,0.9,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+LU_AB_2011-now,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+LU_AB_2011-now,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+LU_AB_2011-now,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+LU_AB_2011-now,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+LU_AB_2011-now,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment

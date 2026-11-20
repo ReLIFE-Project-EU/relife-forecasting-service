@@ -1,0 +1,1072 @@
+archetype_id,group,parameter,value,value_type,unit,notes,sources
+AT_SFH_0-1945,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_0-1945,Meta,Construction period,0-1945,text,-,Mapped to MODERATE age band: Before 1945,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_0-1945,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_0-1945,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+AT_SFH_0-1945,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_0-1945,Meta,"Value (archetype dwellings, abs.)",784750,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_SFH_0-1945,Meta,"Total dwellings (country/period, abs.)",1481657,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_SFH_0-1945,Meta,Share of period dwellings,0.52964350048599995,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_SFH_0-1945,Meta,Useful floor area,47.002000000000002,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_SFH_0-1945,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_SFH_0-1945,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_0-1945,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_0-1945,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_SFH_0-1945,Geometry,Floors,2,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_SFH_0-1945,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_SFH_0-1945,Geometry,Volume-to-surface ratio,1.2889999999999999,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_SFH_0-1945,Geometry,A/V ratio,0.77600000000000002,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_SFH_0-1945,Geometry,Net floor area per dwelling,59.9,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_SFH_0-1945,Geometry,Building footprint / ground area,74.900000000000006,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_SFH_0-1945,Geometry,"Perimeter (external, estimated)",40.5,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_SFH_0-1945,Geometry,External wall area (gross),218.8,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_SFH_0-1945,Geometry,Window area,37.200000000000003,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_SFH_0-1945,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_SFH_0-1945,Envelope,External wall U-value,1.1910000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_SFH_0-1945,Envelope,External wall - Stratigraphy,Masonry wall with limited/partial insulation; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_0-1945,Envelope,Roof U-value,0.623,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_SFH_0-1945,Envelope,Roof - Stratigraphy,Roof with limited/intermediate insulation; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_0-1945,Envelope,Floor/Slab U-value,0.77600000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_SFH_0-1945,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_0-1945,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_SFH_0-1945,Envelope,Approx. transmission heat-loss coefficient,375.5,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_SFH_0-1945,Windows,Window Uw (whole window),1.4650000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_SFH_0-1945,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_SFH_0-1945,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_SFH_0-1945,Heating system,System type,central oil non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_SFH_0-1945,Heating system,COP / seasonal efficiency,0.72,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_SFH_0-1945,Heating system,Useful energy demand - space heating,195.6,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_SFH_0-1945,Heating system,Final energy - space heating,259.8,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_SFH_0-1945,DHW,System type,central oil non-condensing boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_SFH_0-1945,DHW,"Generation efficiency_gen,DHW",0.55000000000000004,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_SFH_0-1945,DHW,Useful energy demand - DHW,13.4,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_SFH_0-1945,DHW,Final energy - DHW,20.100000000000001,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_SFH_0-1945,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_SFH_0-1945,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_SFH_0-1945,Cooling system,Useful energy demand - cooling,16.399999999999999,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_SFH_0-1945,Cooling system,Final energy - cooling,2.8,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_SFH_0-1945,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_SFH_0-1945,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_SFH_0-1945,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_SFH_0-1945,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_SFH_0-1945,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_SFH_1946-1969,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1946-1969,Meta,Construction period,1946-1969,text,-,Mapped to MODERATE age band: 1945 - 1969,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1946-1969,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1946-1969,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+AT_SFH_1946-1969,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1946-1969,Meta,"Value (archetype dwellings, abs.)",1009185,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_SFH_1946-1969,Meta,"Total dwellings (country/period, abs.)",1646106,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_SFH_1946-1969,Meta,Share of period dwellings,0.61307412766900005,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_SFH_1946-1969,Meta,Useful floor area,63.817999999999998,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_SFH_1946-1969,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_SFH_1946-1969,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_1946-1969,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_1946-1969,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_SFH_1946-1969,Geometry,Floors,2,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_SFH_1946-1969,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_SFH_1946-1969,Geometry,Volume-to-surface ratio,1.2849999999999999,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_SFH_1946-1969,Geometry,A/V ratio,0.77800000000000002,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_SFH_1946-1969,Geometry,Net floor area per dwelling,63.2,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_SFH_1946-1969,Geometry,Building footprint / ground area,82.7,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_SFH_1946-1969,Geometry,"Perimeter (external, estimated)",39.4,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_SFH_1946-1969,Geometry,External wall area (gross),212.9,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_SFH_1946-1969,Geometry,Window area,36.200000000000003,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_SFH_1946-1969,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_SFH_1946-1969,Envelope,External wall U-value,0.98599999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_SFH_1946-1969,Envelope,External wall - Stratigraphy,Masonry wall with limited/partial insulation; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1946-1969,Envelope,Roof U-value,0.58299999999999996,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_SFH_1946-1969,Envelope,Roof - Stratigraphy,Roof with limited/intermediate insulation; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1946-1969,Envelope,Floor/Slab U-value,0.84,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_SFH_1946-1969,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1946-1969,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_SFH_1946-1969,Envelope,Approx. transmission heat-loss coefficient,349.3,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_SFH_1946-1969,Windows,Window Uw (whole window),1.5820000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_SFH_1946-1969,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_SFH_1946-1969,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_SFH_1946-1969,Heating system,System type,central oil non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_SFH_1946-1969,Heating system,COP / seasonal efficiency,0.75,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_SFH_1946-1969,Heating system,Useful energy demand - space heating,165.4,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_SFH_1946-1969,Heating system,Final energy - space heating,219.7,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_SFH_1946-1969,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_SFH_1946-1969,DHW,"Generation efficiency_gen,DHW",0.57999999999999996,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_SFH_1946-1969,DHW,Useful energy demand - DHW,13.4,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_SFH_1946-1969,DHW,Final energy - DHW,20.100000000000001,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_SFH_1946-1969,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_SFH_1946-1969,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_SFH_1946-1969,Cooling system,Useful energy demand - cooling,21.7,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_SFH_1946-1969,Cooling system,Final energy - cooling,3.7,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_SFH_1946-1969,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_SFH_1946-1969,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_SFH_1946-1969,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_SFH_1946-1969,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_SFH_1946-1969,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_SFH_1970-1979,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1970-1979,Meta,Construction period,1970-1979,text,-,Mapped to MODERATE age band: 1970 - 1979,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1970-1979,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1970-1979,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+AT_SFH_1970-1979,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1970-1979,Meta,"Value (archetype dwellings, abs.)",628387,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_SFH_1970-1979,Meta,"Total dwellings (country/period, abs.)",914355,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_SFH_1970-1979,Meta,Share of period dwellings,0.68724620087400001,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_SFH_1970-1979,Meta,Useful floor area,41.207999999999998,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_SFH_1970-1979,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_SFH_1970-1979,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_1970-1979,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_1970-1979,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_SFH_1970-1979,Geometry,Floors,2,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_SFH_1970-1979,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_SFH_1970-1979,Geometry,Volume-to-surface ratio,1.325,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_SFH_1970-1979,Geometry,A/V ratio,0.755,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_SFH_1970-1979,Geometry,Net floor area per dwelling,65.599999999999994,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_SFH_1970-1979,Geometry,Building footprint / ground area,90.2,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_SFH_1970-1979,Geometry,"Perimeter (external, estimated)",41.8,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_SFH_1970-1979,Geometry,External wall area (gross),225.5,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_SFH_1970-1979,Geometry,Window area,38.299999999999997,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_SFH_1970-1979,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_SFH_1970-1979,Envelope,External wall U-value,0.77500000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_SFH_1970-1979,Envelope,External wall - Stratigraphy,Masonry wall with limited/partial insulation; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1970-1979,Envelope,Roof U-value,0.38900000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_SFH_1970-1979,Envelope,Roof - Stratigraphy,Insulated roof/attic construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1970-1979,Envelope,Floor/Slab U-value,0.78500000000000003,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_SFH_1970-1979,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1970-1979,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_SFH_1970-1979,Envelope,Approx. transmission heat-loss coefficient,313.2,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_SFH_1970-1979,Windows,Window Uw (whole window),1.627,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_SFH_1970-1979,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_SFH_1970-1979,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_SFH_1970-1979,Heating system,System type,central oil non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_SFH_1970-1979,Heating system,COP / seasonal efficiency,0.78,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_SFH_1970-1979,Heating system,Useful energy demand - space heating,132.1,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_SFH_1970-1979,Heating system,Final energy - space heating,175.4,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_SFH_1970-1979,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_SFH_1970-1979,DHW,"Generation efficiency_gen,DHW",0.62,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_SFH_1970-1979,DHW,Useful energy demand - DHW,13.4,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_SFH_1970-1979,DHW,Final energy - DHW,20.100000000000001,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_SFH_1970-1979,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_SFH_1970-1979,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_SFH_1970-1979,Cooling system,Useful energy demand - cooling,21.4,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_SFH_1970-1979,Cooling system,Final energy - cooling,3.6,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_SFH_1970-1979,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_SFH_1970-1979,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_SFH_1970-1979,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_SFH_1970-1979,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_SFH_1970-1979,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_SFH_1980-1989,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1980-1989,Meta,Construction period,1980-1989,text,-,Mapped to MODERATE age band: 1980 - 1989,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1980-1989,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1980-1989,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+AT_SFH_1980-1989,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1980-1989,Meta,"Value (archetype dwellings, abs.)",492622,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_SFH_1980-1989,Meta,"Total dwellings (country/period, abs.)",666319,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_SFH_1980-1989,Meta,Share of period dwellings,0.73931855462600005,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_SFH_1980-1989,Meta,Useful floor area,34.936,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_SFH_1980-1989,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_SFH_1980-1989,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_1980-1989,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_1980-1989,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_SFH_1980-1989,Geometry,Floors,2,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_SFH_1980-1989,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_SFH_1980-1989,Geometry,Volume-to-surface ratio,1.331,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_SFH_1980-1989,Geometry,A/V ratio,0.751,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_SFH_1980-1989,Geometry,Net floor area per dwelling,70.900000000000006,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_SFH_1980-1989,Geometry,Building footprint / ground area,91.9,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_SFH_1980-1989,Geometry,"Perimeter (external, estimated)",42.2,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_SFH_1980-1989,Geometry,External wall area (gross),227.8,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_SFH_1980-1989,Geometry,Window area,38.700000000000003,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_SFH_1980-1989,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_SFH_1980-1989,Envelope,External wall U-value,0.59499999999999997,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_SFH_1980-1989,Envelope,External wall - Stratigraphy,Insulated masonry or composite wall; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1980-1989,Envelope,Roof U-value,0.28000000000000003,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_SFH_1980-1989,Envelope,Roof - Stratigraphy,Insulated roof/attic construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1980-1989,Envelope,Floor/Slab U-value,0.56100000000000005,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_SFH_1980-1989,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1980-1989,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_SFH_1980-1989,Envelope,Approx. transmission heat-loss coefficient,249.3,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_SFH_1980-1989,Windows,Window Uw (whole window),1.5389999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_SFH_1980-1989,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_SFH_1980-1989,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_SFH_1980-1989,Heating system,System type,central oil non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_SFH_1980-1989,Heating system,COP / seasonal efficiency,0.82,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_SFH_1980-1989,Heating system,Useful energy demand - space heating,99.8,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_SFH_1980-1989,Heating system,Final energy - space heating,132.6,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_SFH_1980-1989,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_SFH_1980-1989,DHW,"Generation efficiency_gen,DHW",0.68,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_SFH_1980-1989,DHW,Useful energy demand - DHW,13.4,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_SFH_1980-1989,DHW,Final energy - DHW,20.100000000000001,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_SFH_1980-1989,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_SFH_1980-1989,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_SFH_1980-1989,Cooling system,Useful energy demand - cooling,23,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_SFH_1980-1989,Cooling system,Final energy - cooling,3.9,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_SFH_1980-1989,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_SFH_1980-1989,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_SFH_1980-1989,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_SFH_1980-1989,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_SFH_1980-1989,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_SFH_1990-1999,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1990-1999,Meta,Construction period,1990-1999,text,-,Mapped to MODERATE age band: 1990 - 1999,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1990-1999,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1990-1999,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+AT_SFH_1990-1999,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_1990-1999,Meta,"Value (archetype dwellings, abs.)",519960,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_SFH_1990-1999,Meta,"Total dwellings (country/period, abs.)",779914,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_SFH_1990-1999,Meta,Share of period dwellings,0.666688891339,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_SFH_1990-1999,Meta,Useful floor area,36.305999999999997,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_SFH_1990-1999,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_SFH_1990-1999,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_1990-1999,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_1990-1999,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_SFH_1990-1999,Geometry,Floors,2,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_SFH_1990-1999,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_SFH_1990-1999,Geometry,Volume-to-surface ratio,1.3260000000000001,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_SFH_1990-1999,Geometry,A/V ratio,0.754,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_SFH_1990-1999,Geometry,Net floor area per dwelling,69.8,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_SFH_1990-1999,Geometry,Building footprint / ground area,89.9,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_SFH_1990-1999,Geometry,"Perimeter (external, estimated)",41.7,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_SFH_1990-1999,Geometry,External wall area (gross),225,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_SFH_1990-1999,Geometry,Window area,38.299999999999997,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_SFH_1990-1999,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_SFH_1990-1999,Envelope,External wall U-value,0.45100000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_SFH_1990-1999,Envelope,External wall - Stratigraphy,Insulated masonry or composite wall; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1990-1999,Envelope,Roof U-value,0.26300000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_SFH_1990-1999,Envelope,Roof - Stratigraphy,Insulated roof/attic construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1990-1999,Envelope,Floor/Slab U-value,0.44600000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_SFH_1990-1999,Envelope,Floor/Slab - Stratigraphy,Insulated slab or floor over basement; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_1990-1999,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_SFH_1990-1999,Envelope,Approx. transmission heat-loss coefficient,202.1,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_SFH_1990-1999,Windows,Window Uw (whole window),1.4119999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_SFH_1990-1999,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_SFH_1990-1999,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_SFH_1990-1999,Heating system,System type,central oil condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_SFH_1990-1999,Heating system,COP / seasonal efficiency,0.87,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_SFH_1990-1999,Heating system,Useful energy demand - space heating,86.5,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_SFH_1990-1999,Heating system,Final energy - space heating,114.9,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_SFH_1990-1999,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_SFH_1990-1999,DHW,"Generation efficiency_gen,DHW",0.75,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_SFH_1990-1999,DHW,Useful energy demand - DHW,13.4,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_SFH_1990-1999,DHW,Final energy - DHW,20.100000000000001,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_SFH_1990-1999,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_SFH_1990-1999,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_SFH_1990-1999,Cooling system,Useful energy demand - cooling,16.7,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_SFH_1990-1999,Cooling system,Final energy - cooling,2.8,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_SFH_1990-1999,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_SFH_1990-1999,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_SFH_1990-1999,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_SFH_1990-1999,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_SFH_1990-1999,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_SFH_2000-2010,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_2000-2010,Meta,Construction period,2000-2010,text,-,Mapped to MODERATE age band: 2000 - 2010,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_2000-2010,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_2000-2010,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+AT_SFH_2000-2010,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_2000-2010,Meta,"Value (archetype dwellings, abs.)",245784,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_SFH_2000-2010,Meta,"Total dwellings (country/period, abs.)",434242,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_SFH_2000-2010,Meta,Share of period dwellings,0.56600697307000003,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_SFH_2000-2010,Meta,Useful floor area,15.33,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_SFH_2000-2010,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_SFH_2000-2010,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_2000-2010,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_2000-2010,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_SFH_2000-2010,Geometry,Floors,2,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_SFH_2000-2010,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_SFH_2000-2010,Geometry,Volume-to-surface ratio,1.32,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_SFH_2000-2010,Geometry,A/V ratio,0.75800000000000001,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_SFH_2000-2010,Geometry,Net floor area per dwelling,62.4,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_SFH_2000-2010,Geometry,Building footprint / ground area,87.7,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_SFH_2000-2010,Geometry,"Perimeter (external, estimated)",41.1,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_SFH_2000-2010,Geometry,External wall area (gross),222.2,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_SFH_2000-2010,Geometry,Window area,37.799999999999997,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_SFH_2000-2010,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_SFH_2000-2010,Envelope,External wall U-value,0.35399999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_SFH_2000-2010,Envelope,External wall - Stratigraphy,Insulated masonry or composite wall; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_2000-2010,Envelope,Roof U-value,0.188,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_SFH_2000-2010,Envelope,Roof - Stratigraphy,High-performance insulated roof construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_2000-2010,Envelope,Floor/Slab U-value,0.35699999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_SFH_2000-2010,Envelope,Floor/Slab - Stratigraphy,Insulated slab or floor over basement; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_2000-2010,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_SFH_2000-2010,Envelope,Approx. transmission heat-loss coefficient,156.4,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_SFH_2000-2010,Windows,Window Uw (whole window),1.149,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_SFH_2000-2010,Windows,g-value,0.55000000000000004,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_SFH_2000-2010,Windows,Glazing description,Low-e double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_SFH_2000-2010,Heating system,System type,central oil condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_SFH_2000-2010,Heating system,COP / seasonal efficiency,0.92,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_SFH_2000-2010,Heating system,Useful energy demand - space heating,70.400000000000006,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_SFH_2000-2010,Heating system,Final energy - space heating,93.4,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_SFH_2000-2010,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_SFH_2000-2010,DHW,"Generation efficiency_gen,DHW",0.82,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_SFH_2000-2010,DHW,Useful energy demand - DHW,13.4,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_SFH_2000-2010,DHW,Final energy - DHW,20.100000000000001,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_SFH_2000-2010,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_SFH_2000-2010,Cooling system,SEER,3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_SFH_2000-2010,Cooling system,Useful energy demand - cooling,21.6,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_SFH_2000-2010,Cooling system,Final energy - cooling,3.7,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_SFH_2000-2010,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_SFH_2000-2010,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_SFH_2000-2010,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_SFH_2000-2010,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_SFH_2000-2010,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_SFH_2011-now,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_2011-now,Meta,Construction period,2011-now,text,-,Mapped to MODERATE age band: 2011 - 2020,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_2011-now,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_2011-now,Meta,Typology,single-family house,text,-,Requested RELIFE typology class.,User specification
+AT_SFH_2011-now,Meta,MODERATE subsector mapping,Single family- Terraced houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_SFH_2011-now,Meta,"Value (archetype dwellings, abs.)",66013,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_SFH_2011-now,Meta,"Total dwellings (country/period, abs.)",138319,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_SFH_2011-now,Meta,Share of period dwellings,0.47725185983099999,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_SFH_2011-now,Meta,Useful floor area,3.8620000000000001,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_SFH_2011-now,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_SFH_2011-now,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_2011-now,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_SFH_2011-now,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_SFH_2011-now,Geometry,Floors,2,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_SFH_2011-now,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_SFH_2011-now,Geometry,Volume-to-surface ratio,1.319,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_SFH_2011-now,Geometry,A/V ratio,0.75800000000000001,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_SFH_2011-now,Geometry,Net floor area per dwelling,58.5,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_SFH_2011-now,Geometry,Building footprint / ground area,87.2,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_SFH_2011-now,Geometry,"Perimeter (external, estimated)",41,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_SFH_2011-now,Geometry,External wall area (gross),221.6,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_SFH_2011-now,Geometry,Window area,37.700000000000003,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_SFH_2011-now,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_SFH_2011-now,Envelope,External wall U-value,0.23799999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_SFH_2011-now,Envelope,External wall - Stratigraphy,High-performance insulated wall; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_2011-now,Envelope,Roof U-value,0.13800000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_SFH_2011-now,Envelope,Roof - Stratigraphy,High-performance insulated roof construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_2011-now,Envelope,Floor/Slab U-value,0.251,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_SFH_2011-now,Envelope,Floor/Slab - Stratigraphy,Insulated slab or floor over basement; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_SFH_2011-now,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_SFH_2011-now,Envelope,Approx. transmission heat-loss coefficient,113.2,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_SFH_2011-now,Windows,Window Uw (whole window),0.94099999999999995,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_SFH_2011-now,Windows,g-value,0.55000000000000004,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_SFH_2011-now,Windows,Glazing description,Low-e double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_SFH_2011-now,Heating system,System type,central oil condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_SFH_2011-now,Heating system,COP / seasonal efficiency,0.95,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_SFH_2011-now,Heating system,Useful energy demand - space heating,50.3,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_SFH_2011-now,Heating system,Final energy - space heating,66.8,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_SFH_2011-now,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_SFH_2011-now,DHW,"Generation efficiency_gen,DHW",0.88,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_SFH_2011-now,DHW,Useful energy demand - DHW,13.4,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_SFH_2011-now,DHW,Final energy - DHW,20.100000000000001,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_SFH_2011-now,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_SFH_2011-now,Cooling system,SEER,3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_SFH_2011-now,Cooling system,Useful energy demand - cooling,25.1,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_SFH_2011-now,Cooling system,Final energy - cooling,4.3,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_SFH_2011-now,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_SFH_2011-now,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_SFH_2011-now,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_SFH_2011-now,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_SFH_2011-now,Quality flag,Confidence,Medium,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_MFH_0-1945,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_0-1945,Meta,Construction period,0-1945,text,-,Mapped to MODERATE age band: Before 1945,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_0-1945,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_0-1945,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+AT_MFH_0-1945,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_0-1945,Meta,"Value (archetype dwellings, abs.)",280857,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_MFH_0-1945,Meta,"Total dwellings (country/period, abs.)",1481657,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_MFH_0-1945,Meta,Share of period dwellings,0.189556017351,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_MFH_0-1945,Meta,Useful floor area,16.821999999999999,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_MFH_0-1945,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_MFH_0-1945,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_0-1945,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_0-1945,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_MFH_0-1945,Geometry,Floors,3,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_MFH_0-1945,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_MFH_0-1945,Geometry,Volume-to-surface ratio,2.1669999999999998,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_MFH_0-1945,Geometry,A/V ratio,0.46100000000000002,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_MFH_0-1945,Geometry,Net floor area per dwelling,59.9,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_MFH_0-1945,Geometry,Building footprint / ground area,183.6,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_MFH_0-1945,Geometry,"Perimeter (external, estimated)",71,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_MFH_0-1945,Geometry,External wall area (gross),575,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_MFH_0-1945,Geometry,Window area,97.8,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_MFH_0-1945,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_MFH_0-1945,Envelope,External wall U-value,1.403,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_MFH_0-1945,Envelope,External wall - Stratigraphy,Uninsulated masonry / massive wall typical of older Austrian dwellings; equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_0-1945,Envelope,Roof U-value,0.74099999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_MFH_0-1945,Envelope,Roof - Stratigraphy,Roof with limited/intermediate insulation; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_0-1945,Envelope,Floor/Slab U-value,0.91900000000000004,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_MFH_0-1945,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_0-1945,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_MFH_0-1945,Envelope,Approx. transmission heat-loss coefficient,1143.8,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_MFH_0-1945,Windows,Window Uw (whole window),1.7330000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_MFH_0-1945,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_MFH_0-1945,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_MFH_0-1945,Heating system,System type,central gas non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_MFH_0-1945,Heating system,COP / seasonal efficiency,0.72,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_MFH_0-1945,Heating system,Useful energy demand - space heating,154.6,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_MFH_0-1945,Heating system,Final energy - space heating,205.3,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_MFH_0-1945,DHW,System type,central oil non-condensing boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_MFH_0-1945,DHW,"Generation efficiency_gen,DHW",0.55000000000000004,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_MFH_0-1945,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_MFH_0-1945,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_MFH_0-1945,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_MFH_0-1945,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_MFH_0-1945,Cooling system,Useful energy demand - cooling,8.5,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_MFH_0-1945,Cooling system,Final energy - cooling,1.4,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_MFH_0-1945,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_MFH_0-1945,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_MFH_0-1945,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_MFH_0-1945,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_MFH_0-1945,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_MFH_1946-1969,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1946-1969,Meta,Construction period,1946-1969,text,-,Mapped to MODERATE age band: 1945 - 1969,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1946-1969,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1946-1969,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+AT_MFH_1946-1969,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1946-1969,Meta,"Value (archetype dwellings, abs.)",239862,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_MFH_1946-1969,Meta,"Total dwellings (country/period, abs.)",1646106,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_MFH_1946-1969,Meta,Share of period dwellings,0.145714796009,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_MFH_1946-1969,Meta,Useful floor area,15.167999999999999,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_MFH_1946-1969,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_MFH_1946-1969,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_1946-1969,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_1946-1969,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_MFH_1946-1969,Geometry,Floors,3,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_MFH_1946-1969,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_MFH_1946-1969,Geometry,Volume-to-surface ratio,1.96,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_MFH_1946-1969,Geometry,A/V ratio,0.51,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_MFH_1946-1969,Geometry,Net floor area per dwelling,63.2,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_MFH_1946-1969,Geometry,Building footprint / ground area,163.80000000000001,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_MFH_1946-1969,Geometry,"Perimeter (external, estimated)",57.4,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_MFH_1946-1969,Geometry,External wall area (gross),464.8,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_MFH_1946-1969,Geometry,Window area,79,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_MFH_1946-1969,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_MFH_1946-1969,Envelope,External wall U-value,1.1479999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_MFH_1946-1969,Envelope,External wall - Stratigraphy,Masonry wall with limited/partial insulation; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1946-1969,Envelope,Roof U-value,0.68100000000000005,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_MFH_1946-1969,Envelope,Roof - Stratigraphy,Roof with limited/intermediate insulation; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1946-1969,Envelope,Floor/Slab U-value,0.98399999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_MFH_1946-1969,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1946-1969,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_MFH_1946-1969,Envelope,Approx. transmission heat-loss coefficient,862.5,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_MFH_1946-1969,Windows,Window Uw (whole window),1.8560000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_MFH_1946-1969,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_MFH_1946-1969,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_MFH_1946-1969,Heating system,System type,central gas non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_MFH_1946-1969,Heating system,COP / seasonal efficiency,0.75,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_MFH_1946-1969,Heating system,Useful energy demand - space heating,132.5,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_MFH_1946-1969,Heating system,Final energy - space heating,176,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_MFH_1946-1969,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_MFH_1946-1969,DHW,"Generation efficiency_gen,DHW",0.57999999999999996,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_MFH_1946-1969,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_MFH_1946-1969,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_MFH_1946-1969,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_MFH_1946-1969,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_MFH_1946-1969,Cooling system,Useful energy demand - cooling,13.5,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_MFH_1946-1969,Cooling system,Final energy - cooling,2.2000000000000002,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_MFH_1946-1969,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_MFH_1946-1969,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_MFH_1946-1969,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_MFH_1946-1969,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_MFH_1946-1969,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_MFH_1970-1979,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1970-1979,Meta,Construction period,1970-1979,text,-,Mapped to MODERATE age band: 1970 - 1979,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1970-1979,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1970-1979,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+AT_MFH_1970-1979,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1970-1979,Meta,"Value (archetype dwellings, abs.)",93228,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_MFH_1970-1979,Meta,"Total dwellings (country/period, abs.)",914355,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_MFH_1970-1979,Meta,Share of period dwellings,0.101960398314,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_MFH_1970-1979,Meta,Useful floor area,6.1139999999999999,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_MFH_1970-1979,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_MFH_1970-1979,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_1970-1979,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_1970-1979,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_MFH_1970-1979,Geometry,Floors,3,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_MFH_1970-1979,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_MFH_1970-1979,Geometry,Volume-to-surface ratio,2.0510000000000002,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_MFH_1970-1979,Geometry,A/V ratio,0.48799999999999999,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_MFH_1970-1979,Geometry,Net floor area per dwelling,65.599999999999994,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_MFH_1970-1979,Geometry,Building footprint / ground area,188.9,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_MFH_1970-1979,Geometry,"Perimeter (external, estimated)",62.5,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_MFH_1970-1979,Geometry,External wall area (gross),506.5,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_MFH_1970-1979,Geometry,Window area,86.1,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_MFH_1970-1979,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_MFH_1970-1979,Envelope,External wall U-value,1.06,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_MFH_1970-1979,Envelope,External wall - Stratigraphy,Masonry wall with limited/partial insulation; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1970-1979,Envelope,Roof U-value,0.52900000000000003,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_MFH_1970-1979,Envelope,Roof - Stratigraphy,Roof with limited/intermediate insulation; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1970-1979,Envelope,Floor/Slab U-value,1.0609999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_MFH_1970-1979,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with no or limited insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1970-1979,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_MFH_1970-1979,Envelope,Approx. transmission heat-loss coefficient,936.5,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_MFH_1970-1979,Windows,Window Uw (whole window),2.2109999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_MFH_1970-1979,Windows,g-value,0.7,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_MFH_1970-1979,Windows,Glazing description,Conventional double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_MFH_1970-1979,Heating system,System type,central oil non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_MFH_1970-1979,Heating system,COP / seasonal efficiency,0.78,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_MFH_1970-1979,Heating system,Useful energy demand - space heating,124.7,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_MFH_1970-1979,Heating system,Final energy - space heating,165.5,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_MFH_1970-1979,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_MFH_1970-1979,DHW,"Generation efficiency_gen,DHW",0.62,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_MFH_1970-1979,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_MFH_1970-1979,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_MFH_1970-1979,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_MFH_1970-1979,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_MFH_1970-1979,Cooling system,Useful energy demand - cooling,12.1,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_MFH_1970-1979,Cooling system,Final energy - cooling,2,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_MFH_1970-1979,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_MFH_1970-1979,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_MFH_1970-1979,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_MFH_1970-1979,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_MFH_1970-1979,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_MFH_1980-1989,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1980-1989,Meta,Construction period,1980-1989,text,-,Mapped to MODERATE age band: 1980 - 1989,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1980-1989,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1980-1989,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+AT_MFH_1980-1989,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1980-1989,Meta,"Value (archetype dwellings, abs.)",86206,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_MFH_1980-1989,Meta,"Total dwellings (country/period, abs.)",666319,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_MFH_1980-1989,Meta,Share of period dwellings,0.129376469829,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_MFH_1980-1989,Meta,Useful floor area,6.1139999999999999,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_MFH_1980-1989,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_MFH_1980-1989,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_1980-1989,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_1980-1989,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_MFH_1980-1989,Geometry,Floors,3,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_MFH_1980-1989,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_MFH_1980-1989,Geometry,Volume-to-surface ratio,2.06,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_MFH_1980-1989,Geometry,A/V ratio,0.48499999999999999,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_MFH_1980-1989,Geometry,Net floor area per dwelling,70.900000000000006,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_MFH_1980-1989,Geometry,Building footprint / ground area,191.5,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_MFH_1980-1989,Geometry,"Perimeter (external, estimated)",63.1,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_MFH_1980-1989,Geometry,External wall area (gross),510.7,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_MFH_1980-1989,Geometry,Window area,86.8,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_MFH_1980-1989,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_MFH_1980-1989,Envelope,External wall U-value,0.89700000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_MFH_1980-1989,Envelope,External wall - Stratigraphy,Masonry wall with limited/partial insulation; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1980-1989,Envelope,Roof U-value,0.42,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_MFH_1980-1989,Envelope,Roof - Stratigraphy,Insulated roof/attic construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1980-1989,Envelope,Floor/Slab U-value,0.84099999999999997,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_MFH_1980-1989,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1980-1989,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_MFH_1980-1989,Envelope,Approx. transmission heat-loss coefficient,825.7,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_MFH_1980-1989,Windows,Window Uw (whole window),2.351,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_MFH_1980-1989,Windows,g-value,0.7,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_MFH_1980-1989,Windows,Glazing description,Conventional double glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_MFH_1980-1989,Heating system,System type,central oil non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_MFH_1980-1989,Heating system,COP / seasonal efficiency,0.82,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_MFH_1980-1989,Heating system,Useful energy demand - space heating,108.3,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_MFH_1980-1989,Heating system,Final energy - space heating,143.80000000000001,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_MFH_1980-1989,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_MFH_1980-1989,DHW,"Generation efficiency_gen,DHW",0.68,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_MFH_1980-1989,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_MFH_1980-1989,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_MFH_1980-1989,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_MFH_1980-1989,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_MFH_1980-1989,Cooling system,Useful energy demand - cooling,12.2,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_MFH_1980-1989,Cooling system,Final energy - cooling,2,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_MFH_1980-1989,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_MFH_1980-1989,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_MFH_1980-1989,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_MFH_1980-1989,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_MFH_1980-1989,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_MFH_1990-1999,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1990-1999,Meta,Construction period,1990-1999,text,-,Mapped to MODERATE age band: 1990 - 1999,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1990-1999,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1990-1999,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+AT_MFH_1990-1999,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_1990-1999,Meta,"Value (archetype dwellings, abs.)",143864,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_MFH_1990-1999,Meta,"Total dwellings (country/period, abs.)",779914,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_MFH_1990-1999,Meta,Share of period dwellings,0.18446136368900001,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_MFH_1990-1999,Meta,Useful floor area,10.045,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_MFH_1990-1999,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_MFH_1990-1999,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_1990-1999,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_1990-1999,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_MFH_1990-1999,Geometry,Floors,3,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_MFH_1990-1999,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_MFH_1990-1999,Geometry,Volume-to-surface ratio,2.0329999999999999,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_MFH_1990-1999,Geometry,A/V ratio,0.49199999999999999,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_MFH_1990-1999,Geometry,Net floor area per dwelling,69.8,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_MFH_1990-1999,Geometry,Building footprint / ground area,182,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_MFH_1990-1999,Geometry,"Perimeter (external, estimated)",61.5,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_MFH_1990-1999,Geometry,External wall area (gross),498,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_MFH_1990-1999,Geometry,Window area,84.7,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_MFH_1990-1999,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_MFH_1990-1999,Envelope,External wall U-value,0.67300000000000004,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_MFH_1990-1999,Envelope,External wall - Stratigraphy,Insulated masonry or composite wall; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1990-1999,Envelope,Roof U-value,0.39100000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_MFH_1990-1999,Envelope,Roof - Stratigraphy,Insulated roof/attic construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1990-1999,Envelope,Floor/Slab U-value,0.66600000000000004,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_MFH_1990-1999,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_1990-1999,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_MFH_1990-1999,Envelope,Approx. transmission heat-loss coefficient,648.79999999999995,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_MFH_1990-1999,Windows,Window Uw (whole window),2.1059999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_MFH_1990-1999,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_MFH_1990-1999,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_MFH_1990-1999,Heating system,System type,central oil condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_MFH_1990-1999,Heating system,COP / seasonal efficiency,0.87,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_MFH_1990-1999,Heating system,Useful energy demand - space heating,92.8,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_MFH_1990-1999,Heating system,Final energy - space heating,123.2,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_MFH_1990-1999,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_MFH_1990-1999,DHW,"Generation efficiency_gen,DHW",0.75,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_MFH_1990-1999,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_MFH_1990-1999,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_MFH_1990-1999,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_MFH_1990-1999,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_MFH_1990-1999,Cooling system,Useful energy demand - cooling,9.4,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_MFH_1990-1999,Cooling system,Final energy - cooling,1.5,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_MFH_1990-1999,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_MFH_1990-1999,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_MFH_1990-1999,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_MFH_1990-1999,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_MFH_1990-1999,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_MFH_2000-2010,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_2000-2010,Meta,Construction period,2000-2010,text,-,Mapped to MODERATE age band: 2000 - 2010,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_2000-2010,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_2000-2010,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+AT_MFH_2000-2010,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_2000-2010,Meta,"Value (archetype dwellings, abs.)",79090,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_MFH_2000-2010,Meta,"Total dwellings (country/period, abs.)",434242,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_MFH_2000-2010,Meta,Share of period dwellings,0.18213346475,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_MFH_2000-2010,Meta,Useful floor area,4.9329999999999998,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_MFH_2000-2010,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_MFH_2000-2010,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_2000-2010,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_2000-2010,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_MFH_2000-2010,Geometry,Floors,3,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_MFH_2000-2010,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_MFH_2000-2010,Geometry,Volume-to-surface ratio,2.032,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_MFH_2000-2010,Geometry,A/V ratio,0.49199999999999999,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_MFH_2000-2010,Geometry,Net floor area per dwelling,62.4,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_MFH_2000-2010,Geometry,Building footprint / ground area,181.8,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_MFH_2000-2010,Geometry,"Perimeter (external, estimated)",61.4,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_MFH_2000-2010,Geometry,External wall area (gross),497.7,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_MFH_2000-2010,Geometry,Window area,84.6,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_MFH_2000-2010,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_MFH_2000-2010,Envelope,External wall U-value,0.48699999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_MFH_2000-2010,Envelope,External wall - Stratigraphy,Insulated masonry or composite wall; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_2000-2010,Envelope,Roof U-value,0.255,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_MFH_2000-2010,Envelope,Roof - Stratigraphy,Insulated roof/attic construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_2000-2010,Envelope,Floor/Slab U-value,0.49199999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_MFH_2000-2010,Envelope,Floor/Slab - Stratigraphy,Insulated slab or floor over basement; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_2000-2010,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_MFH_2000-2010,Envelope,Approx. transmission heat-loss coefficient,470.9,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_MFH_2000-2010,Windows,Window Uw (whole window),1.581,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_MFH_2000-2010,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_MFH_2000-2010,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_MFH_2000-2010,Heating system,System type,central oil condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_MFH_2000-2010,Heating system,COP / seasonal efficiency,0.92,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_MFH_2000-2010,Heating system,Useful energy demand - space heating,67.900000000000006,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_MFH_2000-2010,Heating system,Final energy - space heating,90.2,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_MFH_2000-2010,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_MFH_2000-2010,DHW,"Generation efficiency_gen,DHW",0.82,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_MFH_2000-2010,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_MFH_2000-2010,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_MFH_2000-2010,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_MFH_2000-2010,Cooling system,SEER,3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_MFH_2000-2010,Cooling system,Useful energy demand - cooling,13.5,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_MFH_2000-2010,Cooling system,Final energy - cooling,2.2000000000000002,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_MFH_2000-2010,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_MFH_2000-2010,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_MFH_2000-2010,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_MFH_2000-2010,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_MFH_2000-2010,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_MFH_2011-now,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_2011-now,Meta,Construction period,2011-now,text,-,Mapped to MODERATE age band: 2011 - 2020,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_2011-now,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_2011-now,Meta,Typology,multi-family house,text,-,Requested RELIFE typology class.,User specification
+AT_MFH_2011-now,Meta,MODERATE subsector mapping,Multifamily houses,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_MFH_2011-now,Meta,"Value (archetype dwellings, abs.)",31350,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_MFH_2011-now,Meta,"Total dwellings (country/period, abs.)",138319,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_MFH_2011-now,Meta,Share of period dwellings,0.22664999023999999,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_MFH_2011-now,Meta,Useful floor area,1.8340000000000001,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_MFH_2011-now,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_MFH_2011-now,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_2011-now,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_MFH_2011-now,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_MFH_2011-now,Geometry,Floors,3,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_MFH_2011-now,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_MFH_2011-now,Geometry,Volume-to-surface ratio,2.032,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_MFH_2011-now,Geometry,A/V ratio,0.49199999999999999,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_MFH_2011-now,Geometry,Net floor area per dwelling,58.5,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_MFH_2011-now,Geometry,Building footprint / ground area,181.9,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_MFH_2011-now,Geometry,"Perimeter (external, estimated)",61.5,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_MFH_2011-now,Geometry,External wall area (gross),497.8,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_MFH_2011-now,Geometry,Window area,84.6,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_MFH_2011-now,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_MFH_2011-now,Envelope,External wall U-value,0.25900000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_MFH_2011-now,Envelope,External wall - Stratigraphy,High-performance insulated wall; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_2011-now,Envelope,Roof U-value,0.15,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_MFH_2011-now,Envelope,Roof - Stratigraphy,High-performance insulated roof construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_2011-now,Envelope,Floor/Slab U-value,0.27300000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_MFH_2011-now,Envelope,Floor/Slab - Stratigraphy,Insulated slab or floor over basement; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_MFH_2011-now,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_MFH_2011-now,Envelope,Approx. transmission heat-loss coefficient,270.7,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_MFH_2011-now,Windows,Window Uw (whole window),1.0229999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_MFH_2011-now,Windows,g-value,0.55000000000000004,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_MFH_2011-now,Windows,Glazing description,Low-e double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_MFH_2011-now,Heating system,System type,central oil condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_MFH_2011-now,Heating system,COP / seasonal efficiency,0.95,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_MFH_2011-now,Heating system,Useful energy demand - space heating,40.6,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_MFH_2011-now,Heating system,Final energy - space heating,53.9,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_MFH_2011-now,DHW,System type,central oil combined boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_MFH_2011-now,DHW,"Generation efficiency_gen,DHW",0.88,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_MFH_2011-now,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_MFH_2011-now,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_MFH_2011-now,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_MFH_2011-now,Cooling system,SEER,3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_MFH_2011-now,Cooling system,Useful energy demand - cooling,16.8,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_MFH_2011-now,Cooling system,Final energy - cooling,2.7,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_MFH_2011-now,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_MFH_2011-now,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_MFH_2011-now,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_MFH_2011-now,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_MFH_2011-now,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_AB_0-1945,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_0-1945,Meta,Construction period,0-1945,text,-,Mapped to MODERATE age band: Before 1945,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_0-1945,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_0-1945,Meta,Typology,Apartment buildings,text,-,Requested RELIFE typology class.,User specification
+AT_AB_0-1945,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_0-1945,Meta,"Value (archetype dwellings, abs.)",416050,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_AB_0-1945,Meta,"Total dwellings (country/period, abs.)",1481657,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_AB_0-1945,Meta,Share of period dwellings,0.28080048216300002,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_AB_0-1945,Meta,Useful floor area,19.167000000000002,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_AB_0-1945,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_AB_0-1945,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_0-1945,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_0-1945,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_AB_0-1945,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_AB_0-1945,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_AB_0-1945,Geometry,Volume-to-surface ratio,2.9609999999999999,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_AB_0-1945,Geometry,A/V ratio,0.33800000000000002,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_AB_0-1945,Geometry,Net floor area per dwelling,46.1,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_AB_0-1945,Geometry,Building footprint / ground area,389.3,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_AB_0-1945,Geometry,"Perimeter (external, estimated)",109.2,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_AB_0-1945,Geometry,External wall area (gross),1179.8,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_AB_0-1945,Geometry,Window area,200.6,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_AB_0-1945,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_AB_0-1945,Envelope,External wall U-value,1.4379999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_AB_0-1945,Envelope,External wall - Stratigraphy,Uninsulated masonry / massive wall typical of older Austrian dwellings; equivalent stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_AB_0-1945,Envelope,Roof U-value,0.77,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_AB_0-1945,Envelope,Roof - Stratigraphy,Roof with limited/intermediate insulation; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_0-1945,Envelope,Floor/Slab U-value,0.94799999999999995,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_AB_0-1945,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_0-1945,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_AB_0-1945,Envelope,Approx. transmission heat-loss coefficient,2434.9,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_AB_0-1945,Windows,Window Uw (whole window),1.7849999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_AB_0-1945,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_AB_0-1945,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_AB_0-1945,Heating system,System type,central oil non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_AB_0-1945,Heating system,COP / seasonal efficiency,0.72,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_AB_0-1945,Heating system,Useful energy demand - space heating,117.3,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_AB_0-1945,Heating system,Final energy - space heating,155.80000000000001,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_AB_0-1945,DHW,System type,central oil non-condensing boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_AB_0-1945,DHW,"Generation efficiency_gen,DHW",0.55000000000000004,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_AB_0-1945,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_AB_0-1945,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_AB_0-1945,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_AB_0-1945,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_AB_0-1945,Cooling system,Useful energy demand - cooling,5.5,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_AB_0-1945,Cooling system,Final energy - cooling,0.9,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_AB_0-1945,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_AB_0-1945,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_AB_0-1945,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_AB_0-1945,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_AB_0-1945,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_AB_1946-1969,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1946-1969,Meta,Construction period,1946-1969,text,-,Mapped to MODERATE age band: 1945 - 1969,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1946-1969,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1946-1969,Meta,Typology,Apartment buildings,text,-,Requested RELIFE typology class.,User specification
+AT_AB_1946-1969,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1946-1969,Meta,"Value (archetype dwellings, abs.)",397060,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_AB_1946-1969,Meta,"Total dwellings (country/period, abs.)",1646106,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_AB_1946-1969,Meta,Share of period dwellings,0.241211683816,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_AB_1946-1969,Meta,Useful floor area,18.292000000000002,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_AB_1946-1969,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_AB_1946-1969,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_1946-1969,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_1946-1969,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_AB_1946-1969,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_AB_1946-1969,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_AB_1946-1969,Geometry,Volume-to-surface ratio,2.7269999999999999,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_AB_1946-1969,Geometry,A/V ratio,0.36699999999999999,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_AB_1946-1969,Geometry,Net floor area per dwelling,46.1,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_AB_1946-1969,Geometry,Building footprint / ground area,372.2,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_AB_1946-1969,Geometry,"Perimeter (external, estimated)",91.6,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_AB_1946-1969,Geometry,External wall area (gross),989.1,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_AB_1946-1969,Geometry,Window area,168.2,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_AB_1946-1969,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_AB_1946-1969,Envelope,External wall U-value,0.97299999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_AB_1946-1969,Envelope,External wall - Stratigraphy,Masonry wall with limited/partial insulation; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1946-1969,Envelope,Roof U-value,0.58699999999999997,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_AB_1946-1969,Envelope,Roof - Stratigraphy,Roof with limited/intermediate insulation; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1946-1969,Envelope,Floor/Slab U-value,0.88,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_AB_1946-1969,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1946-1969,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_AB_1946-1969,Envelope,Approx. transmission heat-loss coefficient,1622.7,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_AB_1946-1969,Windows,Window Uw (whole window),1.651,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_AB_1946-1969,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_AB_1946-1969,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_AB_1946-1969,Heating system,System type,central oil non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_AB_1946-1969,Heating system,COP / seasonal efficiency,0.75,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_AB_1946-1969,Heating system,Useful energy demand - space heating,82.5,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_AB_1946-1969,Heating system,Final energy - space heating,109.6,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_AB_1946-1969,DHW,System type,central oil non-condensing boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_AB_1946-1969,DHW,"Generation efficiency_gen,DHW",0.57999999999999996,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_AB_1946-1969,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_AB_1946-1969,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_AB_1946-1969,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_AB_1946-1969,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_AB_1946-1969,Cooling system,Useful energy demand - cooling,9.4,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_AB_1946-1969,Cooling system,Final energy - cooling,1.5,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_AB_1946-1969,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_AB_1946-1969,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_AB_1946-1969,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_AB_1946-1969,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_AB_1946-1969,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_AB_1970-1979,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1970-1979,Meta,Construction period,1970-1979,text,-,Mapped to MODERATE age band: 1970 - 1979,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1970-1979,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1970-1979,Meta,Typology,Apartment buildings,text,-,Requested RELIFE typology class.,User specification
+AT_AB_1970-1979,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1970-1979,Meta,"Value (archetype dwellings, abs.)",192739,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_AB_1970-1979,Meta,"Total dwellings (country/period, abs.)",914355,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_AB_1970-1979,Meta,Share of period dwellings,0.210792307145,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_AB_1970-1979,Meta,Useful floor area,8.8789999999999996,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_AB_1970-1979,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_AB_1970-1979,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_1970-1979,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_1970-1979,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_AB_1970-1979,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_AB_1970-1979,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_AB_1970-1979,Geometry,Volume-to-surface ratio,2.8439999999999999,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_AB_1970-1979,Geometry,A/V ratio,0.35199999999999998,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_AB_1970-1979,Geometry,Net floor area per dwelling,46.1,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_AB_1970-1979,Geometry,Building footprint / ground area,426.3,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_AB_1970-1979,Geometry,"Perimeter (external, estimated)",99.4,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_AB_1970-1979,Geometry,External wall area (gross),1073.9000000000001,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_AB_1970-1979,Geometry,Window area,182.6,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_AB_1970-1979,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_AB_1970-1979,Envelope,External wall U-value,0.92300000000000004,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_AB_1970-1979,Envelope,External wall - Stratigraphy,Masonry wall with limited/partial insulation; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1970-1979,Envelope,Roof U-value,0.46600000000000003,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_AB_1970-1979,Envelope,Roof - Stratigraphy,Insulated roof/attic construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1970-1979,Envelope,Floor/Slab U-value,0.93899999999999995,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_AB_1970-1979,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1970-1979,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_AB_1970-1979,Envelope,Approx. transmission heat-loss coefficient,1775.9,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_AB_1970-1979,Windows,Window Uw (whole window),1.94,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_AB_1970-1979,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_AB_1970-1979,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_AB_1970-1979,Heating system,System type,central oil non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_AB_1970-1979,Heating system,COP / seasonal efficiency,0.78,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_AB_1970-1979,Heating system,Useful energy demand - space heating,78.5,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_AB_1970-1979,Heating system,Final energy - space heating,104.2,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_AB_1970-1979,DHW,System type,central oil non-condensing boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_AB_1970-1979,DHW,"Generation efficiency_gen,DHW",0.62,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_AB_1970-1979,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_AB_1970-1979,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_AB_1970-1979,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_AB_1970-1979,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_AB_1970-1979,Cooling system,Useful energy demand - cooling,8.4,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_AB_1970-1979,Cooling system,Final energy - cooling,1.4,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_AB_1970-1979,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_AB_1970-1979,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_AB_1970-1979,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_AB_1970-1979,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_AB_1970-1979,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_AB_1980-1989,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1980-1989,Meta,Construction period,1980-1989,text,-,Mapped to MODERATE age band: 1980 - 1989,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1980-1989,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1980-1989,Meta,Typology,Apartment buildings,text,-,Requested RELIFE typology class.,User specification
+AT_AB_1980-1989,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1980-1989,Meta,"Value (archetype dwellings, abs.)",87490,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_AB_1980-1989,Meta,"Total dwellings (country/period, abs.)",666319,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_AB_1980-1989,Meta,Share of period dwellings,0.13130347476199999,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_AB_1980-1989,Meta,Useful floor area,4.0309999999999997,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_AB_1980-1989,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_AB_1980-1989,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_1980-1989,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_1980-1989,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_AB_1980-1989,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_AB_1980-1989,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_AB_1980-1989,Geometry,Volume-to-surface ratio,2.8650000000000002,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_AB_1980-1989,Geometry,A/V ratio,0.34899999999999998,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_AB_1980-1989,Geometry,Net floor area per dwelling,46.1,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_AB_1980-1989,Geometry,Building footprint / ground area,437.9,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_AB_1980-1989,Geometry,"Perimeter (external, estimated)",100.9,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_AB_1980-1989,Geometry,External wall area (gross),1090,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_AB_1980-1989,Geometry,Window area,185.3,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_AB_1980-1989,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_AB_1980-1989,Envelope,External wall U-value,0.84699999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_AB_1980-1989,Envelope,External wall - Stratigraphy,Masonry wall with limited/partial insulation; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1980-1989,Envelope,Roof U-value,0.40100000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_AB_1980-1989,Envelope,Roof - Stratigraphy,Insulated roof/attic construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1980-1989,Envelope,Floor/Slab U-value,0.80100000000000005,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_AB_1980-1989,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1980-1989,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_AB_1980-1989,Envelope,Approx. transmission heat-loss coefficient,1696.4,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_AB_1980-1989,Windows,Window Uw (whole window),2.1800000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_AB_1980-1989,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_AB_1980-1989,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_AB_1980-1989,Heating system,System type,central oil non-condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_AB_1980-1989,Heating system,COP / seasonal efficiency,0.82,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_AB_1980-1989,Heating system,Useful energy demand - space heating,73.5,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_AB_1980-1989,Heating system,Final energy - space heating,97.6,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_AB_1980-1989,DHW,System type,central oil non-condensing boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_AB_1980-1989,DHW,"Generation efficiency_gen,DHW",0.68,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_AB_1980-1989,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_AB_1980-1989,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_AB_1980-1989,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_AB_1980-1989,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_AB_1980-1989,Cooling system,Useful energy demand - cooling,8.1999999999999993,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_AB_1980-1989,Cooling system,Final energy - cooling,1.3,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_AB_1980-1989,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_AB_1980-1989,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_AB_1980-1989,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_AB_1980-1989,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_AB_1980-1989,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_AB_1990-1999,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1990-1999,Meta,Construction period,1990-1999,text,-,Mapped to MODERATE age band: 1990 - 1999,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1990-1999,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1990-1999,Meta,Typology,Apartment buildings,text,-,Requested RELIFE typology class.,User specification
+AT_AB_1990-1999,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_1990-1999,Meta,"Value (archetype dwellings, abs.)",116090,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_AB_1990-1999,Meta,"Total dwellings (country/period, abs.)",779914,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_AB_1990-1999,Meta,Share of period dwellings,0.14884974497199999,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_AB_1990-1999,Meta,Useful floor area,5.3479999999999999,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_AB_1990-1999,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_AB_1990-1999,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_1990-1999,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_1990-1999,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_AB_1990-1999,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_AB_1990-1999,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_AB_1990-1999,Geometry,Volume-to-surface ratio,2.831,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_AB_1990-1999,Geometry,A/V ratio,0.35299999999999998,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_AB_1990-1999,Geometry,Net floor area per dwelling,46.1,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_AB_1990-1999,Geometry,Building footprint / ground area,418,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_AB_1990-1999,Geometry,"Perimeter (external, estimated)",98.6,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_AB_1990-1999,Geometry,External wall area (gross),1065,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_AB_1990-1999,Geometry,Window area,181,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_AB_1990-1999,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_AB_1990-1999,Envelope,External wall U-value,0.65100000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_AB_1990-1999,Envelope,External wall - Stratigraphy,Insulated masonry or composite wall; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1990-1999,Envelope,Roof U-value,0.379,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_AB_1990-1999,Envelope,Roof - Stratigraphy,Insulated roof/attic construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1990-1999,Envelope,Floor/Slab U-value,0.64400000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_AB_1990-1999,Envelope,Floor/Slab - Stratigraphy,Ground floor/slab with moderate insulation; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_1990-1999,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_AB_1990-1999,Envelope,Approx. transmission heat-loss coefficient,1372.2,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_AB_1990-1999,Windows,Window Uw (whole window),2.0390000000000001,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_AB_1990-1999,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_AB_1990-1999,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_AB_1990-1999,Heating system,System type,central oil condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_AB_1990-1999,Heating system,COP / seasonal efficiency,0.87,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_AB_1990-1999,Heating system,Useful energy demand - space heating,65.2,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_AB_1990-1999,Heating system,Final energy - space heating,86.6,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_AB_1990-1999,DHW,System type,central oil condensing boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_AB_1990-1999,DHW,"Generation efficiency_gen,DHW",0.75,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_AB_1990-1999,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_AB_1990-1999,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_AB_1990-1999,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_AB_1990-1999,Cooling system,SEER,2.5,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_AB_1990-1999,Cooling system,Useful energy demand - cooling,6.4,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_AB_1990-1999,Cooling system,Final energy - cooling,1,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_AB_1990-1999,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_AB_1990-1999,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_AB_1990-1999,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_AB_1990-1999,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_AB_1990-1999,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_AB_2000-2010,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_2000-2010,Meta,Construction period,2000-2010,text,-,Mapped to MODERATE age band: 2000 - 2010,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_2000-2010,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_2000-2010,Meta,Typology,Apartment buildings,text,-,Requested RELIFE typology class.,User specification
+AT_AB_2000-2010,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_2000-2010,Meta,"Value (archetype dwellings, abs.)",109368,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_AB_2000-2010,Meta,"Total dwellings (country/period, abs.)",434242,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_AB_2000-2010,Meta,Share of period dwellings,0.25185956218,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_AB_2000-2010,Meta,Useful floor area,5.0380000000000003,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_AB_2000-2010,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_AB_2000-2010,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_2000-2010,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_2000-2010,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_AB_2000-2010,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_AB_2000-2010,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_AB_2000-2010,Geometry,Volume-to-surface ratio,2.827,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_AB_2000-2010,Geometry,A/V ratio,0.35399999999999998,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_AB_2000-2010,Geometry,Net floor area per dwelling,46.1,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_AB_2000-2010,Geometry,Building footprint / ground area,415.6,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_AB_2000-2010,Geometry,"Perimeter (external, estimated)",98.3,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_AB_2000-2010,Geometry,External wall area (gross),1062,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_AB_2000-2010,Geometry,Window area,180.5,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_AB_2000-2010,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_AB_2000-2010,Envelope,External wall U-value,0.47699999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_AB_2000-2010,Envelope,External wall - Stratigraphy,Insulated masonry or composite wall; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_AB_2000-2010,Envelope,Roof U-value,0.251,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_AB_2000-2010,Envelope,Roof - Stratigraphy,Insulated roof/attic construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_2000-2010,Envelope,Floor/Slab U-value,0.48099999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_AB_2000-2010,Envelope,Floor/Slab - Stratigraphy,Insulated slab or floor over basement; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_2000-2010,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_AB_2000-2010,Envelope,Approx. transmission heat-loss coefficient,1004,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_AB_2000-2010,Windows,Window Uw (whole window),1.5449999999999999,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_AB_2000-2010,Windows,g-value,0.62,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_AB_2000-2010,Windows,Glazing description,Improved double glazing / low-e generation,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_AB_2000-2010,Heating system,System type,central oil condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_AB_2000-2010,Heating system,COP / seasonal efficiency,0.92,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_AB_2000-2010,Heating system,Useful energy demand - space heating,49.1,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_AB_2000-2010,Heating system,Final energy - space heating,65.2,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_AB_2000-2010,DHW,System type,central oil condensing boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_AB_2000-2010,DHW,"Generation efficiency_gen,DHW",0.82,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_AB_2000-2010,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_AB_2000-2010,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_AB_2000-2010,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_AB_2000-2010,Cooling system,SEER,3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_AB_2000-2010,Cooling system,Useful energy demand - cooling,9.4,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_AB_2000-2010,Cooling system,Final energy - cooling,1.5,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_AB_2000-2010,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_AB_2000-2010,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_AB_2000-2010,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_AB_2000-2010,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_AB_2000-2010,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
+AT_AB_2011-now,Meta,Country,Austria,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_2011-now,Meta,Construction period,2011-now,text,-,Mapped to MODERATE age band: 2011 - 2020,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_2011-now,Meta,Building use,Residential,text,-,,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_2011-now,Meta,Typology,Apartment buildings,text,-,Requested RELIFE typology class.,User specification
+AT_AB_2011-now,Meta,MODERATE subsector mapping,Apartment blocks,text,-,Direct MODERATE category used for the archetype.,MODERATE Building Stock Data.xlsx — Austria sheet
+AT_AB_2011-now,Meta,"Value (archetype dwellings, abs.)",40956,number,-,Number of dwellings in this archetype/period from MODERATE.,MODERATE: dwellings_M
+AT_AB_2011-now,Meta,"Total dwellings (country/period, abs.)",138319,number,-,Residential total dwellings in same construction period.,MODERATE: Total / dwellings_M
+AT_AB_2011-now,Meta,Share of period dwellings,0.29609814992900002,number,-,Archetype dwellings divided by residential total for the period.,Calculated from MODERATE
+AT_AB_2011-now,Meta,Useful floor area,1.887,number,Mm²,Total useful floor area for category/period.,MODERATE: area_Mm2
+AT_AB_2011-now,Meta,Notes,Generated as a 21-sheet Austrian archetype workbook; values are source-derived where direct mapping exists and assumed where noted.,text,-,,RELIFE archetype generation
+AT_AB_2011-now,Climate,HDD,3317,number,HDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_2011-now,Climate,CDD,30,number,CDD,Austrian representative value calculated as 2014-2023 mean from BSO/Eurostat degree-day rows.,data0(7).xlsx / Eurostat degree-day data
+AT_AB_2011-now,Climate,Köppen-Geiger class,Cfb / Dfb,text,-,Austria includes temperate oceanic/continental Alpine-influenced climates; national archetype uses a representative mixed class.,Assumption / national climate classification
+AT_AB_2011-now,Geometry,Floors,4,number,storeys,Average number of floors from MODERATE.,MODERATE: floor
+AT_AB_2011-now,Geometry,Storey height,2.7,number,m,Representative residential storey height used to derive perimeter from vertical envelope area.,Assumption (geometry)
+AT_AB_2011-now,Geometry,Volume-to-surface ratio,2.827,number,m,MODERATE V/A ratio.,MODERATE: volume_surface_ratio_m
+AT_AB_2011-now,Geometry,A/V ratio,0.35399999999999998,number,m²/m³,Calculated as inverse of MODERATE V/A ratio.,Calculated from MODERATE
+AT_AB_2011-now,Geometry,Net floor area per dwelling,46.1,number,m²/dwelling,Useful floor area divided by dwellings.,Calculated from MODERATE
+AT_AB_2011-now,Geometry,Building footprint / ground area,415.5,number,m²,Representative ground area from MODERATE.,MODERATE: ground_m2
+AT_AB_2011-now,Geometry,"Perimeter (external, estimated)",98.3,number,m,External wall area divided by floors and assumed storey height.,Calculated from MODERATE + assumption
+AT_AB_2011-now,Geometry,External wall area (gross),1061.8,number,m²,Representative vertical envelope area.,MODERATE: vertical_area_m2
+AT_AB_2011-now,Geometry,Window area,180.5,number,m²,Representative window area.,MODERATE: surface_windows_m2
+AT_AB_2011-now,Geometry,Window-to-wall ratio (WWR),0.17,number,-,Window area divided by gross vertical envelope area.,Calculated from MODERATE
+AT_AB_2011-now,Envelope,External wall U-value,0.27200000000000002,number,W/m²K,Period- and typology-specific value.,MODERATE: u_walls_W_m2K
+AT_AB_2011-now,Envelope,External wall - Stratigraphy,High-performance insulated wall; equivalent Austrian stratigraphy calibrated to MODERATE U-value.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; cross-check with TABULA https://webtool.building-typology.eu/#bm
+AT_AB_2011-now,Envelope,Roof U-value,0.158,number,W/m²K,Period- and typology-specific value.,MODERATE: u_roof_W_m2K
+AT_AB_2011-now,Envelope,Roof - Stratigraphy,High-performance insulated roof construction; period-typical Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_2011-now,Envelope,Floor/Slab U-value,0.28799999999999998,number,W/m²K,Period- and typology-specific value.,MODERATE: u_floor_W_m2K
+AT_AB_2011-now,Envelope,Floor/Slab - Stratigraphy,Insulated slab or floor over basement; equivalent Austrian construction.,text,-,Qualitative equivalent stratigraphy calibrated to U-value.,Assumption; TABULA https://webtool.building-typology.eu/#bm
+AT_AB_2011-now,Envelope,Increase in transmittance for thermal bridges,0.08,number,W/m²K,Default penalty retained from original Belgian workbook.,RELIFE template / assumption
+AT_AB_2011-now,Envelope,Approx. transmission heat-loss coefficient,619.4,number,W/K,Area-weighted sum of opaque/window U-values; excludes ventilation.,Calculated from MODERATE
+AT_AB_2011-now,Windows,Window Uw (whole window),1.077,number,W/m²K,Period- and typology-specific value.,MODERATE: u_windows_W_m2K
+AT_AB_2011-now,Windows,g-value,0.55000000000000004,number,-,Representative solar transmittance by glazing generation.,Assumption; TABULA context https://webtool.building-typology.eu/#bm
+AT_AB_2011-now,Windows,Glazing description,Low-e double or triple glazing,text,-,Inferred from MODERATE window U-value.,Inference from MODERATE
+AT_AB_2011-now,Heating system,System type,central oil condensing boiler,text,-,Dominant space-heating configuration inferred from MODERATE shares.,MODERATE: SH_*
+AT_AB_2011-now,Heating system,COP / seasonal efficiency,0.95,number,-,Period-typical seasonal efficiency unless heat-pump dominance applies.,Assumption calibrated to period
+AT_AB_2011-now,Heating system,Useful energy demand - space heating,33.700000000000003,number,kWh/m²yr,Useful space-heating demand.,MODERATE: ued_sh_kWh_m2
+AT_AB_2011-now,Heating system,Final energy - space heating,44.8,number,kWh/m²yr,Final energy for space heating.,MODERATE: fec_sh_kWh_m2
+AT_AB_2011-now,DHW,System type,central oil condensing boiler,text,-,Dominant DHW configuration inferred from MODERATE shares.,MODERATE: DHW_*
+AT_AB_2011-now,DHW,"Generation efficiency_gen,DHW",0.88,number,-,Period-typical DHW generation efficiency.,Assumption calibrated to period
+AT_AB_2011-now,DHW,Useful energy demand - DHW,17.2,number,kWh/m²yr,Useful DHW demand.,MODERATE: ued_dhw_kWh_m2
+AT_AB_2011-now,DHW,Final energy - DHW,25.9,number,kWh/m²yr,Final energy for DHW.,MODERATE: fec_dhw_kWh_m2
+AT_AB_2011-now,Cooling system,System type,No active space cooling / negligible penetration,text,-,Inferred from MODERATE cooling shares and final cooling energy.,MODERATE: SC_*
+AT_AB_2011-now,Cooling system,SEER,3,number,-,Period-typical split-system SEER; used only when cooling is modelled.,Assumption calibrated to period
+AT_AB_2011-now,Cooling system,Useful energy demand - cooling,11.4,number,kWh/m²yr,Useful cooling demand.,MODERATE: ued_sc_kWh_m2
+AT_AB_2011-now,Cooling system,Final energy - cooling,1.8,number,kWh/m²yr,Final energy for space cooling.,MODERATE: fec_sc_kWh_m2
+AT_AB_2011-now,Internal conditions,Heating setpoint,20,number,°C,Standard residential heating setpoint.,Assumption; TABULA/EPISCOPE methodology https://episcope.eu/building-typology/
+AT_AB_2011-now,Internal conditions,Cooling setpoint,26,number,°C,Standard residential cooling setpoint.,Assumption
+AT_AB_2011-now,Internal conditions,Occupancy profile,Mostly evening,text,-,Residential occupancy profile retained from RELIFE template.,RELIFE template / assumption
+AT_AB_2011-now,Stock / BSO,BSO definition link,Building use definitions and dataset structure,text,-,BSO file used to validate building-use terminology and climate degree-day data.,data0(7).xlsx - Building Stock Observatory / EU building stock data definitions
+AT_AB_2011-now,Quality flag,Confidence,High,text,-,Medium for SFH because MODERATE category combines single-family and terraced houses; high for direct MFH/Apartment mapping.,Author assessment
