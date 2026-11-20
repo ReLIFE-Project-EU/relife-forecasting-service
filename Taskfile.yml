@@ -17,6 +17,23 @@ tasks:
     cmds:
       - uv run fastapi run --reload {{.ROOT_DIR}}/src/relife_forecasting/app.py
 
+  fmt:
+    desc: Sort imports and format Python files
+    cmds:
+      - uv run --locked ruff check --select I --fix {{.CLI_ARGS | default "."}}
+      - uv run --locked ruff format {{.CLI_ARGS | default "."}}
+
+  fmt-check:
+    desc: Check Python formatting and import order
+    cmds:
+      - uv run --locked ruff check --select I {{.CLI_ARGS | default "."}}
+      - uv run --locked ruff format --check {{.CLI_ARGS | default "."}}
+
+  lint:
+    desc: Check Python code with Ruff
+    cmds:
+      - uv run --locked ruff check {{.CLI_ARGS | default "."}}
+
   test:
     desc: Run all tests using pytest with verbose output
     cmds:

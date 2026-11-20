@@ -19,17 +19,16 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any
 
 import requests
-
 
 BASE_URL = "http://127.0.0.1:9091"
 ENDPOINT = "/ecm_application/run_sequential_save"
 REPORT_ENDPOINT = "/ecm_application/report"
 
 # --- choose one ---
-WEATHER_SOURCE = "epw"   # "pvgis" or "epw"
+WEATHER_SOURCE = "epw"  # "pvgis" or "epw"
 EPW_PATH = Path("epw_weather/GRC_Athens.167160_IWEC.epw")  # required if WEATHER_SOURCE="epw"
 
 DEFAULT_TIMEOUT = 600
@@ -38,7 +37,8 @@ GENERATE_REPORT = True
 
 def slugify(text: str) -> str:
     return (
-        str(text).lower()
+        str(text)
+        .lower()
         .replace(" ", "_")
         .replace("/", "_")
         .replace("\\", "_")
@@ -57,7 +57,7 @@ def build_report_path(
     *,
     building_name: str,
     output_dir: str,
-    epw_path: Optional[Path],
+    epw_path: Path | None,
 ) -> Path:
     weather_tag = "pvgis"
     if epw_path is not None:
@@ -73,16 +73,16 @@ def call_run_sequential_save(
     country: str = "Greece",
     name: str = "GR_SFH_1946-1969",
     weather_source: str = "pvgis",
-    epw_path: Optional[Path] = None,
+    epw_path: Path | None = None,
     ecm_options: str = "wall,window",
     u_wall: float = 0.5,
-    u_roof: Optional[float] = None,
+    u_roof: float | None = None,
     u_window: float = 1.0,
     include_baseline: bool = True,
     output_dir: str = "results/ecm_api",
     save_bui: bool = True,
     bui_dir: str = "building_examples_ecm_api",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     url = f"{BASE_URL}{ENDPOINT}"
 
     params = {
@@ -108,16 +108,14 @@ def call_run_sequential_save(
             raise ValueError("epw_path is required when weather_source='epw'")
         if not epw_path.exists():
             raise FileNotFoundError(f"EPW file not found: {epw_path}")
-        files = {
-            "epw_file": (epw_path.name, epw_path.read_bytes(), "application/octet-stream")
-        }
+        files = {"epw_file": (epw_path.name, epw_path.read_bytes(), "application/octet-stream")}
 
     r = requests.post(url, params=params, files=files, timeout=DEFAULT_TIMEOUT)
     if not r.ok:
         # try to show FastAPI error details
         try:
             detail = r.json()
-        except Exception:
+        except requests.exceptions.JSONDecodeError:
             detail = r.text
         raise RuntimeError(f"HTTP {r.status_code}: {detail}")
 
@@ -131,17 +129,17 @@ def call_ecm_report(
     country: str = "Greece",
     name: str = "GR_SFH_1946-1969",
     weather_source: str = "pvgis",
-    epw_path: Optional[Path] = None,
-    scenario_elements: Optional[str] = None,
-    u_wall: Optional[float] = None,
-    u_roof: Optional[float] = None,
-    u_window: Optional[float] = None,
-    u_slab: Optional[float] = None,
-    report_title: Optional[str] = None,
+    epw_path: Path | None = None,
+    scenario_elements: str | None = None,
+    u_wall: float | None = None,
+    u_roof: float | None = None,
+    u_window: float | None = None,
+    u_slab: float | None = None,
+    report_title: str | None = None,
 ) -> str:
     url = f"{BASE_URL}{REPORT_ENDPOINT}"
 
-    params: Dict[str, Any] = {
+    params: dict[str, Any] = {
         "archetype": str(archetype).lower(),
         "category": category,
         "country": country,
@@ -167,15 +165,13 @@ def call_ecm_report(
             raise ValueError("epw_path is required when weather_source='epw'")
         if not epw_path.exists():
             raise FileNotFoundError(f"EPW file not found: {epw_path}")
-        files = {
-            "epw_file": (epw_path.name, epw_path.read_bytes(), "application/octet-stream")
-        }
+        files = {"epw_file": (epw_path.name, epw_path.read_bytes(), "application/octet-stream")}
 
     r = requests.post(url, params=params, files=files, timeout=DEFAULT_TIMEOUT)
     if not r.ok:
         try:
             detail = r.json()
-        except Exception:
+        except requests.exceptions.JSONDecodeError:
             detail = r.text
         raise RuntimeError(f"HTTP {r.status_code}: {detail}")
 
@@ -191,7 +187,7 @@ def main() -> None:
         name="GR_SFH_1946-1969",
         weather_source=WEATHER_SOURCE,
         epw_path=EPW_PATH if WEATHER_SOURCE == "epw" else None,
-        ecm_options=ecm_options,   # combos: baseline + wall + window + wall+window
+        ecm_options=ecm_options,  # combos: baseline + wall + window + wall+window
         u_wall=0.5,
         u_window=1.0,
         u_roof=None,

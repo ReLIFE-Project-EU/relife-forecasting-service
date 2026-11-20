@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -24,5 +24,5 @@ class TableDataResponse(BaseModel):
     """Response model for table read endpoint."""
 
     table_name: str
-    data: List[dict[str, Any]]
+    data: list[dict[str, Any]]
     count: int

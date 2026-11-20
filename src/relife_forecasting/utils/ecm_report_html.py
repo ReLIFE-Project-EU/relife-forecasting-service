@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import html
 import json
-from typing import Any, Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from contextlib import suppress
+from typing import Any
 
 import pandas as pd
 
@@ -12,7 +14,7 @@ try:
         HeatingSystemParams,
         compute_primary_energy_from_hourly_ideal,
     )
-except Exception:
+except ImportError:
     from routes.uni11300_primary_energy import (  # type: ignore
         CoolingSystemParams,
         HeatingSystemParams,
@@ -24,7 +26,7 @@ try:
         calculate_emissions,
         calculate_savings,
     )
-except Exception:
+except ImportError:
     from routes.forecasting_service_functions import (  # type: ignore
         calculate_emissions,
         calculate_savings,
@@ -51,10 +53,7 @@ def _monthly_mean(df: pd.DataFrame, columns: Iterable[str]) -> pd.DataFrame:
     cols = [col for col in columns if col in df.columns]
     if not cols:
         return pd.DataFrame()
-    try:
-        return df[cols].resample("ME").mean()
-    except Exception:
-        return df[cols].resample("M").mean()
+    return df[cols].resample(pd.offsets.MonthEnd()).mean()
 
 
 def _monthly_sum(df: pd.DataFrame, columns: Iterable[str], scale: float = 1.0) -> pd.DataFrame:
@@ -62,14 +61,11 @@ def _monthly_sum(df: pd.DataFrame, columns: Iterable[str], scale: float = 1.0) -
     if not cols:
         return pd.DataFrame()
     numeric = df[cols].apply(pd.to_numeric, errors="coerce").fillna(0.0)
-    try:
-        monthly = numeric.resample("ME").sum()
-    except Exception:
-        monthly = numeric.resample("M").sum()
+    monthly = numeric.resample(pd.offsets.MonthEnd()).sum()
     return monthly * scale
 
 
-def _month_labels(*dfs: pd.DataFrame) -> List[str]:
+def _month_labels(*dfs: pd.DataFrame) -> list[str]:
     for df in dfs:
         if not df.empty:
             return [idx.strftime("%Y-%m") for idx in df.index]
@@ -120,7 +116,7 @@ def _table_html(df: pd.DataFrame, *, title: str, index_label: str = "Period") ->
     )
 
 
-def _safe_percent_saving(baseline: float, scenario: float) -> Optional[float]:
+def _safe_percent_saving(baseline: float, scenario: float) -> float | None:
     baseline = float(baseline)
     scenario = float(scenario)
     if abs(baseline) < 1e-9:
@@ -167,7 +163,7 @@ def _build_emission_component(
     energy_source: str,
     annual_consumption_kwh: float,
     country: str,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     consumption = max(_safe_float(annual_consumption_kwh), 0.0)
     if consumption <= 1e-9:
         return None
@@ -190,9 +186,9 @@ def _build_emission_component(
 def _build_co2_summary(
     *,
     building_country: Any,
-    uni_summary: Dict[str, Any],
-    pv_summary: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    uni_summary: dict[str, Any],
+    pv_summary: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     country = _normalize_emission_country(building_country)
     summary = dict(uni_summary or {})
 
@@ -218,7 +214,7 @@ def _build_co2_summary(
     else:
         grid_import_kwh = electric_total_kwh
 
-    components: List[Dict[str, Any]] = []
+    components: list[dict[str, Any]] = []
     for component in (
         _build_emission_component(
             label="Delivered thermal energy",
@@ -303,19 +299,27 @@ def _build_ideal_load_frame(hourly_df: pd.DataFrame) -> pd.DataFrame:
     ideal = pd.DataFrame(index=hourly_df.index)
 
     if "Q_H" in hourly_df.columns:
-        ideal["Q_ideal_heat_kWh"] = pd.to_numeric(hourly_df["Q_H"], errors="coerce").fillna(0.0) * 0.001
+        ideal["Q_ideal_heat_kWh"] = (
+            pd.to_numeric(hourly_df["Q_H"], errors="coerce").fillna(0.0) * 0.001
+        )
     elif "Q_HC" in hourly_df.columns:
-        ideal["Q_ideal_heat_kWh"] = pd.to_numeric(hourly_df["Q_HC"], errors="coerce").fillna(0.0).clip(lower=0.0) * 0.001
+        ideal["Q_ideal_heat_kWh"] = (
+            pd.to_numeric(hourly_df["Q_HC"], errors="coerce").fillna(0.0).clip(lower=0.0) * 0.001
+        )
 
     if "Q_C" in hourly_df.columns:
-        ideal["Q_ideal_cool_kWh"] = pd.to_numeric(hourly_df["Q_C"], errors="coerce").fillna(0.0) * 0.001
+        ideal["Q_ideal_cool_kWh"] = (
+            pd.to_numeric(hourly_df["Q_C"], errors="coerce").fillna(0.0) * 0.001
+        )
     elif "Q_HC" in hourly_df.columns:
-        ideal["Q_ideal_cool_kWh"] = (-pd.to_numeric(hourly_df["Q_HC"], errors="coerce").fillna(0.0)).clip(lower=0.0) * 0.001
+        ideal["Q_ideal_cool_kWh"] = (
+            -pd.to_numeric(hourly_df["Q_HC"], errors="coerce").fillna(0.0)
+        ).clip(lower=0.0) * 0.001
 
     return ideal
 
 
-def _compute_uni_summary(results_df: pd.DataFrame) -> Dict[str, float]:
+def _compute_uni_summary(results_df: pd.DataFrame) -> dict[str, float]:
     summary_fields = [
         "Q_ideal_heat_kWh",
         "Q_ideal_cool_kWh",
@@ -334,23 +338,37 @@ def _compute_uni_summary(results_df: pd.DataFrame) -> Dict[str, float]:
     }
 
 
-def _apply_heat_pump_mask(results_df: pd.DataFrame, generation_mask: Dict[str, Any]) -> pd.DataFrame:
+def _apply_heat_pump_mask(
+    results_df: pd.DataFrame, generation_mask: dict[str, Any]
+) -> pd.DataFrame:
     out = results_df.copy()
     try:
-        heat_pump_cop = float(generation_mask.get("heat_pump_cop") or generation_mask.get("mask_value") or 3.2)
-    except Exception:
+        heat_pump_cop = float(
+            generation_mask.get("heat_pump_cop") or generation_mask.get("mask_value") or 3.2
+        )
+    except (TypeError, ValueError, OverflowError):
         heat_pump_cop = 3.2
     try:
         fp_electric = float(generation_mask.get("fp_electric") or 2.18)
-    except Exception:
+    except (TypeError, ValueError, OverflowError):
         fp_electric = 2.18
 
-    q_ideal_heat = pd.to_numeric(out.get("Q_ideal_heat_kWh", 0.0), errors="coerce").fillna(0.0).clip(lower=0.0)
-    e_aux_heat = pd.to_numeric(
-        out.get("E_aux_total_heat_kWh", out.get("E_delivered_electric_heat_kWh", 0.0)),
-        errors="coerce",
-    ).fillna(0.0).clip(lower=0.0)
-    e_electric_cool = pd.to_numeric(out.get("E_delivered_electric_cool_kWh", 0.0), errors="coerce").fillna(0.0).clip(lower=0.0)
+    q_ideal_heat = (
+        pd.to_numeric(out.get("Q_ideal_heat_kWh", 0.0), errors="coerce").fillna(0.0).clip(lower=0.0)
+    )
+    e_aux_heat = (
+        pd.to_numeric(
+            out.get("E_aux_total_heat_kWh", out.get("E_delivered_electric_heat_kWh", 0.0)),
+            errors="coerce",
+        )
+        .fillna(0.0)
+        .clip(lower=0.0)
+    )
+    e_electric_cool = (
+        pd.to_numeric(out.get("E_delivered_electric_cool_kWh", 0.0), errors="coerce")
+        .fillna(0.0)
+        .clip(lower=0.0)
+    )
     ep_cool = pd.to_numeric(out.get("EP_cool_total_kWh", 0.0), errors="coerce").fillna(0.0)
 
     e_hp_heating = (q_ideal_heat / heat_pump_cop).clip(lower=0.0)
@@ -373,8 +391,8 @@ def _apply_heat_pump_mask(results_df: pd.DataFrame, generation_mask: Dict[str, A
 
 def _compute_uni_from_building_hourly(
     hourly_df: pd.DataFrame,
-    generation_mask: Optional[Dict[str, Any]] = None,
-) -> tuple[pd.DataFrame, Dict[str, float]]:
+    generation_mask: dict[str, Any] | None = None,
+) -> tuple[pd.DataFrame, dict[str, float]]:
     if hourly_df.empty:
         return pd.DataFrame(), {}
 
@@ -383,16 +401,14 @@ def _compute_uni_from_building_hourly(
     if ideal.empty:
         return pd.DataFrame(), {}
 
-    heating_kwargs: Dict[str, Any] = {}
+    heating_kwargs: dict[str, Any] = {}
     if generation_mask.get("applied_mode") != "heat_pump":
         eta_generation = generation_mask.get("heating_eta_generation")
         if eta_generation is None and generation_mask.get("metric") == "eta_generation":
             eta_generation = generation_mask.get("mask_value")
         if eta_generation is not None:
-            try:
+            with suppress(TypeError, ValueError, OverflowError):
                 heating_kwargs["eta_generation"] = float(eta_generation)
-            except Exception:
-                pass
 
     results_df = compute_primary_energy_from_hourly_ideal(
         df_hourly=ideal,
@@ -409,10 +425,10 @@ def _compute_uni_from_building_hourly(
 
 
 def _annual_summary_frame(
-    baseline_iso_annual: Dict[str, float],
-    scenario_iso_annual: Dict[str, float],
-    baseline_uni_summary: Dict[str, Any],
-    scenario_uni_summary: Dict[str, Any],
+    baseline_iso_annual: dict[str, float],
+    scenario_iso_annual: dict[str, float],
+    baseline_uni_summary: dict[str, Any],
+    scenario_uni_summary: dict[str, Any],
 ) -> pd.DataFrame:
     rows = [
         {
@@ -456,7 +472,7 @@ def _join_frames(frames: Iterable[pd.DataFrame]) -> pd.DataFrame:
     return combined
 
 
-def _build_mask_text(generation_mask: Dict[str, Any]) -> str:
+def _build_mask_text(generation_mask: dict[str, Any]) -> str:
     applied_mode = generation_mask.get("applied_mode") or "default"
     metric = generation_mask.get("metric")
     mask_value = generation_mask.get("mask_value")
@@ -477,14 +493,14 @@ def _format_metric_value(value: Any) -> str:
         return str(value)
 
 
-def _format_saving_text(value: Optional[float]) -> str:
+def _format_saving_text(value: float | None) -> str:
     if value is None:
         return "n.a."
     return f"{float(value):.1f}%"
 
 
-def _scenario_option_tokens(meta: Dict[str, Any], generation_mask: Dict[str, Any]) -> List[str]:
-    tokens: List[str] = []
+def _scenario_option_tokens(meta: dict[str, Any], generation_mask: dict[str, Any]) -> list[str]:
+    tokens: list[str] = []
     raw_tokens = meta.get("combo") or meta.get("elements") or []
     for token in raw_tokens:
         token_text = str(token).strip()
@@ -504,15 +520,15 @@ def _scenario_option_tokens(meta: Dict[str, Any], generation_mask: Dict[str, Any
     return tokens
 
 
-def _build_scenario_options_text(meta: Dict[str, Any], generation_mask: Dict[str, Any]) -> str:
+def _build_scenario_options_text(meta: dict[str, Any], generation_mask: dict[str, Any]) -> str:
     tokens = _scenario_option_tokens(meta, generation_mask)
     if not tokens:
         return "generation only"
     return ", ".join(_humanize_token(token) for token in tokens)
 
 
-def _build_generation_setup_text(meta: Dict[str, Any], generation_mask: Dict[str, Any]) -> str:
-    parts: List[str] = []
+def _build_generation_setup_text(meta: dict[str, Any], generation_mask: dict[str, Any]) -> str:
+    parts: list[str] = []
     applied_mode = str(generation_mask.get("applied_mode") or "").strip()
     requested_mode = str(generation_mask.get("requested_mode") or "").strip()
     mode = applied_mode if applied_mode not in {"", "default"} else requested_mode
@@ -531,8 +547,8 @@ def _build_generation_setup_text(meta: Dict[str, Any], generation_mask: Dict[str
     return " + ".join(parts)
 
 
-def _build_eta_values_text(generation_mask: Dict[str, Any]) -> str:
-    values: List[str] = []
+def _build_eta_values_text(generation_mask: dict[str, Any]) -> str:
+    values: list[str] = []
     heating_eta = generation_mask.get("heating_eta_generation")
     if heating_eta is None and generation_mask.get("metric") == "eta_generation":
         heating_eta = generation_mask.get("mask_value")
@@ -540,7 +556,10 @@ def _build_eta_values_text(generation_mask: Dict[str, Any]) -> str:
         values.append(f"eta_generation={_format_metric_value(heating_eta)}")
 
     heat_pump_cop = generation_mask.get("heat_pump_cop")
-    if heat_pump_cop is None and str(generation_mask.get("applied_mode") or "").strip() == "heat_pump":
+    if (
+        heat_pump_cop is None
+        and str(generation_mask.get("applied_mode") or "").strip() == "heat_pump"
+    ):
         heat_pump_cop = generation_mask.get("mask_value")
     if heat_pump_cop not in {None, ""}:
         values.append(f"COP={_format_metric_value(heat_pump_cop)}")
@@ -550,8 +569,8 @@ def _build_eta_values_text(generation_mask: Dict[str, Any]) -> str:
 
 def _build_scenario_summary_table_html(
     *,
-    baseline_entry: Dict[str, Any],
-    scenario_entries: List[Dict[str, Any]],
+    baseline_entry: dict[str, Any],
+    scenario_entries: list[dict[str, Any]],
 ) -> str:
     headers = [
         "Scenario",
@@ -571,7 +590,7 @@ def _build_scenario_summary_table_html(
     baseline_primary_total = float(baseline_entry["uni_summary"].get("EP_total_kWh", 0.0))
 
     header_html = "".join(f"<th>{html.escape(header)}</th>" for header in headers)
-    body_rows: List[str] = []
+    body_rows: list[str] = []
     for entry in scenario_entries:
         scenario_iso_total = float(entry["iso_annual"].get("Q_H_kWh", 0.0)) + float(
             entry["iso_annual"].get("Q_C_kWh", 0.0)
@@ -615,12 +634,12 @@ def _build_scenario_summary_table_html(
 def _prepare_report_entry(
     *,
     label: str,
-    scenario_meta: Dict[str, Any],
+    scenario_meta: dict[str, Any],
     hourly_df: pd.DataFrame,
-    uni_results: Dict[str, Any],
+    uni_results: dict[str, Any],
     building_country: Any,
-    pv_summary: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    pv_summary: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     hourly_df = _coerce_datetime_index(hourly_df)
     generation_mask = (
         (uni_results.get("generation_mask") if isinstance(uni_results, dict) else None)
@@ -633,7 +652,9 @@ def _prepare_report_entry(
         generation_mask=generation_mask,
     )
     if uni_hourly.empty:
-        uni_hourly = _coerce_datetime_index(pd.DataFrame((uni_results or {}).get("hourly_results") or []))
+        uni_hourly = _coerce_datetime_index(
+            pd.DataFrame((uni_results or {}).get("hourly_results") or [])
+        )
         uni_summary = (uni_results or {}).get("summary") or {}
 
     iso_annual = {
@@ -673,29 +694,44 @@ def _prepare_report_entry(
 
 def _annual_summary_multi_frame(
     *,
-    baseline_entry: Dict[str, Any],
-    scenario_entries: List[Dict[str, Any]],
-) -> tuple[pd.DataFrame, Dict[str, Any]]:
+    baseline_entry: dict[str, Any],
+    scenario_entries: list[dict[str, Any]],
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     metric_specs = [
-        ("Heating need ISO 52016", "kWh", lambda entry: float(entry["iso_annual"].get("Q_H_kWh", 0.0))),
-        ("Cooling need ISO 52016", "kWh", lambda entry: float(entry["iso_annual"].get("Q_C_kWh", 0.0))),
-        ("Primary energy heating UNI/TS 11300", "kWh", lambda entry: float(entry["uni_summary"].get("EP_heat_total_kWh", 0.0))),
-        ("Primary energy total UNI/TS 11300", "kWh", lambda entry: float(entry["uni_summary"].get("EP_total_kWh", 0.0))),
+        (
+            "Heating need ISO 52016",
+            "kWh",
+            lambda entry: float(entry["iso_annual"].get("Q_H_kWh", 0.0)),
+        ),
+        (
+            "Cooling need ISO 52016",
+            "kWh",
+            lambda entry: float(entry["iso_annual"].get("Q_C_kWh", 0.0)),
+        ),
+        (
+            "Primary energy heating UNI/TS 11300",
+            "kWh",
+            lambda entry: float(entry["uni_summary"].get("EP_heat_total_kWh", 0.0)),
+        ),
+        (
+            "Primary energy total UNI/TS 11300",
+            "kWh",
+            lambda entry: float(entry["uni_summary"].get("EP_total_kWh", 0.0)),
+        ),
     ]
 
-    rows: List[Dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
     chart_payload = {
         "labels": [],
         "baseline": [],
         "scenarios": [
-            {"label": entry["label"], "values": [], "savings_pct": []}
-            for entry in scenario_entries
+            {"label": entry["label"], "values": [], "savings_pct": []} for entry in scenario_entries
         ],
     }
 
     for metric, unit, getter in metric_specs:
         baseline_value = getter(baseline_entry)
-        row: Dict[str, Any] = {"metric": metric, "unit": unit, "Baseline": baseline_value}
+        row: dict[str, Any] = {"metric": metric, "unit": unit, "Baseline": baseline_value}
         chart_payload["labels"].append(metric)
         chart_payload["baseline"].append(round(baseline_value, 2))
 
@@ -716,19 +752,23 @@ def _annual_summary_multi_frame(
 
 def _co2_summary_multi_frame(
     *,
-    baseline_entry: Dict[str, Any],
-    scenario_entries: List[Dict[str, Any]],
-) -> tuple[pd.DataFrame, Dict[str, Any]]:
+    baseline_entry: dict[str, Any],
+    scenario_entries: list[dict[str, Any]],
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     baseline_totals = baseline_entry["co2"].get("totals") or {}
     baseline_emissions_kg = _safe_float(baseline_totals.get("annual_emissions_kg_co2eq"))
 
-    rows: List[Dict[str, Any]] = [
+    rows: list[dict[str, Any]] = [
         {
             "scenario": baseline_entry["label"],
             "final_energy_kWh": _safe_float(baseline_totals.get("annual_consumption_kwh")),
             "annual_emissions_kg_co2eq": baseline_emissions_kg,
-            "annual_emissions_ton_co2eq": _safe_float(baseline_totals.get("annual_emissions_ton_co2eq")),
-            "weighted_factor_kg_per_kWh": _safe_float(baseline_totals.get("weighted_emission_factor_kg_per_kwh")),
+            "annual_emissions_ton_co2eq": _safe_float(
+                baseline_totals.get("annual_emissions_ton_co2eq")
+            ),
+            "weighted_factor_kg_per_kWh": _safe_float(
+                baseline_totals.get("weighted_emission_factor_kg_per_kwh")
+            ),
             "natural_gas_kWh": _safe_float(baseline_totals.get("natural_gas_kWh")),
             "grid_electricity_kWh": _safe_float(baseline_totals.get("grid_electricity_kWh")),
             "solar_pv_kWh": _safe_float(baseline_totals.get("solar_pv_kWh")),
@@ -752,7 +792,9 @@ def _co2_summary_multi_frame(
                 "final_energy_kWh": _safe_float(totals.get("annual_consumption_kwh")),
                 "annual_emissions_kg_co2eq": emissions_kg,
                 "annual_emissions_ton_co2eq": _safe_float(totals.get("annual_emissions_ton_co2eq")),
-                "weighted_factor_kg_per_kWh": _safe_float(totals.get("weighted_emission_factor_kg_per_kwh")),
+                "weighted_factor_kg_per_kWh": _safe_float(
+                    totals.get("weighted_emission_factor_kg_per_kwh")
+                ),
                 "natural_gas_kWh": _safe_float(totals.get("natural_gas_kWh")),
                 "grid_electricity_kWh": _safe_float(totals.get("grid_electricity_kWh")),
                 "solar_pv_kWh": _safe_float(totals.get("solar_pv_kWh")),
@@ -770,29 +812,37 @@ def _co2_summary_multi_frame(
 def build_ecm_multi_scenario_report_html(
     *,
     report_title: str,
-    building_meta: Dict[str, Any],
+    building_meta: dict[str, Any],
     baseline_hourly: pd.DataFrame,
-    baseline_uni_results: Dict[str, Any],
-    scenario_contexts: List[Dict[str, Any]],
+    baseline_uni_results: dict[str, Any],
+    scenario_contexts: list[dict[str, Any]],
 ) -> str:
     baseline_entry = _prepare_report_entry(
         label="Baseline",
-        scenario_meta={"label": "Baseline", "elements": [], "generation_mask": baseline_uni_results.get("generation_mask") or {}},
+        scenario_meta={
+            "label": "Baseline",
+            "elements": [],
+            "generation_mask": baseline_uni_results.get("generation_mask") or {},
+        },
         hourly_df=baseline_hourly,
         uni_results=baseline_uni_results,
         building_country=building_meta.get("country"),
     )
 
-    prepared_scenarios: List[Dict[str, Any]] = []
+    prepared_scenarios: list[dict[str, Any]] = []
     for idx, context in enumerate(scenario_contexts, start=1):
         scenario_meta = dict(context.get("scenario_meta") or {})
-        scenario_label = str(scenario_meta.get("label") or f"Scenario {idx}").strip() or f"Scenario {idx}"
+        scenario_label = (
+            str(scenario_meta.get("label") or f"Scenario {idx}").strip() or f"Scenario {idx}"
+        )
         hourly_payload = context.get("hourly_building")
         prepared_scenarios.append(
             _prepare_report_entry(
                 label=scenario_label,
                 scenario_meta=scenario_meta,
-                hourly_df=hourly_payload if isinstance(hourly_payload, pd.DataFrame) else pd.DataFrame(hourly_payload or []),
+                hourly_df=hourly_payload
+                if isinstance(hourly_payload, pd.DataFrame)
+                else pd.DataFrame(hourly_payload or []),
                 uni_results=context.get("primary_energy_uni11300") or {},
                 building_country=building_meta.get("country"),
                 pv_summary=context.get("pv_hp_summary"),
@@ -817,9 +867,9 @@ def build_ecm_multi_scenario_report_html(
         ]
     )
 
-    baseline_iso_monthly = _monthly_sum(baseline_entry["hourly"], ["Q_H", "Q_C"], scale=0.001).rename(
-        columns={"Q_H": "Baseline Q_H [kWh]", "Q_C": "Baseline Q_C [kWh]"}
-    )
+    baseline_iso_monthly = _monthly_sum(
+        baseline_entry["hourly"], ["Q_H", "Q_C"], scale=0.001
+    ).rename(columns={"Q_H": "Baseline Q_H [kWh]", "Q_C": "Baseline Q_C [kWh]"})
     iso_monthly = _join_frames(
         [
             baseline_iso_monthly,
@@ -878,45 +928,91 @@ def build_ecm_multi_scenario_report_html(
         "hourly_labels": [idx.strftime("%Y-%m-%d %H:%M") for idx in baseline_entry["hourly"].index],
         "temperature": {
             "baseline_t_ext": pd.to_numeric(
-                baseline_entry["hourly"].get("T_ext", pd.Series(index=baseline_entry["hourly"].index, dtype=float)),
+                baseline_entry["hourly"].get(
+                    "T_ext", pd.Series(index=baseline_entry["hourly"].index, dtype=float)
+                ),
                 errors="coerce",
-            ).ffill().fillna(0.0).round(3).tolist(),
+            )
+            .ffill()
+            .fillna(0.0)
+            .round(3)
+            .tolist(),
             "baseline_t_op": pd.to_numeric(
-                baseline_entry["hourly"].get("T_op", pd.Series(index=baseline_entry["hourly"].index, dtype=float)),
+                baseline_entry["hourly"].get(
+                    "T_op", pd.Series(index=baseline_entry["hourly"].index, dtype=float)
+                ),
                 errors="coerce",
-            ).ffill().fillna(0.0).round(3).tolist(),
+            )
+            .ffill()
+            .fillna(0.0)
+            .round(3)
+            .tolist(),
             "scenarios": [
                 {
                     "label": entry["label"],
                     "t_op": pd.to_numeric(
-                        entry["hourly"].get("T_op", pd.Series(index=entry["hourly"].index, dtype=float)),
+                        entry["hourly"].get(
+                            "T_op", pd.Series(index=entry["hourly"].index, dtype=float)
+                        ),
                         errors="coerce",
-                    ).ffill().fillna(0.0).round(3).tolist(),
+                    )
+                    .ffill()
+                    .fillna(0.0)
+                    .round(3)
+                    .tolist(),
                 }
                 for entry in prepared_scenarios
             ],
         },
         "months": months,
         "iso_monthly": {
-            "baseline_qh": iso_monthly.get("Baseline Q_H [kWh]", pd.Series(dtype=float)).fillna(0.0).round(2).tolist(),
-            "baseline_qc": iso_monthly.get("Baseline Q_C [kWh]", pd.Series(dtype=float)).fillna(0.0).round(2).tolist(),
+            "baseline_qh": iso_monthly.get("Baseline Q_H [kWh]", pd.Series(dtype=float))
+            .fillna(0.0)
+            .round(2)
+            .tolist(),
+            "baseline_qc": iso_monthly.get("Baseline Q_C [kWh]", pd.Series(dtype=float))
+            .fillna(0.0)
+            .round(2)
+            .tolist(),
             "scenarios": [
                 {
                     "label": entry["label"],
-                    "qh": iso_monthly.get(f"{entry['label']} Q_H [kWh]", pd.Series(dtype=float)).fillna(0.0).round(2).tolist(),
-                    "qc": iso_monthly.get(f"{entry['label']} Q_C [kWh]", pd.Series(dtype=float)).fillna(0.0).round(2).tolist(),
+                    "qh": iso_monthly.get(f"{entry['label']} Q_H [kWh]", pd.Series(dtype=float))
+                    .fillna(0.0)
+                    .round(2)
+                    .tolist(),
+                    "qc": iso_monthly.get(f"{entry['label']} Q_C [kWh]", pd.Series(dtype=float))
+                    .fillna(0.0)
+                    .round(2)
+                    .tolist(),
                 }
                 for entry in prepared_scenarios
             ],
         },
         "uni_monthly": {
-            "baseline_ep_total": uni_monthly.get("Baseline EP_total [kWh]", pd.Series(dtype=float)).fillna(0.0).round(2).tolist(),
-            "baseline_ep_heat": uni_monthly.get("Baseline EP_heat [kWh]", pd.Series(dtype=float)).fillna(0.0).round(2).tolist(),
+            "baseline_ep_total": uni_monthly.get("Baseline EP_total [kWh]", pd.Series(dtype=float))
+            .fillna(0.0)
+            .round(2)
+            .tolist(),
+            "baseline_ep_heat": uni_monthly.get("Baseline EP_heat [kWh]", pd.Series(dtype=float))
+            .fillna(0.0)
+            .round(2)
+            .tolist(),
             "scenarios": [
                 {
                     "label": entry["label"],
-                    "ep_total": uni_monthly.get(f"{entry['label']} EP_total [kWh]", pd.Series(dtype=float)).fillna(0.0).round(2).tolist(),
-                    "ep_heat": uni_monthly.get(f"{entry['label']} EP_heat [kWh]", pd.Series(dtype=float)).fillna(0.0).round(2).tolist(),
+                    "ep_total": uni_monthly.get(
+                        f"{entry['label']} EP_total [kWh]", pd.Series(dtype=float)
+                    )
+                    .fillna(0.0)
+                    .round(2)
+                    .tolist(),
+                    "ep_heat": uni_monthly.get(
+                        f"{entry['label']} EP_heat [kWh]", pd.Series(dtype=float)
+                    )
+                    .fillna(0.0)
+                    .round(2)
+                    .tolist(),
                 }
                 for entry in prepared_scenarios
             ],
@@ -929,12 +1025,16 @@ def build_ecm_multi_scenario_report_html(
         [
             _table_html(temp_monthly, title="Monthly average temperatures", index_label="Month"),
             _table_html(iso_monthly, title="Monthly ISO 52016 energy needs", index_label="Month"),
-            _table_html(uni_monthly, title="Monthly UNI/TS 11300 primary energy", index_label="Month"),
+            _table_html(
+                uni_monthly, title="Monthly UNI/TS 11300 primary energy", index_label="Month"
+            ),
         ]
     )
     annual_table_html = _table_html(
         annual_summary.set_index("metric"),
-        title="Annual baseline vs selected scenarios summary" if len(prepared_scenarios) > 1 else "Annual baseline vs ECM summary",
+        title="Annual baseline vs selected scenarios summary"
+        if len(prepared_scenarios) > 1
+        else "Annual baseline vs ECM summary",
         index_label="Indicator",
     )
     co2_table_html = _table_html(
@@ -1469,12 +1569,12 @@ def build_ecm_multi_scenario_report_html(
 def build_ecm_comparison_report_html(
     *,
     report_title: str,
-    building_meta: Dict[str, Any],
-    scenario_meta: Dict[str, Any],
+    building_meta: dict[str, Any],
+    scenario_meta: dict[str, Any],
     baseline_hourly: pd.DataFrame,
     scenario_hourly: pd.DataFrame,
-    baseline_uni_results: Dict[str, Any],
-    scenario_uni_results: Dict[str, Any],
+    baseline_uni_results: dict[str, Any],
+    scenario_uni_results: dict[str, Any],
 ) -> str:
     return build_ecm_multi_scenario_report_html(
         report_title=report_title,

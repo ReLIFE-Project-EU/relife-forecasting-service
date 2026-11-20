@@ -9,11 +9,12 @@ Start the API first (e.g. `uv run uvicorn relife_forecasting.main:app --port 800
   python scripts/run_floor_area_comparison.py --floor-area 187.5 --weather epw \
       --epw src/relife_forecasting/epw_weather/GRC_Athens.167160_IWEC.epw
 """
+
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
 
@@ -28,10 +29,10 @@ ARCHETYPE = {
 def simulate(
     client: httpx.Client,
     weather: str,
-    epw: Optional[Path],
-    floor_area: Optional[float],
-) -> Dict[str, Any]:
-    params: Dict[str, Any] = {**ARCHETYPE, "weather_source": weather}
+    epw: Path | None,
+    floor_area: float | None,
+) -> dict[str, Any]:
+    params: dict[str, Any] = {**ARCHETYPE, "weather_source": weather}
     if floor_area is not None:
         params["floor_area"] = floor_area
     files = {"epw_file": (epw.name, epw.read_bytes())} if weather == "epw" else None
@@ -40,8 +41,8 @@ def simulate(
     return r.json()
 
 
-def building_area(client: httpx.Client, floor_area: Optional[float]) -> float:
-    params: Dict[str, Any] = dict(ARCHETYPE)
+def building_area(client: httpx.Client, floor_area: float | None) -> float:
+    params: dict[str, Any] = dict(ARCHETYPE)
     if floor_area is not None:
         params["floor_area"] = floor_area
     r = client.post("/building", params=params)
@@ -49,7 +50,7 @@ def building_area(client: httpx.Client, floor_area: Optional[float]) -> float:
     return r.json()["bui"]["building"]["net_floor_area"]
 
 
-def summarize(label: str, area: float, result: Dict[str, Any]) -> Dict[str, float]:
+def summarize(label: str, area: float, result: dict[str, Any]) -> dict[str, float]:
     rows = result["results"]["hourly_building"]
     q_h = sum(row.get("Q_H") or 0.0 for row in rows) / 1000.0  # Wh -> kWh
     q_c = sum(row.get("Q_C") or 0.0 for row in rows) / 1000.0
@@ -62,12 +63,20 @@ def summarize(label: str, area: float, result: Dict[str, Any]) -> Dict[str, floa
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--base-url", default="http://127.0.0.1:8000")
-    ap.add_argument("--floor-area", type=float, default=187.5, help="Second-case net floor area (m2).")
+    ap.add_argument(
+        "--floor-area", type=float, default=187.5, help="Second-case net floor area (m2)."
+    )
     ap.add_argument("--weather", choices=["pvgis", "epw"], default="pvgis")
-    ap.add_argument("--epw", type=Path, default=None, help="EPW file (required with --weather epw).")
-    ap.add_argument("--token", default=None, help="Bearer token, if the API requires authentication.")
+    ap.add_argument(
+        "--epw", type=Path, default=None, help="EPW file (required with --weather epw)."
+    )
+    ap.add_argument(
+        "--token", default=None, help="Bearer token, if the API requires authentication."
+    )
     args = ap.parse_args()
 
     if args.weather == "epw" and args.epw is None:

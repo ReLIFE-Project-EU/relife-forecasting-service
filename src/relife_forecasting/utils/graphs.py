@@ -1,13 +1,15 @@
-#%%
-from pyecharts.charts import Page
-from pyecharts.globals import ThemeType
+# %%
+import json
+
+import numpy as np
 import pandas as pd
 from pyecharts import options as opts
-from pyecharts.charts import Bar, Scatter, Line, Gauge
+from pyecharts.charts import Bar, Gauge, Line, Page, Scatter
+from pyecharts.globals import ThemeType
 from scipy.stats import linregress
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
-import json
+
 
 def capitalize_first_letter(s):
     """
@@ -40,7 +42,6 @@ def Heating_Degree_days(out_temp: list, base_temperature: int) -> list:
     return HDD
 
 
-
 def Simple_regeression(x_data: list, y_data: list, x_data_name: str):
     """
     Simple regression between two variable
@@ -52,7 +53,7 @@ def Simple_regeression(x_data: list, y_data: list, x_data_name: str):
         * **R2**: coefficient of determination
         * **equation**: linear regression equation
         * **residual**: residual !!! *Not yet included* !!!
-    
+
     """
     #
     # Sample data
@@ -75,9 +76,10 @@ def Simple_regeression(x_data: list, y_data: list, x_data_name: str):
     # Print R-squared and equation of the regression line
     # print("R-squared:", r2)
     # print("Equation of the regression line: y =", slope, "* x +", intercept)
-    equation = f"y ={round(intercept,2)} + {x_data_name}*{round(slope,2)}"
+    equation = f"y ={round(intercept, 2)} + {x_data_name}*{round(slope, 2)}"
 
     return (round(r2, 2), equation)
+
 
 # ========================================================================================================
 #                                   FUNCTIONS GRAPHS
@@ -160,9 +162,7 @@ def line_and_bar(
             ],
             toolbox_opts=opts.ToolboxOpts(
                 feature=opts.ToolBoxFeatureOpts(
-                    save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(
-                        title="Download as Image"
-                    ),
+                    save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(title="Download as Image"),
                     restore=opts.ToolBoxFeatureRestoreOpts(title="Restore"),
                     data_view=opts.ToolBoxFeatureDataViewOpts(
                         title="View Data", lang=["Data View", "Close", "Refresh"]
@@ -202,6 +202,7 @@ def line_and_bar(
 
     return bar.overlap(lineChart)
 
+
 def bar_chart_single(y_name: list, y_data_plot: list, theme_type: str):
     """
     Simple bar chart
@@ -223,9 +224,7 @@ def bar_chart_single(y_name: list, y_data_plot: list, theme_type: str):
             ],
             toolbox_opts=opts.ToolboxOpts(
                 feature=opts.ToolBoxFeatureOpts(
-                    save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(
-                        title="Download as Image"
-                    ),
+                    save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(title="Download as Image"),
                     restore=opts.ToolBoxFeatureRestoreOpts(title="Restore"),
                     data_view=opts.ToolBoxFeatureDataViewOpts(
                         title="View Data", lang=["Data View", "Close", "Refresh"]
@@ -254,7 +253,6 @@ def bar_chart_single(y_name: list, y_data_plot: list, theme_type: str):
     return c
 
 
-
 # def bar_chart_single(y_name: list, y_data_plot: list, theme_type: str):
 #     """
 #     Simple bar chart
@@ -264,7 +262,7 @@ def bar_chart_single(y_name: list, y_data_plot: list, theme_type: str):
 #     :param theme_type: chart theme, possible values are desribed in the parmeters of ``line_and_bar`` function
 
 #     :return: simple html bar chart
-    
+
 #     """
 #     c = (
 #         Bar(init_opts=opts.InitOpts(theme=theme_type))
@@ -378,11 +376,7 @@ def Scatter_with_regression(
 
     """
     # Create a line chart for the regression line
-    line_chart = (
-        Line()
-        .add_xaxis(x_data)
-        .set_series_opts(label_opts=opts.LabelOpts(is_show=False))
-    )
+    line_chart = Line().add_xaxis(x_data).set_series_opts(label_opts=opts.LabelOpts(is_show=False))
     scatter_chart = (
         Scatter()
         .add_xaxis(xaxis_data=x_data)
@@ -393,9 +387,7 @@ def Scatter_with_regression(
             ),
             toolbox_opts=opts.ToolboxOpts(
                 feature=opts.ToolBoxFeatureOpts(
-                    save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(
-                        title="Download as Image"
-                    ),
+                    save_as_image=opts.ToolBoxFeatureSaveAsImageOpts(title="Download as Image"),
                     restore=opts.ToolBoxFeatureRestoreOpts(title="Restore"),
                     data_view=opts.ToolBoxFeatureDataViewOpts(
                         title="View Data", lang=["Data View", "Close", "Refresh"]
@@ -424,10 +416,10 @@ def Scatter_with_regression(
     for data in y_data:
         # calcuation of regression line
         # Perform linear regression using numpy
-        slope, intercept, r_value, p_value, std_err = linregress(x_data, data)
+        slope, intercept, r_value, _p_value, _std_err = linregress(x_data, data)
 
         # Calculate R-squared
-        r_squared.append(r_value ** 2)
+        r_squared.append(r_value**2)
 
         # Generate predicted y values based on the regression line
 
@@ -467,7 +459,7 @@ def Scatter_with_regression(
 
 
 class Graphs_and_report:
-    def __init__(self, df, season: str, building_area:float):
+    def __init__(self, df, season: str, building_area: float):
         self.df = df
         self.season = season
         self.area_bui = building_area
@@ -475,7 +467,7 @@ class Graphs_and_report:
         if season in season_type:
             self.season = season
         else:
-            raise ValueError(f"Invalid choice for season. Select heating or cooling")
+            raise ValueError("Invalid choice for season. Select heating or cooling")
 
     def single_variable_plot(self, folder_directory: str, name_file: str):
         """
@@ -489,10 +481,7 @@ class Graphs_and_report:
         # filtering dataset only for heating and cooling
         df_HC = self.df.loc[:, ["Q_H", "Q_HC", "Q_C"]]
         # Monthly resample
-        try: 
-            dfHC_monthly = df_HC.resample("ME").sum()
-        except:
-            dfHC_monthly = df_HC.resample("M").sum()
+        dfHC_monthly = df_HC.resample(pd.offsets.MonthEnd()).sum()
         if self.season == "heating":
             y_data = [[value / 1000 for value in dfHC_monthly.loc[:, "Q_H"].tolist()]]
             y_name = "Heating consumption"
@@ -513,7 +502,7 @@ class Graphs_and_report:
 
         Chart = bar_chart_single(y_name, y_data, theme_type)
 
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         Chart.render(file_path)
 
         return Chart
@@ -556,30 +545,20 @@ class Graphs_and_report:
                 else:
                     df_HC = df_HC[df_HC.index.month == _month]
         elif month_selected is not None:
-            raise ValueError("Value must be either True or False")
+            raise TypeError("Value must be either True or False")
         # ===============================================================
         # Filtering by frequency
         df_HC_energy = df_HC.loc[:, ["Q_H", "Q_HC", "Q_C"]]
         df_HC_temp = df_HC.loc[:, ["T_op", "T_ext"]]
-        
-        try: 
-            frequency_mapping = {
-                "yearly": "YE",
-                "monthly": "ME",
-                "daily": "D",
-                "hourly": "h",
-            }
-            # Get the resampling frequency code
-            freq = frequency_mapping.get(_frequency, None)
-        except:
-            frequency_mapping = {
-                "yearly": "Y",
-                "monthly": "M",
-                "daily": "D",
-                "hourly": "h",
-            }
-            # Get the resampling frequency code
-            freq = frequency_mapping.get(_frequency, None)
+
+        frequency_mapping = {
+            "yearly": pd.offsets.YearEnd(),
+            "monthly": pd.offsets.MonthEnd(),
+            "daily": "D",
+            "hourly": "h",
+        }
+        # Get the resampling frequency code
+        freq = frequency_mapping.get(_frequency, None)
 
         if freq:
             # Resample energy and temperature data
@@ -626,7 +605,7 @@ class Graphs_and_report:
             frequency=capitalize_first_letter(_frequency),
         )
         # Chart.render(os.getcwd()+f"/pybuildingenergy/charts/{chart_name}.html")
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         # directory_chart = os.getcwd()+f"/charts/{chart_name}.html"
         Chart.render(file_path)
         return Chart
@@ -659,7 +638,7 @@ class Graphs_and_report:
         )
         # Plot chart in a single html file
         # Chart.render(os.getcwd()+f"/pybuildingenergy/charts/{chart_name}.html")
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         # directory_chart = os.getcwd()+f"/charts/{chart_name}.html"
         Chart.render(file_path)
 
@@ -687,14 +666,9 @@ class Graphs_and_report:
         df_HC_energy = df_HC.loc[:, ["Q_H", "Q_HC", "Q_C"]]
         df_HC_temp = df_HC.loc[:, ["T_op", "T_ext"]]
         # FREQUENCY MAPPING
-        try: 
-            frequency_mapping = {"monthly": "ME", "daily": "D"}
-            # Get the resampling frequency code
-            freq = frequency_mapping.get(_frequency, None)
-        except: 
-            frequency_mapping = {"monthly": "M", "daily": "D"}
-            # Get the resampling frequency code
-            freq = frequency_mapping.get(_frequency, None)
+        frequency_mapping = {"monthly": pd.offsets.MonthEnd(), "daily": "D"}
+        # Get the resampling frequency code
+        freq = frequency_mapping.get(_frequency, None)
 
         if freq:
             # Resample energy and temperature data
@@ -709,9 +683,7 @@ class Graphs_and_report:
         df_ext_temp_HDD = df_HC_temp["T_ext"].resample("D").mean().to_list()
         HDD = Heating_Degree_days(df_ext_temp_HDD, 18)
         # REMOVE 0 VALUES
-        df_HDD_Q = pd.DataFrame(
-            {"Q_H": df_HC_energy_resampled["Q_H"].to_list(), "HDD": HDD}
-        )
+        df_HDD_Q = pd.DataFrame({"Q_H": df_HC_energy_resampled["Q_H"].to_list(), "HDD": HDD})
         #  REMOVE 0 VALUES IF SELECTED
         if isinstance(clean_data, bool):
             if clean_data:
@@ -719,11 +691,9 @@ class Graphs_and_report:
             else:
                 pass  # No cleaning needed
         else:
-            raise ValueError("Value must be either True or False")
+            raise TypeError("Value must be either True or False")
         # Equation of regeression
-        regress = Simple_regeression(
-            df_HDD_Q["HDD"].to_list(), df_HDD_Q["Q_H"].to_list(), "HDD"
-        )
+        regress = Simple_regeression(df_HDD_Q["HDD"].to_list(), df_HDD_Q["Q_H"].to_list(), "HDD")
 
         # PLOT
         Chart = Scatter_with_regression(
@@ -737,13 +707,12 @@ class Graphs_and_report:
         )
 
         # Chart.render(os.getcwd()+f"/pybuildingenergy/charts/{chart_name}.html")
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         # directory_chart = os.getcwd()+f"/charts/{chart_name}.html"
         Chart.render(file_path)
 
         return Chart
 
-    #
     def bui_analysis_page(self, folder_directory: str, name_file: str):
         """
         Create a simple report with building performance graphs:
@@ -776,10 +745,8 @@ class Graphs_and_report:
             self.annual_charts(folder_directory=folder_directory),
         )
 
-        file_path = "{}/{}.html".format(folder_directory, name_file)
+        file_path = f"{folder_directory}/{name_file}.html"
         page.render(file_path)
 
         print("Report created!")
         return json.dumps({"report": "created"})
-
-

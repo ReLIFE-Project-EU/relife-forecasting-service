@@ -33,7 +33,12 @@ def test_nan_and_inf_become_null_in_every_converter(convert):
 
 
 def test_scalars_and_arrays_with_nan_are_safe():
-    payload = {"a": float("nan"), "b": np.float64("inf"), "c": np.array([1.0, np.nan]), "d": [np.nan, 1]}
+    payload = {
+        "a": float("nan"),
+        "b": np.float64("inf"),
+        "c": np.array([1.0, np.nan]),
+        "d": [np.nan, 1],
+    }
     json.dumps(clean_and_jsonable(payload), allow_nan=False)
     json.dumps(to_jsonable(payload), allow_nan=False)
 

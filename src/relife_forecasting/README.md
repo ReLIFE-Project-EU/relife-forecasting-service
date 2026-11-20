@@ -1015,7 +1015,9 @@ You can pass any subset of these U-values:
 The endpoint calls:
 
 ```python
-scenarios_spec = build_uvalue_scenarios(u_roof=u_roof, u_wall=u_wall, u_window=u_window, u_slab=u_slab)
+scenarios_spec = build_uvalue_scenarios(
+    u_roof=u_roof, u_wall=u_wall, u_window=u_window, u_slab=u_slab
+)
 ```
 
 This helper is expected to return a list of scenario specs (non-empty combinations), each containing:

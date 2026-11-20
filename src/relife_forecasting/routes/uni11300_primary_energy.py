@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
-from typing import Any, Dict, Optional, Union
+from dataclasses import asdict, dataclass
+from typing import Any
 
 import pandas as pd
 
-NumberOrSeries = Union[float, pd.Series]
+NumberOrSeries = float | pd.Series
 
 
 def _as_series(x: NumberOrSeries, index: pd.Index) -> pd.Series:
@@ -65,6 +65,7 @@ class HeatingSystemParams:
       - fp_thermal
       - fp_electric
     """
+
     eta_emission: NumberOrSeries = 0.95
     eta_distribution: NumberOrSeries = 0.93
     eta_storage: NumberOrSeries = 0.98
@@ -108,6 +109,7 @@ class CoolingSystemParams:
     Primary energy factor:
       - fp_electric
     """
+
     eta_emission: NumberOrSeries = 0.97
     eta_distribution: NumberOrSeries = 0.95
     eta_storage: NumberOrSeries = 1.00
@@ -327,8 +329,8 @@ def compute_primary_energy_from_hourly_ideal(
     df_hourly: pd.DataFrame,
     heat_col: str = "Q_ideal_heat_kWh",
     cool_col: str = "Q_ideal_cool_kWh",
-    heating_params: Optional[HeatingSystemParams] = None,
-    cooling_params: Optional[CoolingSystemParams] = None,
+    heating_params: HeatingSystemParams | None = None,
+    cooling_params: CoolingSystemParams | None = None,
 ) -> pd.DataFrame:
     """
     Wrapper to compute delivered and primary energy from ideal loads.
@@ -366,18 +368,22 @@ def compute_primary_energy_from_hourly_ideal(
         copy_columns_by_position(cool_results, "Cooling")
 
     if "EP_heat_total_kWh" in out.columns and "EP_cool_total_kWh" in out.columns:
-        out["EP_total_kWh"] = out["EP_heat_total_kWh"].fillna(0.0) + out["EP_cool_total_kWh"].fillna(0.0)
+        out["EP_total_kWh"] = out["EP_heat_total_kWh"].fillna(0.0) + out[
+            "EP_cool_total_kWh"
+        ].fillna(0.0)
 
-    if "E_delivered_electric_heat_kWh" in out.columns and "E_delivered_electric_cool_kWh" in out.columns:
-        out["E_delivered_electric_total_kWh"] = (
-            out["E_delivered_electric_heat_kWh"].fillna(0.0)
-            + out["E_delivered_electric_cool_kWh"].fillna(0.0)
-        )
+    if (
+        "E_delivered_electric_heat_kWh" in out.columns
+        and "E_delivered_electric_cool_kWh" in out.columns
+    ):
+        out["E_delivered_electric_total_kWh"] = out["E_delivered_electric_heat_kWh"].fillna(
+            0.0
+        ) + out["E_delivered_electric_cool_kWh"].fillna(0.0)
 
     return out
 
 
-def build_uni11300_input_example() -> Dict[str, Any]:
+def build_uni11300_input_example() -> dict[str, Any]:
     """Return a compact input example for the UNI/TS 11300 calculation."""
     return {
         "hourly_sim": [

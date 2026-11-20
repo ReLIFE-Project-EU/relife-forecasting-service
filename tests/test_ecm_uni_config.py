@@ -5,15 +5,12 @@ from fastapi.testclient import TestClient
 
 import relife_forecasting.main as main_module
 
-
 client = TestClient(main_module.app)
 
 
 def test_custom_ecm_uses_supplied_archetype_uni_config(monkeypatch):
     archetype = next(
-        entry
-        for entry in main_module.BUILDING_ARCHETYPES
-        if entry["name"] == "GR_SFH_2011-now"
+        entry for entry in main_module.BUILDING_ARCHETYPES if entry["name"] == "GR_SFH_2011-now"
     )
 
     def fake_iso_simulation(bui, **kwargs):
@@ -60,9 +57,7 @@ def test_custom_ecm_uses_supplied_archetype_uni_config(monkeypatch):
 
 def test_custom_uni_config_validation_rejects_invalid_payloads():
     archetype = next(
-        entry
-        for entry in main_module.BUILDING_ARCHETYPES
-        if entry["name"] == "GR_SFH_2011-now"
+        entry for entry in main_module.BUILDING_ARCHETYPES if entry["name"] == "GR_SFH_2011-now"
     )
     params = {"archetype": "false", "baseline_only": "true"}
     for value in ("not-json", "[]", "{}", '{"input_unit":"kWh"}'):

@@ -13,12 +13,10 @@ Run:
 from __future__ import annotations
 
 import os
-from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 import pytest
 import requests
-
 
 BASE_URL = os.getenv("RELIFE_BASE_URL", "http://127.0.0.1:9091")
 ENDPOINT = "/run/iso52016-uni11300-pv"
@@ -51,7 +49,7 @@ def _get_bui_from_archetype(
     category: str = DEFAULT_CATEGORY,
     country: str = DEFAULT_COUNTRY,
     name: str = DEFAULT_ARCHETYPE_NAME,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Uses GET /building?archetype=true ... to retrieve archetype BUI and return only 'bui'.
     """
@@ -66,7 +64,7 @@ def _get_bui_from_archetype(
     if not r.ok:
         try:
             detail = r.json()
-        except Exception:
+        except requests.exceptions.JSONDecodeError:
             detail = r.text
         raise AssertionError(f"Failed to fetch archetype BUI: HTTP {r.status_code}: {detail}")
 
@@ -78,7 +76,7 @@ def _get_bui_from_archetype(
 
 def call_run_iso52016_uni11300_pv(
     *,
-    bui: Dict[str, Any],
+    bui: dict[str, Any],
     pv_kwp: float = PV_KWP,
     tilt_deg: float = PV_TILT,
     azimuth_deg: float = PV_AZIMUTH,
@@ -87,15 +85,15 @@ def call_run_iso52016_uni11300_pv(
     pvgis_year: int | None = PVGIS_YEAR,
     # optional UNI overrides (keep empty for defaults)
     uni_input_unit: str = "Wh",
-    heating_params: Dict[str, Any] | None = None,
-    cooling_params: Dict[str, Any] | None = None,
+    heating_params: dict[str, Any] | None = None,
+    cooling_params: dict[str, Any] | None = None,
     return_hourly_building: bool = False,
     # optional battery (set env RELIFE_ENABLE_BATTERY=true)
-    battery_params: Dict[str, Any] | None = None,
-) -> Dict[str, Any]:
+    battery_params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     url = f"{BASE_URL}{ENDPOINT}"
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "bui": bui,
         "pv": {
             "pv_kwp": pv_kwp,
@@ -126,7 +124,7 @@ def call_run_iso52016_uni11300_pv(
     if not r.ok:
         try:
             detail = r.json()
-        except Exception:
+        except requests.exceptions.JSONDecodeError:
             detail = r.text
         raise AssertionError(f"HTTP {r.status_code}: {detail}")
 
@@ -147,7 +145,9 @@ def test_run_iso52016_uni11300_pv_endpoint(use_archetype_bui: bool) -> None:
 
     # Ensure coords exist (endpoint allows pv overrides, but we keep it simple)
     b = bui.get("building", {})
-    assert "latitude" in b and "longitude" in b, "BUI missing building.latitude/longitude (needed for PVGIS/PV)."
+    assert "latitude" in b and "longitude" in b, (
+        "BUI missing building.latitude/longitude (needed for PVGIS/PV)."
+    )
 
     # --- 2) optional battery via env
     enable_battery = os.getenv("RELIFE_ENABLE_BATTERY", "false").lower() == "true"
@@ -194,7 +194,10 @@ def test_run_iso52016_uni11300_pv_endpoint(use_archetype_bui: bool) -> None:
     assert int(uni.get("n_hours", 0)) >= 8760  # typically 8760 (or 8784 for leap)
     assert "summary" in uni and isinstance(uni["summary"], dict)
     # at least one of these should exist
-    assert any(k in uni["summary"] for k in ("EP_total_kWh", "E_delivered_electric_total_kWh", "Q_ideal_heat_kWh"))
+    assert any(
+        k in uni["summary"]
+        for k in ("EP_total_kWh", "E_delivered_electric_total_kWh", "Q_ideal_heat_kWh")
+    )
 
     pv_hp = results["pv_hp"]
     assert "summary" in pv_hp and isinstance(pv_hp["summary"], dict)

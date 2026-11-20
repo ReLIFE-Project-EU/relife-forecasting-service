@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 
 try:
     from relife_forecasting.building_examples import BUILDING_ARCHETYPES
-except Exception:
+except ImportError:
     from building_examples import BUILDING_ARCHETYPES  # type: ignore
 
 router = APIRouter(tags=["archetypes"])
@@ -17,7 +17,7 @@ def _normalize(text: str) -> str:
     return " ".join(text.strip().lower().split())
 
 
-def _surface_summary(surface: Dict[str, Any]) -> Dict[str, Any]:
+def _surface_summary(surface: dict[str, Any]) -> dict[str, Any]:
     summary = {
         "name": surface.get("name"),
         "type": surface.get("type"),
@@ -36,11 +36,10 @@ def _surface_summary(surface: Dict[str, Any]) -> Dict[str, Any]:
     return summary
 
 
-def _building_summary(archetype: Dict[str, Any]) -> Dict[str, Any]:
-    building = archetype.get("bui", {}).get("building", {})
+def _building_summary(archetype: dict[str, Any]) -> dict[str, Any]:
     surfaces = archetype.get("bui", {}).get("building_surface", [])
 
-    selected_surfaces: Dict[str, Dict[str, Any]] = {}
+    selected_surfaces: dict[str, dict[str, Any]] = {}
     for surface in surfaces:
         surface_name = str(surface.get("name", "")).lower()
         surface_type = str(surface.get("type", "")).lower()
@@ -72,20 +71,22 @@ def _building_summary(archetype: Dict[str, Any]) -> Dict[str, Any]:
 
 @router.get("/building/archetypes_info_capex", tags=["archetypes"])
 def list_archetypes(
-    country: Optional[str] = Query(None, description="Country to filter by, e.g. Austria, Greece, Italy."),
-    building_type: Optional[str] = Query(
+    country: str | None = Query(
+        None, description="Country to filter by, e.g. Austria, Greece, Italy."
+    ),
+    building_type: str | None = Query(
         None,
         description="Building typology: Single Family House, Multi family House, Apartment buildings.",
     ),
-    name: Optional[str] = Query(None, description="Specific archetype name."),
-) -> Dict[str, Any]:
+    name: str | None = Query(None, description="Specific archetype name."),
+) -> dict[str, Any]:
     """
     Return archetypes from `building_examples.py` in a readable form.
 
     Filters are optional. When provided, the endpoint returns only the matching
     archetypes for the requested country and/or building typology.
     """
-    matches: List[Dict[str, Any]] = []
+    matches: list[dict[str, Any]] = []
     country_filter = _normalize(country) if country else None
     type_filter = _normalize(building_type) if building_type else None
     name_filter = _normalize(name) if name else None
@@ -118,8 +119,16 @@ def list_archetypes(
 
 
 @router.get("/building/archetypes/options", tags=["archetypes"])
-def list_archetype_options() -> Dict[str, Any]:
+def list_archetype_options() -> dict[str, Any]:
     """Return available countries and typologies derived from the archetype list."""
-    countries = sorted({str(item.get("country")) for item in BUILDING_ARCHETYPES if item.get("country")})
-    building_types = sorted({str(item.get("category")) for item in BUILDING_ARCHETYPES if item.get("category")})
-    return {"countries": countries, "building_types": building_types, "count": len(BUILDING_ARCHETYPES)}
+    countries = sorted(
+        {str(item.get("country")) for item in BUILDING_ARCHETYPES if item.get("country")}
+    )
+    building_types = sorted(
+        {str(item.get("category")) for item in BUILDING_ARCHETYPES if item.get("category")}
+    )
+    return {
+        "countries": countries,
+        "building_types": building_types,
+        "count": len(BUILDING_ARCHETYPES),
+    }

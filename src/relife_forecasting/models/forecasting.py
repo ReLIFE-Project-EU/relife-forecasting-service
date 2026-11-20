@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pandas as pd
 from pydantic import BaseModel, Field
@@ -6,13 +6,13 @@ from pydantic import BaseModel, Field
 
 class Project:
     def __init__(self):
-        self.building: Optional[Dict[str, Any]] = None
-        self.plant: Optional[Dict[str, Any]] = None
-        self.results: Optional[pd.DataFrame] = None
+        self.building: dict[str, Any] | None = None
+        self.plant: dict[str, Any] | None = None
+        self.results: pd.DataFrame | None = None
 
 
 class BuildingPayload(BaseModel):
-    data: Dict[str, Any] = Field(
+    data: dict[str, Any] = Field(
         ...,
         description=(
             "Dizionario con parametri geometrici/termici. Esempio chiavi: \n"
@@ -33,7 +33,7 @@ class BuildingPayload(BaseModel):
 
 
 class PlantPayload(BaseModel):
-    data: Dict[str, Any] = Field(
+    data: dict[str, Any] = Field(
         ...,
         description=(
             "Dizionario impianto. Esempio chiavi: \n"

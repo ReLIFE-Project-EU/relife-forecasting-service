@@ -15,7 +15,8 @@ client = TestClient(app)
 
 def _sfh():
     return next(
-        a for a in BUILDING_ARCHETYPES
+        a
+        for a in BUILDING_ARCHETYPES
         if a["country"] == "Austria" and a["name"] == "AT_SFH_1946-1969"
     )["bui"]
 
@@ -34,19 +35,23 @@ def test_scaling_geometry():
     bui = _sfh()
     original = copy.deepcopy(bui)
     k = 1.5
-    s = k ** 0.5
+    s = k**0.5
     out = scale_bui_floor_area(bui, bui["building"]["net_floor_area"] * k)
 
     assert bui == original  # input untouched
     assert out["building"]["net_floor_area"] == pytest.approx(bui["building"]["net_floor_area"] * k)
-    assert out["building"]["exposed_perimeter"] == pytest.approx(bui["building"]["exposed_perimeter"] * s)
+    assert out["building"]["exposed_perimeter"] == pytest.approx(
+        bui["building"]["exposed_perimeter"] * s
+    )
     assert out["building"]["height"] == bui["building"]["height"]
     assert _total(out, "roof") == pytest.approx(_total(bui, "roof") * k)
     assert _total(out, "slab") == pytest.approx(_total(bui, "slab") * k)
     assert _total(out, "wall") == pytest.approx(_total(bui, "wall") * s)
     assert _total(out, "window") == pytest.approx(_total(bui, "window") * s)
     cap0 = bui["building_parameters"]["system_capacities"]["heating_capacity"]
-    assert out["building_parameters"]["system_capacities"]["heating_capacity"] == pytest.approx(cap0 * k)
+    assert out["building_parameters"]["system_capacities"]["heating_capacity"] == pytest.approx(
+        cap0 * k
+    )
 
 
 def test_invalid_area_rejected():

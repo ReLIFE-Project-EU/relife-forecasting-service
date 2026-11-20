@@ -5,6 +5,7 @@ workbooks in "EU_new archetypes/" (one sheet per archetype, e.g. AT_SFH_1946-196
   python scripts/check_archetypes_vs_excel.py
 Exit code 1 if any value differs.
 """
+
 from __future__ import annotations
 
 import glob
@@ -41,14 +42,22 @@ def main() -> int:
     for path in sorted(glob.glob(str(ROOT / "EU_new archetypes" / "[!~]*.xlsx"))):
         for ws in openpyxl.load_workbook(path, data_only=True):
             seen.add(ws.title)
-            rows = {(r[0], r[1]): r[2] for r in ws.iter_rows(min_row=2, values_only=True) if r[0] and r[1]}
+            rows = {
+                (r[0], r[1]): r[2]
+                for r in ws.iter_rows(min_row=2, values_only=True)
+                if r[0] and r[1]
+            }
             spec = specs.get(ws.title)
             if spec is None:
                 problems.append(f"{ws.title}: sheet has no spec in the code")
                 continue
             for key, label in FIELDS.items():
                 expected, actual = rows.get(label), spec.get(key)
-                if expected is None or actual is None or abs(float(actual) - float(expected)) > 1e-3 * max(1, abs(float(expected))):
+                if (
+                    expected is None
+                    or actual is None
+                    or abs(float(actual) - float(expected)) > 1e-3 * max(1, abs(float(expected)))
+                ):
                     problems.append(f"{ws.title}: {key} code={actual} sheet={expected}")
     problems += [f"{n}: spec has no sheet" for n in specs if n not in seen]
     print(f"{len(seen)} sheets, {len(specs)} specs, {len(problems)} differences")
