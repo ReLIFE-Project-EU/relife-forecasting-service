@@ -47,6 +47,7 @@ class ConstructionClass(StrEnum):
     I = "class_i"
     II = "class_ii"
     III = "class_iii"
+    DISTRIBUTED = "class_d"
 
 
 class ArchetypeSpec(TypedDict):

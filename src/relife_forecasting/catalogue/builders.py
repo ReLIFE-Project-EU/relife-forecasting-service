@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .spec import ArchetypeSpec, BuildingTypeClass, Country
+from .thermal_mass import ThermalCapacityUnit, with_provisional_thermal_mass
 
 # -----------------------------------------------------------------------------
 # Envelope archetypes (provided dataset)
@@ -376,7 +377,7 @@ def _make_extended_building(
         "units": {
             "area": "m²",
             "u_value": "W/m²K",
-            "thermal_capacity": "J/K",
+            "thermal_capacity": ThermalCapacityUnit.TOTAL.value,
             "azimuth": "degrees (0=N, 90=E, 180=S, 270=W)",
             "tilt": "degrees (0=horizontal, 90=vertical)",
             "internal_gain": "W/m²",
@@ -567,6 +568,7 @@ SYSTEM_CONDENSING_BOILER_RADIATORS: dict[str, Any] = {
 }
 
 
+@with_provisional_thermal_mass
 def build_archetype(name: str, spec: ArchetypeSpec) -> dict[str, Any]:
     # Some specs ship a placeholder net_floor_area of 0.0. A zero area breaks
     # per-m2 metrics and gets silently coerced to 1.0 m2 by
